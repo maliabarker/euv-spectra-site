@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}{% endblock %}
 {% block content %}
+
     <div class="container">
         <div class="col-sm-7 offset-sm-2 mt-3">
 
@@ -19,148 +20,148 @@
 
             <form action="/" method="POST">
                 {{ form.csrf_token }}
-                
-                <div class="form-floating mb-3">
-                    {{ form.teff(class="form-control", placeholder="Teff — Stellar Effective Temperature (K)") }}
-                    {{ form.teff.label }}
-                </div>
-                <ul>
-                    {% for error in form.teff.errors %}
-                        <li class="error">{{ error }}</li>
-                    {% endfor %}
-                </ul>
-
-                <div class="form-floating mb-3">
-                    {{ form.logg(class="form-control", placeholder="log g — Surface Gravity (cm/s2)") }}
-                    {{ form.logg.label }}
-                </div>
-                <ul>
-                    {% for error in form.logg.errors %}
-                        <li class="error">{{ error }}</li>
-                    {% endfor %}
-                </ul>
-
-                <div class="form-floating mb-3">
-                    {{ form.mass(class="form-control", placeholder="M ☉ - Mass in Solar Masses") }}
-                    {{ form.mass.label }}
-                </div>
-                <ul>
-                    {% for error in form.mass.errors %}
-                        <li class="error">{{ error }}</li>
-                    {% endfor %}
-                </ul>
-
-                <div class="form-floating mb-3">
-                    {{ form.stell_rad(class="form-control", placeholder="R ☉ — Stellar Radius in Solar Radian") }}
-                    {{ form.stell_rad.label }}
-                </div>
-                <ul>
-                    {% for error in form.stell_rad.errors %}
-                        <li class="error">{{ error }}</li>
-                    {% endfor %}
-                </ul>
-
-                <div class="row">
-                    <div class="col-sm-9">
-                        <div class="form-floating mb-3">
-                            {{ form.dist(class="form-control", placeholder="d — Distance") }}
-                            {{ form.dist.label }}
-                        </div>
-                        <ul>
-                            {% for error in form.dist.errors %}
-                                <li class="error">{{ error }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="col-sm-3">
-                        <div class="form-floating mb-3">
-                            {{ form.dist_unit(class="form-select") }}
-                            <label for="floatingSelect">d Unit</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row mb-3" id="uv-choices">
-                    <p>Choose an option:</p>
-                    <div class="col-sm-6 d-flex justify-content-end">
-                        <button class="btn btn-secondary" onclick="showFlux()">Manually Enter FUV/NUV</button>
-                    </div>
-                    <div class="col-sm-6">
-                        <button type="submit" class="btn btn-secondary">Search GALEX for FUV/NUV</button>
-                    </div>
-                </div>
-
-                
-                <div id="flux-inputs-div" style="display:none;">
-                    <p class="btn btn-link" onclick="showFluxOptions()">Back to Options</p>
-                    <div class="row">
-                        <div class="col-sm-9">
-                            <div class="form-floating mb-3">
-                                {{ form.fuv(class="form-control", placeholder="FUV — Far Ultraviolet Spectra in Microjanskys (mjy)") }}
-                                {{ form.fuv.label }}
-                            </div>
-                            <ul>
-                                {% for error in form.fuv.errors %}
-                                    <li class="error">{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        <div class="col-sm-3">
-                            <div class="form-floating mb-3">
-                                {{ form.fuv_flag(class="form-select") }}
-                                <!--WHAT TO PUT HERE???-->
-                                <label for="floatingSelect">Specify</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-sm-9">
-                            <div class="form-floating mb-3">
-                                {{ form.nuv(class="form-control", placeholder="NUV — Near Ultraviolet Spectra in Microjanskys (mjy)") }}
-                                {{ form.nuv.label }}
-                            </div>
-                            <ul>
-                                {% for error in form.nuv.errors %}
-                                    <li class="error">{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        <div class="col-sm-3">
-                            <div class="form-floating mb-3">
-                                {{ form.nuv_flag(class="form-select") }}
-                                <label for="floatingSelect">Specify</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- <div class="form-floating mb-3">
-                        <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-                        <label for="floatingInput">FUV — Far Ultraviolet Spectra in Microjanskys (mjy)</label>
-                    </div>
+                <fieldset>
                     <div class="form-floating mb-3">
-                        <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-                        <label for="floatingInput">NUV — Near Ultraviolet Spectra in Microjanskys (mjy)</label>
-                    </div> -->
-                </div>
+                        {{ form.teff(class="form-control", placeholder="Teff — Stellar Effective Temperature (K)") }}
+                        {{ form.teff.label }}
+                    </div>
+                    <ul>
+                        {% for error in form.teff.errors %}
+                            <li class="error">{{ error }}</li>
+                        {% endfor %}
+                    </ul>
 
-                
-                <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-primary mb-3" id="model-next"><a href="/ex-spectra" style="color: white; text-decoration: none;">Next →</a></button>
-                </div>
+                    <div class="form-floating mb-3">
+                        {{ form.logg(class="form-control", placeholder="log g — Surface Gravity (cm/s2)") }}
+                        {{ form.logg.label }}
+                    </div>
+                    <ul>
+                        {% for error in form.logg.errors %}
+                            <li class="error">{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="form-floating mb-3">
+                        {{ form.mass(class="form-control", placeholder="M ☉ - Mass in Solar Masses") }}
+                        {{ form.mass.label }}
+                    </div>
+                    <ul>
+                        {% for error in form.mass.errors %}
+                            <li class="error">{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="form-floating mb-3">
+                        {{ form.stell_rad(class="form-control", placeholder="R ☉ — Stellar Radius in Solar Radian") }}
+                        {{ form.stell_rad.label }}
+                    </div>
+                    <ul>
+                        {% for error in form.stell_rad.errors %}
+                            <li class="error">{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="row">
+                        <div class="col-sm-9">
+                            <div class="form-floating mb-3">
+                                {{ form.dist(class="form-control", placeholder="d — Distance") }}
+                                {{ form.dist.label }}
+                            </div>
+                            <ul>
+                                {% for error in form.dist.errors %}
+                                    <li class="error">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="form-floating mb-3">
+                                {{ form.dist_unit(class="form-select") }}
+                                <label for="floatingSelect">d Unit</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3" id="uv-choices">
+                        <p>Choose an option:</p>
+                        <div class="col-sm-6 d-flex justify-content-end">
+                            <button type="button" class="btn btn-secondary" onclick="showFlux()">Manually Enter FUV/NUV</button>
+                        </div>
+                        <div class="col-sm-6">
+                            <button type="submit" class="btn btn-secondary">Search GALEX for FUV/NUV</button>
+                        </div>
+                    </div>
+
+                    
+                    <div id="flux-inputs-div" style="display:none;">
+                        <p class="btn btn-link" onclick="showFluxOptions()">Back to Options</p>
+                        <div class="row">
+                            <div class="col-sm-9">
+                                <div class="form-floating mb-3">
+                                    {{ form.fuv(class="form-control", placeholder="FUV — Far Ultraviolet Spectra in Microjanskys (mjy)") }}
+                                    {{ form.fuv.label }}
+                                </div>
+                                <ul>
+                                    {% for error in form.fuv.errors %}
+                                        <li class="error">{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="form-floating mb-3">
+                                    {{ form.fuv_flag(class="form-select") }}
+                                    <!--WHAT TO PUT HERE???-->
+                                    <label for="floatingSelect">Specify</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-sm-9">
+                                <div class="form-floating mb-3">
+                                    {{ form.nuv(class="form-control", placeholder="NUV — Near Ultraviolet Spectra in Microjanskys (mjy)") }}
+                                    {{ form.nuv.label }}
+                                </div>
+                                <ul>
+                                    {% for error in form.nuv.errors %}
+                                        <li class="error">{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="form-floating mb-3">
+                                    {{ form.nuv_flag(class="form-select") }}
+                                    <label for="floatingSelect">Specify</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        {{ form.submit(class="btn btn-primary mb-3") }}
+                    </div>
+                </fieldset>
             </form>
 
-            <hr>or
+            <hr> <span id="home-or">or</span>
 
             <p class="mt-4"><b>Enter Star Name</b></p>
 
-            <form action="">
-                <div class="form-floating mb-3">
-                    <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-                    <label for="floatingInput">Star Name</label>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Next →</button>
+            <form action="/" method="POST">
+                <fieldset>
+                    {{ name_form.csrf_token }}
+                    <div class="form-floating mb-3">
+                        {{ name_form.name(class="form-control", placeholder="Star Name") }}
+                        {{ name_form.name.label }}
+                    </div>
+                    <ul>
+                        {% for error in name_form.name.errors %}
+                            <li class="error">{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                    <div class="d-flex justify-content-end">
+                        {{ name_form.submit(class="btn btn-primary mb-3") }}
+                    </div>
+                </fieldset>
             </form>
 
             <!--QUESTIONS
