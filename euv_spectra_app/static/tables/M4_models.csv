@@ -1,0 +1,62 @@
+Model	,F_EUV,F_FUV,F_NUV,F_J
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=5.5.cmin=3.5.7.gz.fits   ,193645.38,5452.0445,27854.262,257360.18
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=5.5.cmin=3.7.gz.fits     ,193645.19,5816.9423,30019.490,256597.44
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=5.5.cmin=4.5.7.gz.fits   ,191949.16,2007.9890,9993.7006,263824.14
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=5.5.cmin=4.7.gz.fits     ,193065.50,3357.1899,16389.009,261567.05
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=5.cmin=3.5.7.gz.fits     ,1120205.6,14351.322,63438.645,236792.55
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=5.cmin=3.7.gz.fits       ,1122590.2,16745.121,78072.129,233628.11
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=5.cmin=4.7.gz.fits       ,1109162.0,8366.0360,28710.469,247576.63
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=6.5.cmin=3.5.7.gz.fits   ,21330.732,955.91917,7614.2008,280063.94
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=6.5.cmin=3.7.gz.fits     ,21326.165,967.24876,7831.8768,280029.61
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=6.5.cmin=4.5.7.gz.fits   ,21287.237,622.48091,5304.5104,280514.31
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=6.5.cmin=4.7.gz.fits     ,21310.536,930.32404,7116.9719,280016.34
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=6.5.cmin=5.5.7.gz.fits   ,21197.520,291.20223,3728.2830,281044.19
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=6.5.cmin=5.7.gz.fits     ,21246.045,426.67329,4339.2376,280680.81
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=6.cmin=3.5.7.gz.fits     ,66908.243,2395.6329,14371.108,270994.37
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=6.cmin=3.7.gz.fits       ,66874.221,2446.3876,14825.666,270861.78
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=6.cmin=4.5.7.gz.fits     ,66674.152,1121.8985,7343.9006,272988.30
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=6.cmin=4.7.gz.fits       ,66825.840,1864.0009,11310.893,271840.55
+M4.Teff=3200.logg=5.1.TRgrad=7.5.cmtop=6.cmin=5.7.gz.fits       ,66439.318,742.02863,5903.6765,273343.93
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=5.5.cmin=3.5.7.gz.fits   ,12226.429,627.23042,6800.6189,284140.77
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=5.5.cmin=3.7.gz.fits     ,12214.162,687.62671,7554.5548,285067.06
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=5.5.cmin=4.5.7.gz.fits   ,12255.576,593.00463,5162.1364,283963.46
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=5.5.cmin=4.7.gz.fits     ,12239.345,537.74994,5212.6804,284191.60
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=5.cmin=3.5.7.gz.fits     ,65414.065,2006.2867,12441.444,272514.61
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=5.cmin=3.7.gz.fits       ,65290.963,2163.7367,13948.706,272102.17
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=5.cmin=4.7.gz.fits       ,65503.739,2025.0583,11162.552,272400.46
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=6.5.cmin=3.5.7.gz.fits   ,1580.0827,236.03823,3980.9550,292462.08
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=6.5.cmin=3.7.gz.fits     ,1576.9718,250.20336,4045.6646,292475.56
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=6.5.cmin=4.5.7.gz.fits   ,1578.6563,174.34899,2554.7679,292508.92
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=6.5.cmin=4.7.gz.fits     ,1579.2472,176.84659,2901.4380,293718.15
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=6.5.cmin=5.5.7.gz.fits   ,1577.8250,108.59242,2041.6728,292521.29
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=6.5.cmin=5.7.gz.fits     ,1579.6831,158.43338,2390.8976,292518.07
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=6.cmin=3.5.7.gz.fits     ,4525.1156,377.35053,5321.6072,289064.89
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=6.cmin=3.7.gz.fits       ,4519.6565,413.52942,5689.8334,289048.39
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=6.cmin=4.5.7.gz.fits     ,4530.5125,320.14831,3750.7381,289055.94
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=6.cmin=4.7.gz.fits       ,4529.4959,303.87601,4046.0348,289156.48
+M4.Teff=3200.logg=5.1.TRgrad=8.5.cmtop=6.cmin=5.7.gz.fits       ,4534.5748,259.33646,3360.2141,289057.23
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=5.5.cmin=3.5.7.gz.fits     ,47737.262,1652.1602,10840.342,274626.22
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=5.5.cmin=3.7.gz.fits       ,47693.861,1695.6812,11418.181,274488.73
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=5.5.cmin=4.5.7.gz.fits     ,47725.723,1111.6952,7433.9021,275092.43
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=5.5.cmin=4.7.gz.fits       ,47737.651,1658.0906,10181.565,274480.64
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=5.cmin=3.5.7.gz.fits       ,268897.78,8112.3354,38583.778,251414.99
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=5.cmin=3.7.gz.fits       26,8730.98       87,26.9308       41,754.327       25,321.75
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=5.cmin=4.7.gz.fits       26,8123.48       48,68.3500       22,563.232       25,7062.68
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=6.5.cmin=3.5.7.gz.fits     ,5635.2013,375.22288,4939.1949,287861.75
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=6.5.cmin=3.7.gz.fits       ,5634.4890,394.64944,5203.7294,287886.50
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=6.5.cmin=4.5.7.gz.fits     ,5634.3150,371.18245,4107.4982,287824.00
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=6.5.cmin=4.7.gz.fits       ,5634.8670,358.69643,4176.3793,287880.69
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=6.5.cmin=5.5.7.gz.fits     ,5615.6503,171.65039,2919.7133,288049.02
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=6.5.cmin=5.7.gz.fits       ,5633.7790,258.26965,3393.6073,287975.41
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=6.cmin=3.5.7.gz.fits       ,17021.309,746.92170,6846.2424,281901.86
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=6.cmin=3.7.gz.fits       17,009.491       77,3.03572       72,80.6326       28,1846.62
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=6.cmin=4.5.7.gz.fits       ,17028.904,661.72051,5538.1425,281834.08
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=6.cmin=4.7.gz.fits       17,017.274       75,6.60733       61,00.8744       28,1769.79
+M4.Teff=3200.logg=5.1.TRgrad=8.cmtop=6.cmin=5.7.gz.fits       17,002.688       42,5.46136       43,00.8578       28,1989.02
+M4.Teff=3200.logg=5.1.TRgrad=9.cmtop=5.5.cmin=3.5.7.gz.fits     ,3289.1698,414.51607,5902.1185,290484.62
+M4.Teff=3200.logg=5.1.TRgrad=9.cmtop=5.5.cmin=3.7.gz.fits       ,3285.9926,472.76979,6412.7407,290434.66
+M4.Teff=3200.logg=5.1.TRgrad=9.cmtop=5.5.cmin=4.7.gz.fits       ,3296.0592,292.47827,4145.9140,290589.34
+M4.Teff=3200.logg=5.1.TRgrad=9.cmtop=5.cmin=3.5.7.gz.fits       ,16535.445,849.09592,8624.7961,282469.18
+M4.Teff=3200.logg=5.1.TRgrad=9.cmtop=5.cmin=3.7.gz.fits       16,496.878       10,08.8169       10,080.663       28,2259.07
+M4.Teff=3200.logg=5.1.TRgrad=9.cmtop=5.cmin=4.7.gz.fits       16,598.434       64,2.97927       58,80.8661       28,2627.46
+M4.Teff=3200.logg=5.1.TRgrad=9.cmtop=6.cmin=4.7.gz.fits       12,80.1040       19,0.88491       31,02.8166       29,3231.65
