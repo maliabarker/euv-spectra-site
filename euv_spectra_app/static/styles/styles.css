@@ -1,8 +1,13 @@
-input:required {
-    /* border: 1px dashed red; */
-}
+#home-or {
+    width: 100%; 
+    text-align: center; 
+    border-bottom: 1px solid #000; 
+    line-height: 0.1em;
+    margin: 10px 0 20px; 
+} 
 
-input:required label:after {
-    content: " *";
-    color: red;
+#home-or span { 
+    background:#fff; 
+    padding:0 10px;
+    font-style: oblique;
 }

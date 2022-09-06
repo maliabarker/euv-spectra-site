@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% from "form.html" import form_field %}
 
 {% block title %}{% endblock %}
 {% block content %}
@@ -19,13 +18,26 @@
             
             <p class="mt-4"><b>Enter Information for your Star</b></p>
 
+            <!-- <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">Enter Star Info</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Enter Star Name</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">Star Info</div>
+                <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">Star Name</div>
+            </div> -->
+
 
             <form action="/" method="POST">
                 {{ form.csrf_token }}
                 <fieldset>
                     <div class="form-floating mb-3">
                         {{ form.teff(class="form-control", placeholder="Teff — Stellar Effective Temperature (K)") }}
-                        {{ form.teff.label(text='*' + form.teff.label.text) }}
+                        {{ form.teff.label(text='* ' + form.teff.label.text) }}
                     </div>
                     
                     <ul>
@@ -36,7 +48,7 @@
 
                     <div class="form-floating mb-3">
                         {{ form.logg(class="form-control", placeholder="log g — Surface Gravity (cm/s2)") }}
-                        {{ form.logg.label(text='*' + form.logg.label.text) }}
+                        {{ form.logg.label(text='* ' + form.logg.label.text) }}
                     </div>
                     <ul>
                         {% for error in form.logg.errors %}
@@ -46,7 +58,7 @@
 
                     <div class="form-floating mb-3">
                         {{ form.mass(class="form-control", placeholder="M ☉ - Mass in Solar Masses") }}
-                        {{ form.mass.label(text='*' + form.mass.label.text) }}
+                        {{ form.mass.label(text='* ' + form.mass.label.text) }}
                     </div>
                     <ul>
                         {% for error in form.mass.errors %}
@@ -56,7 +68,7 @@
 
                     <div class="form-floating mb-3">
                         {{ form.stell_rad(class="form-control", placeholder="R ☉ — Stellar Radius in Solar Radian") }}
-                        {{ form.stell_rad.label(text='*' + form.stell_rad.label.text) }}
+                        {{ form.stell_rad.label(text='* ' + form.stell_rad.label.text) }}
                     </div>
                     <ul>
                         {% for error in form.stell_rad.errors %}
@@ -68,7 +80,7 @@
                         <div class="col-sm-9">
                             <div class="form-floating mb-3">
                                 {{ form.dist(class="form-control", placeholder="d — Distance") }}
-                                {{ form.dist.label(text='*' + form.dist.label.text) }}
+                                {{ form.dist.label(text='* ' + form.dist.label.text) }}
                             </div>
                             <ul>
                                 {% for error in form.dist.errors %}
@@ -79,20 +91,10 @@
                         <div class="col-sm-3">
                             <div class="form-floating mb-3">
                                 {{ form.dist_unit(class="form-select") }}
-                                {{ form.dist_unit.label(text='*' + form.dist_unit.label.text) }}
+                                {{ form.dist_unit.label(text='* ' + form.dist_unit.label.text) }}
                             </div>
                         </div>
                     </div>
-
-                    <!-- <div class="row mb-3" id="uv-choices">
-                        <p>Choose an option:</p>
-                        <div class="col-sm-6 d-flex justify-content-end">
-                            <button type="button" class="btn btn-secondary" onclick="showFlux()">Manually Enter FUV/NUV</button>
-                        </div>
-                        <div class="col-sm-6">
-                            <button type="submit" class="btn btn-secondary">Search GALEX for FUV/NUV</button>
-                        </div>
-                    </div> -->
 
                     <small>Optional:</small>
 
@@ -137,59 +139,17 @@
                         </div>
                     </div>
 
-                    
-                    {# <!-- <div id="flux-inputs-div" style="display:none;">
-                        <p class="btn btn-link" onclick="showFluxOptions()">Back to Options</p>
-                        <div class="row">
-                            <div class="col-sm-9">
-                                <div class="form-floating mb-3">
-                                    {{ form.fuv(class="form-control", placeholder="FUV — Far Ultraviolet Spectra in Microjanskys (mjy)") }}
-                                    {{ form.fuv.label }}
-                                </div>
-                                <ul>
-                                    {% for error in form.fuv.errors %}
-                                        <li class="error">{{ error }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                            <div class="col-sm-3">
-                                <div class="form-floating mb-3">
-                                    {{ form.fuv_flag(class="form-select") }}
-                                    <label for="floatingSelect">Specify</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-9">
-                                <div class="form-floating mb-3">
-                                    {{ form.nuv(class="form-control", placeholder="NUV — Near Ultraviolet Spectra in Microjanskys (mjy)") }}
-                                    {{ form.nuv.label }}
-                                </div>
-                                <ul>
-                                    {% for error in form.nuv.errors %}
-                                        <li class="error">{{ error }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                            <div class="col-sm-3">
-                                <div class="form-floating mb-3">
-                                    {{ form.nuv_flag(class="form-select") }}
-                                    <label for="floatingSelect">Specify</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div> --> #}
-
                     <div class="d-flex justify-content-end">
                         {{ form.submit(class="btn btn-primary mb-3") }}
                     </div>
                 </fieldset>
             </form>
 
-            <hr> <span id="home-or">or</span>
+
+            <p id="home-or"><span>OR</span></p>
 
             <p class="mt-4"><b>Enter Star Name</b></p>
+
 
             <form action="/" method="POST">
                 <fieldset>
@@ -219,20 +179,5 @@
 
         </div>
     </div>
-
-    <script>
-        const uvChoicesDiv = document.getElementById("uv-choices");
-        const fluxInputs = document.getElementById("flux-inputs-div");
-
-        function showFlux() {
-            fluxInputs.style.display = 'inline';
-            uvChoicesDiv.style.display = 'none';
-        }
-
-        function showFluxOptions() {
-            uvChoicesDiv.style.display = 'flex';
-            fluxInputs.style.display = 'none';
-        }
-    </script>
     
 {% endblock %}
