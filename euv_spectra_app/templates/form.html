@@ -1,0 +1,5 @@
+{% macro form_field(field) %}
+    {{ field(class="form-control", placeholder="Enter Input") }}
+    {% if field.flags.required %}{{ field.label(text='*' + field.label.text) }}
+    {% else %}{{ field.label }}{% endif %}
+{% endmacro %}

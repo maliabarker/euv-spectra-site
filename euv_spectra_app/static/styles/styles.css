@@ -1,0 +1,8 @@
+input:required {
+    /* border: 1px dashed red; */
+}
+
+input:required label:after {
+    content: " *";
+    color: red;
+}
