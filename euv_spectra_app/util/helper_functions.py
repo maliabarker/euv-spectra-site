@@ -8,6 +8,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from euv_spectra_app.models import ModelImport
+from euv_spectra_app.extensions import db
 
 # from ..models import ModelImport
 # from ..extensions import db
@@ -53,4 +54,8 @@ def read_table(file_path):
 
         print(new_model.model, new_model.teff, new_model.logg, new_model.trgrad, new_model.cmtop, new_model.cmin, new_model.euv, new_model.fuv, new_model.nuv, new_model.j)
 
-read_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/M0_models.csv')
+        db.session.add(new_model)
+        db.session.commit()
+
+
+# read_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/M4_models.csv')
