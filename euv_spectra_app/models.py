@@ -37,8 +37,10 @@ class Star(db.Model):
 class ModelImport(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     model = db.Column(db.String(120), nullable=False)
+    fits_filename = db.Column(db.String(240), nullable=False)
     teff = db.Column(db.Integer, nullable=False)
-    logg = db.Column(db.Integer, nullable=False)
+    logg = db.Column(db.Integer, nullable=False)    
+    mass = db.Column(db.Integer, nullable=False)
     trgrad = db.Column(db.Integer, nullable=False)
     cmtop = db.Column(db.Integer, nullable=False)
     cmin = db.Column(db.Integer, nullable=False)
