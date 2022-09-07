@@ -62,5 +62,25 @@ def read_table(file_path):
         db.session.add(new_model)
         db.session.commit()
 
+def search_vizier_tables(result):
+    tables = []
+    keywords = ['teff', 'logg', 'mass', 'rad', 'dist']
+
+    for table_name in result.keys():
+        table = result[table_name]
+        for name in table.columns:
+            if any(word in name.lower() for word in keywords):
+                if table_name not in tables:
+                    tables.append(table_name)
+
+    print(f'TABLES: {tables}')
+
+    for table_name in tables:
+        table = result[table_name]
+        print('————————————————————————')
+        print(f'TABLE NAME: {table_name}, COLUMNS: {table.columns}')
+        print('————————————————————————')
+
+
 
 # read_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/M0_models.csv')

@@ -6,7 +6,13 @@ from euv_spectra_app.main.forms import StarForm, StarNameForm
 
 # FOR ASTROQUERY/GALEX DATA
 from astroquery.mast import Mast, Catalogs
+from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
+from astroquery.simbad import Simbad
+from astropy.coordinates import SkyCoord
+import astropy.units as u
 from astroquery.vizier import Vizier
+
+from re import search
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
@@ -56,38 +62,51 @@ def homepage():
             return redirect(url_for('main.ex_result', formname='main'))
 
         elif name_form.validate_on_submit():
-            print('name form validated!')
 
             star_name = name_form.name.data
-            print(star_name)
+            print(f'name form validated with star: {star_name}')
 
             '''GETTING FLUX VALUES FROM GALEX'''
             flux_catalog_data = Catalogs.query_object(name_form.name.data, radius=.02, catalog="GALEX")
             MIN_DIST = flux_catalog_data['distance_arcmin'] < 0.1
-            
-            filtered_data = flux_catalog_data[MIN_DIST]
-            # filtered_data.pprint()
+            filtered_data = flux_catalog_data[MIN_DIST][0]
+
+            # print(filtered_data)
+            # ra = filtered_data['ra']
+            # dec = filtered_data['dec']
+            # print(f'Position {ra}, {dec}')
 
             fuv = filtered_data['fuv_flux']
             nuv = filtered_data['nuv_flux']
-
             print(f'FLUXES {fuv}, {nuv}')
 
+            '''———GETTING OTHER VALUES———'''
 
-            '''GETTING OTHER VALUES'''
-            # info_catalog_data = Catalogs.query_object(name_form.name.data, radius=.02, catalog="TIC")
-            # # print(info_catalog_data[0].columns)
+            print('————————————————————————————————————————————————')
 
-            # info_row = info_catalog_data[0]
+            result = Vizier.query_region(star_name, radius=0.1*u.deg)
+            tic82_table = result['IV/39/tic82'][0]
 
-            # teff = info_row['Teff']
-            # logg = info_row['logg']
-            # mass = info_row['mass']
-            # rad = info_row['rad']
-            # dist = info_row['d']
+            teff = tic82_table['Teff']
+            logg = tic82_table['logg']
+            mass = tic82_table['Mass']
+            rad = tic82_table['Rad']
+            dist = tic82_table['Dist']
 
-            # print(f'INFO {teff}, {logg}, {mass}, {rad}, {dist}')
+            print(f'INFO Teff:{teff}, Logg:{logg}, Mass:{mass}, Rad:{rad}, Dist:{dist}')
 
+            catalog_data = Catalogs.query_object(star_name, radius=.02, catalog="TIC")
+            table2 = catalog_data[0]
+
+            teff2 = table2['Teff']
+            logg2 = table2['logg']
+            mass2 = table2['mass']
+            rad2 = table2['rad']
+            dist2A = table2['d']
+            dist2B = table2['dstArcSec']
+
+            print(f'INFO2 Teff:{teff2}, Logg:{logg2}, Mass:{mass2}, Rad:{rad2}, DistA:{dist2A}, DistB:{dist2B}')
+            
             return redirect(url_for('main.ex_result', formname='name'))
 
     return render_template('home.html', form=form, name_form=name_form)
