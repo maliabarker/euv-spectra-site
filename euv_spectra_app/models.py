@@ -15,14 +15,9 @@ class FormEnum(enum.Enum):
 
 # ~TODO~
 # model for models database
-# import in galex
-# combine databases — maybe with pandas concat?
-
-# ~NEED TO KNOW~
-# what exact data do we need from GALEX (can we get access to a website with table for scraping)
 
 # QUESTIONS:
-# what unit do we want to store distance in?
+# what unit do we want to specifically store distance in?
 
 class Star(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -38,3 +33,16 @@ class Star(db.Model):
     fuv_flag = db.Column(db.String(120))
     nuv = db.Column(db.Integer, nullable=False)
     nuv_flag = db.Column(db.String(120))
+
+class ModelImport(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    model = db.Column(db.String(120), nullable=False)
+    teff = db.Column(db.Integer, nullable=False)
+    logg = db.Column(db.Integer, nullable=False)
+    trgrad = db.Column(db.Integer, nullable=False)
+    cmtop = db.Column(db.Integer, nullable=False)
+    cmin = db.Column(db.Integer, nullable=False)
+    euv = db.Column(db.Integer, nullable=False)
+    fuv = db.Column(db.Integer, nullable=False)
+    nuv = db.Column(db.Integer, nullable=False)
+    j = db.Column(db.Integer, nullable=False)
