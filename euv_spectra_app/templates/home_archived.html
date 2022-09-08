@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}{% endblock %}
+{% block content %}
+
+    <div class="container">
+        <div class="col-sm-7 offset-sm-2 mt-3">
+
+            <div class="row d-flex align-items-center">
+                <div class="col-sm-3">
+                    <img src="{{url_for('static', filename='imgs/logo-placeholder.png')}}" alt="" class="img-fluid">
+                </div>
+                <div class="col-sm-9">
+                    <h1>Find the Extreme Ultraviolet Spectrum (EUV) for your Star</h1>
+                </div>
+            </div>
+            <small>Enter parameters for your star and enter or search for the NUV and FUV fluxes. If you know your star name, simply enter the name at the bottom of the page.</small>
+
+
+
+            <ul class="nav nav-pills my-3" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="pills-info-tab" data-bs-toggle="pill" data-bs-target="#pills-info" type="button" role="tab" aria-controls="pills-info" aria-selected="true">Enter Star Info</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" id="pills-name-tab" data-bs-toggle="pill" data-bs-target="#pills-name" type="button" role="tab" aria-controls="pills-name" aria-selected="false">Enter Star Name</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="pills-tabContent">
+                <div class="tab-pane fade show active" id="pills-info" role="tabpanel" aria-labelledby="pills-info-tab">
+                    <p class="mt-4"><b>Enter Information for your Star</b></p>
+                    <form action="/" method="POST">
+                        {{ form.csrf_token }}
+                        <fieldset>
+                            <div class="form-floating mb-3">
+                                {{ form.teff(class="form-control", placeholder="Teff — Stellar Effective Temperature (K)") }}
+                                {{ form.teff.label(text='* ' + form.teff.label.text) }}
+                            </div>
+                            
+                            <ul>
+                                {% for error in form.teff.errors %}
+                                    <li class="error">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+        
+                            <div class="form-floating mb-3">
+                                {{ form.logg(class="form-control", placeholder="log g — Surface Gravity (cm/s2)") }}
+                                {{ form.logg.label(text='* ' + form.logg.label.text) }}
+                            </div>
+                            <ul>
+                                {% for error in form.logg.errors %}
+                                    <li class="error">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+        
+                            <div class="form-floating mb-3">
+                                {{ form.mass(class="form-control", placeholder="M ☉ - Mass in Solar Masses") }}
+                                {{ form.mass.label(text='* ' + form.mass.label.text) }}
+                            </div>
+                            <ul>
+                                {% for error in form.mass.errors %}
+                                    <li class="error">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+        
+                            <div class="form-floating mb-3">
+                                {{ form.stell_rad(class="form-control", placeholder="R ☉ — Stellar Radius in Solar Radian") }}
+                                {{ form.stell_rad.label(text='* ' + form.stell_rad.label.text) }}
+                            </div>
+                            <ul>
+                                {% for error in form.stell_rad.errors %}
+                                    <li class="error">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+        
+                            <div class="row">
+                                <div class="col-sm-9">
+                                    <div class="form-floating mb-3">
+                                        {{ form.dist(class="form-control", placeholder="d — Distance") }}
+                                        {{ form.dist.label(text='* ' + form.dist.label.text) }}
+                                    </div>
+                                    <ul>
+                                        {% for error in form.dist.errors %}
+                                            <li class="error">{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="form-floating mb-3">
+                                        {{ form.dist_unit(class="form-select") }}
+                                        {{ form.dist_unit.label(text='* ' + form.dist_unit.label.text) }}
+                                    </div>
+                                </div>
+                            </div>
+        
+                            <small>Optional:</small>
+        
+                            <div class="row mt-2">
+                                <div class="col-sm-9">
+                                    <div class="form-floating mb-3">
+                                        {{ form.fuv(class="form-control", placeholder="FUV — Far Ultraviolet Spectra in Microjanskys (mjy)") }}
+                                        {{ form.fuv.label }}
+                                    </div>
+                                    <ul>
+                                        {% for error in form.fuv.errors %}
+                                            <li class="error">{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="form-floating mb-3">
+                                        {{ form.fuv_flag(class="form-select") }}
+                                        <!--WHAT TO PUT HERE???-->
+                                        <label for="floatingSelect">Specify</label>
+                                    </div>
+                                </div>
+                            </div>
+        
+                            <div class="row">
+                                <div class="col-sm-9">
+                                    <div class="form-floating mb-3">
+                                        {{ form.nuv(class="form-control", placeholder="NUV — Near Ultraviolet Spectra in Microjanskys (mjy)") }}
+                                        {{ form.nuv.label }}
+                                    </div>
+                                    <ul>
+                                        {% for error in form.nuv.errors %}
+                                            <li class="error">{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="col-sm-3">
+                                    <div class="form-floating mb-3">
+                                        {{ form.nuv_flag(class="form-select") }}
+                                        <label for="floatingSelect">Specify</label>
+                                    </div>
+                                </div>
+                            </div>
+        
+                            <div class="d-flex justify-content-end">
+                                {{ form.submit(class="btn btn-primary mb-3") }}
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+
+
+                <div class="tab-pane fade" id="pills-name" role="tabpanel" aria-labelledby="pills-name-tab">
+                    <p class="mt-4"><b>Enter Name of your Star</b></p>
+                    <form action="/" method="POST">
+                        <fieldset>
+                            {{ name_form.csrf_token }}
+                            <div class="form-floating mb-3">
+                                {{ name_form.name(class="form-control", placeholder="Star Name") }}
+                                {{ name_form.name.label }}
+                            </div>
+                            <ul>
+                                {% for error in name_form.name.errors %}
+                                    <li class="error">{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                            <div class="d-flex justify-content-end">
+                                {{ name_form.submit(class="btn btn-primary mb-3") }}
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+
+
+            <!--QUESTIONS
+                will there be more than one possible classification? 
+                do we want to give them options and they choose one or do we want to just return closest match?
+                do we want to render this before moving on to the next parameters or do it all at once?
+                How are the FUV and NUV found through the GALEX DB and what are the returned values?
+                Could we get the values of FUV and NUV without knowing the specific model?
+            -->
+
+        </div>
+    </div>
+    
+{% endblock %}

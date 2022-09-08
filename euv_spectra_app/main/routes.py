@@ -1,7 +1,7 @@
 from flask import Blueprint, request, render_template, redirect, url_for
 
 from euv_spectra_app.models import Star
-from euv_spectra_app.main.forms import StarForm, StarNameForm
+from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm
 
 # FOR ASTROQUERY/GALEX DATA
 from astroquery.mast import Catalogs
@@ -42,21 +42,22 @@ def search_galex(search_input):
 @main.route('/', methods=['GET', 'POST'])
 def homepage():
     
-    form = StarForm()
+    parameter_form = StarForm()
     name_form = StarNameForm()
+    position_form = PositionForm()
 
     if request.method == 'POST':
         print('————————POSTING————————')
 
-        if form.validate_on_submit():
+        if parameter_form.validate_on_submit():
             print('form validated!')
-            print(form)
+            print(parameter_form)
 
-            for fieldname, value in form.data.items():
+            for fieldname, value in parameter_form.data.items():
                 print(fieldname, value)
 
             
-            return redirect(url_for('main.ex_result', formname='main'))
+            return redirect(url_for('main.ex_result'))
 
 
         elif name_form.validate_on_submit():
@@ -94,7 +95,7 @@ def homepage():
             
             return redirect(url_for('main.ex_result', formname='name'))
 
-    return render_template('home.html', form=form, name_form=name_form)
+    return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form)
 
 @main.route('/ex-spectra', methods=['GET', 'POST'])
 def ex_result():

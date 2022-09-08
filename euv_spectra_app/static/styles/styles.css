@@ -11,3 +11,7 @@
     padding:0 10px;
     font-style: oblique;
 }
+
+#home-left-col {
+    border-right: 1px solid #000;
+}
