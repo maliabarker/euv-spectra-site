@@ -1,7 +1,9 @@
-from flask import Blueprint, request, render_template, redirect, url_for
+from flask import Blueprint, request, render_template, redirect, url_for, jsonify
 
 from euv_spectra_app.models import Star
 from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm
+
+import json
 
 # FOR ASTROQUERY/GALEX DATA
 from astroquery.mast import Catalogs
@@ -30,13 +32,16 @@ def search_galex(search_input):
 
 '''
 ————TODO—————
+1. implement axios for the following:
+    a. when searching by name or position, return all found parameters and allow for editing then submit
+    b. when manually entering parameters, continue onto flux/galex inputs
+    QUESTION: do we want to allow ppl to have choice of manually entering/searching for flux for NAME SEARCH also?
 
-1. style form errors
-    if there is a form error, keep the fuv and nuv inputs visible
-    add flashes if there are form errors
-    outline incorrect form inputs in red? (stretch)
+2. create front end for flux input options/search galex (maybe w page anchor tags/scroll?)
 
-2. query GALEX db when not searching by name
+3. run searches for imported models w weights
+
+
 '''
 
 @main.route('/', methods=['GET', 'POST'])
@@ -74,28 +79,80 @@ def homepage():
             result = Vizier.query_region(star_name, radius=0.1*u.deg)
             tic82_table = result['IV/39/tic82'][0]
 
-            teff = tic82_table['Teff']
-            logg = tic82_table['logg']
-            mass = tic82_table['Mass']
-            rad = tic82_table['Rad']
-            dist = tic82_table['Dist']
-            print(f'INFO Teff:{teff}, Logg:{logg}, Mass:{mass}, Rad:{rad}, Dist:{dist}')
+            # teff = tic82_table['Teff']
+            # logg = tic82_table['logg']
+            # mass = tic82_table['Mass']
+            # rad = tic82_table['Rad']
+            # dist = tic82_table['Dist']
+            # print(f'INFO Teff:{teff}, Logg:{logg}, Mass:{mass}, Rad:{rad}, Dist:{dist}')
 
             
-            catalog_data = Catalogs.query_object(star_name, radius=.02, catalog="TIC")
-            table2 = catalog_data[0]
+            # catalog_data = Catalogs.query_object(star_name, radius=.02, catalog="TIC")
+            # table2 = catalog_data[0]
 
-            teff2 = table2['Teff']
-            logg2 = table2['logg']
-            mass2 = table2['mass']
-            rad2 = table2['rad']
-            dist2A = table2['d']
-            dist2B = table2['dstArcSec']
-            print(f'INFO2 Teff:{teff2}, Logg:{logg2}, Mass:{mass2}, Rad:{rad2}, DistA:{dist2A}, DistB:{dist2B}')
+            # teff2 = table2['Teff']
+            # logg2 = table2['logg']
+            # mass2 = table2['mass']
+            # rad2 = table2['rad']
+            # dist2A = table2['d']
+            # dist2B = table2['dstArcSec']
+            # print(f'INFO2 Teff:{teff2}, Logg:{logg2}, Mass:{mass2}, Rad:{rad2}, DistA:{dist2A}, DistB:{dist2B}')
+
+            star_info = {
+                'teff' : float(tic82_table['Teff']),
+                'logg' : float(tic82_table['logg']),
+                'mass' : float(tic82_table['Mass']),
+                'rad' : float(tic82_table['Rad']),
+                'dist' : float(tic82_table['Dist'])
+            }
+
+            print(star_info)
+
+            return jsonify(data=star_info)
+
+            return json.dumps(star_info)
             
-            return redirect(url_for('main.ex_result', formname='name'))
+            # return redirect(url_for('main.ex_result', formname='name'))
 
     return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form)
+
+@main.route('/star-data', methods=['GET', 'POST'])
+def get_star_name_data():
+    form = StarNameForm(form)
+
+    if request.method == 'POST' and form.validate_on_submit():
+        star_name = form.name.data
+
+        print(f'name form validated with star: {star_name}')
+
+        '''GETTING FLUX VALUES FROM GALEX'''
+        fluxes = search_galex(star_name)
+        fuv, nuv = fluxes[0], fluxes[1]
+        print(f'FLUXES {fuv}, {nuv}')
+
+        '''GETTING OTHER STELLAR VALUES'''
+        result = Vizier.query_region(star_name, radius=0.1*u.deg)
+        tic82_table = result['IV/39/tic82'][0]
+
+        teff = tic82_table['Teff']
+        logg = tic82_table['logg']
+        mass = tic82_table['Mass']
+        rad = tic82_table['Rad']
+        dist = tic82_table['Dist']
+        print(f'INFO Teff:{teff}, Logg:{logg}, Mass:{mass}, Rad:{rad}, Dist:{dist}')
+
+        
+        catalog_data = Catalogs.query_object(star_name, radius=.02, catalog="TIC")
+        table2 = catalog_data[0]
+
+        teff2 = table2['Teff']
+        logg2 = table2['logg']
+        mass2 = table2['mass']
+        rad2 = table2['rad']
+        dist2A = table2['d']
+        dist2B = table2['dstArcSec']
+        print(f'INFO2 Teff:{teff2}, Logg:{logg2}, Mass:{mass2}, Rad:{rad2}, DistA:{dist2A}, DistB:{dist2B}')
+            
 
 @main.route('/ex-spectra', methods=['GET', 'POST'])
 def ex_result():
