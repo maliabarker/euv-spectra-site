@@ -143,6 +143,24 @@
                     </fieldset>
                 </form>
             </div>
+
+            <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="myModalLabel">Modal title</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            ...
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary">Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
         </div>
     </div>
@@ -192,7 +210,7 @@
 {% block script %}
     <script type="text/javascript">
         // $SCRIPT_ROOT = {{ request.script_root|tojson }};
-        form = document.getElementById('star_name_form')
+        const form = document.getElementById('star_name_form')
         form.addEventListener('submit', function(event) {
             event.preventDefault();    // prevent page from refreshing
             const formData = new FormData(form);  // grab the data inside the form fields
@@ -203,8 +221,18 @@
             }).then(function(response) {
                 response.text().then(function(data) {
                     console.log(data);
-                    myObj = JSON.parse(data).data;
-                    // console.log(myObj)
+                    const myObj = JSON.parse(data).data;
+                    console.log(myObj)
+
+                    // var myModal = new bootstrap.Modal(document.getElementById('myModal'))
+                    
+
+                    var myModalEl = document.getElementById('myModal')
+                    var modal = new bootstrap.Modal(myModalEl)
+                    // var modal = bootstrap.Modal.getInstance(myModalEl)
+                    modal.show()
+
+                    // $('#myModal').modal('show');
                     // console.log(myObj.dist)
                 });
             });

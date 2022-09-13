@@ -1,5 +1,6 @@
 from cmath import nan
 from flask import Blueprint, request, render_template, redirect, url_for, jsonify
+import simplejson as json
 
 from euv_spectra_app.models import Star
 from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm
@@ -107,8 +108,6 @@ def search_nea(search_input):
 def search_vizier(search_input):
     tables = []
     keywords = ['teff', 'logg', 'mass', 'rad', 'dist']
-    valid_info = 0
-    catalog_info = []
 
     return_info = {
         'catalog_name' : 'Vizier',
@@ -203,8 +202,7 @@ def homepage():
             print(max_data_catalog)
 
             # print(search_vizier(star_name))
-
-            return jsonify(data=max_data_catalog)
+            return json.dumps(max_data_catalog, ignore_nan=True)
             
             # return redirect(url_for('main.ex_result', formname='name'))
 
