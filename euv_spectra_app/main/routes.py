@@ -1,14 +1,16 @@
+from cmath import nan
 from flask import Blueprint, request, render_template, redirect, url_for, jsonify
 
 from euv_spectra_app.models import Star
 from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm
 
-import json
-
 # FOR ASTROQUERY/GALEX DATA
 from astroquery.mast import Catalogs
-import astropy.units as u
+from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
 from astroquery.vizier import Vizier
+import astropy.units as u
+import numpy as np
+
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -18,18 +20,140 @@ main = Blueprint("main", __name__)
 
 # ——————————— HELPER FUNCTIONS ————————————— #
 def search_galex(search_input):
-    flux_catalog_data = Catalogs.query_object(search_input, radius=.02, catalog="GALEX")
-    MIN_DIST = flux_catalog_data['distance_arcmin'] < 0.1
-    filtered_data = flux_catalog_data[MIN_DIST][0]
-    fluxes = (filtered_data['fuv_flux'], filtered_data['nuv_flux'])
-    return fluxes
+    galex_data = Catalogs.query_object(search_input, radius=.02, catalog="GALEX")
+    return_info = {
+        'catalog_name' : 'GALEX',
+        'data' : None,
+        'error_msg' : None
+    }
+    if len(galex_data) > 0:
+        MIN_DIST = galex_data['distance_arcmin'] < 0.1
+        if len(galex_data[MIN_DIST]) > 0:
+            filtered_data = galex_data[MIN_DIST][0]
+            fluxes = {
+                'fuv' : filtered_data['fuv_flux'],
+                'nuv' : filtered_data['nuv_flux']
+            }
+            return_info['data'] = fluxes
+        else:
+            return_info['error_msg'] = 'No data points with distance arcmin under 0.1'
+    else:
+        return_info['error_msg'] = 'Nothing found for this target'
+    return return_info
 
-    # print(filtered_data)
-    # ra = filtered_data['ra']
-    # dec = filtered_data['dec']
-    # print(f'Position {ra}, {dec}')
+
+def search_tic(search_input):
+    tic_data = Catalogs.query_object(search_input, radius=.02, catalog="TIC")
+    return_info = {
+        'catalog_name' : 'TESS Input Catalog',
+        'valid_info' : 0,
+        'data' : None,
+        'error_msg' : None
+    }
+    if len(tic_data) > 0:
+        data = tic_data[0]
+        star_info = {
+            'teff' : float(data['Teff']),
+            'logg' : float(data['logg']),
+            'mass' : float(data['mass']),
+            'rad' : float(data['rad']),
+            'dist' : float(data['d'])
+        }
+        return_info['data'] = star_info
+        for value in star_info.values():
+            if str(value) != 'nan':
+                return_info['valid_info'] += 1
+
+        # print('———————————————————————————')
+        # print('TIC')
+        # print(star_info)
+        # print(f'VALID INFO: {valid_info}')
+    else:
+        return_info['error_msg'] = 'Nothing found for this target'
+    return(return_info)
 
 
+def search_nea(search_input):
+    nea_data = NasaExoplanetArchive.query_criteria(table="pscomppars", where=f"hostname like '%{search_input}%'", order="hostname")
+    return_info = {
+        'catalog_name' : 'NASA Exoplanet Archive',
+        'valid_info' : 0,
+        'data' : None,
+        'error_msg' : None
+    }
+    if len(nea_data) > 0:
+        data = nea_data[0]
+        star_info = {
+            'teff' : data['st_teff'].unmasked,
+            'logg' : data['st_logg'],
+            'mass' : data['st_mass'].unmasked,
+            'rad' : data['st_rad'].unmasked,
+            'dist' : data['sy_dist'].unmasked
+        }
+        return_info['data'] = star_info
+        for value in star_info.values():
+            if str(value) != 'nan':
+                return_info['valid_info'] += 1
+        # print('———————————————————————————')
+        # print('Exoplanet Archive')
+        # print(star_info)
+        # print(f'VALID INFO: {valid_info}')
+    else:
+        return_info['error_msg'] = 'Nothing found for this target'
+
+    return(return_info)
+
+
+def search_vizier(search_input):
+    tables = []
+    keywords = ['teff', 'logg', 'mass', 'rad', 'dist']
+    valid_info = 0
+    catalog_info = []
+
+    return_info = {
+        'catalog_name' : 'Vizier',
+        'data' : [],
+        'error_msg' : None
+    }
+
+    vizier_catalogs = Vizier.query_object(search_input)
+
+    for table_name in vizier_catalogs.keys():
+        table = vizier_catalogs[table_name]
+        cols = list(col.lower() for col in table.columns)
+
+        if all(elem in cols for elem in keywords):
+            if table_name not in tables:
+                tables.append(table_name)
+
+    # print(f'VIZIER TABLES: {tables}')
+    if tables:
+        for table_name in tables:
+            table = vizier_catalogs[table_name][0]
+            valid_info = 0
+            star_info = {
+                'teff' : float(table['Teff']),
+                'logg' : float(table['logg']),
+                'mass' : float(table['Mass']),
+                'rad' : float(table['Rad']),
+                'dist' : float(table['Dist'])
+            }
+
+            for value in star_info.values():
+                if str(value) != 'nan':
+                    valid_info += 1
+
+            # print('————————————————————————')
+            # print(f'TABLE NAME: {table_name}')
+            # print(star_info)
+            # print(f'VALID INFO: {valid_info}')
+            return_info['data'].append((table_name, star_info, valid_info))
+    else:
+        return_info['error_msg'] = 'Nothing found for this target'
+    return(return_info)
+
+
+# ——————————— END HELPER FUNCTIONS ————————————— #
 '''
 ————TODO—————
 1. implement axios for the following:
@@ -70,88 +194,21 @@ def homepage():
             star_name = name_form.name.data
             print(f'name form validated with star: {star_name}')
 
-            '''GETTING FLUX VALUES FROM GALEX'''
-            fluxes = search_galex(star_name)
-            fuv, nuv = fluxes[0], fluxes[1]
-            print(f'FLUXES {fuv}, {nuv}')
+            galex_data = search_galex(star_name)
+            print(galex_data)
 
-            '''GETTING OTHER STELLAR VALUES'''
-            result = Vizier.query_region(star_name, radius=0.1*u.deg)
-            tic82_table = result['IV/39/tic82'][0]
+            catalog_data = [search_tic(star_name), search_nea(star_name)]
+            max_data_catalog = max(catalog_data, key=lambda x:x['valid_info'])
 
-            # teff = tic82_table['Teff']
-            # logg = tic82_table['logg']
-            # mass = tic82_table['Mass']
-            # rad = tic82_table['Rad']
-            # dist = tic82_table['Dist']
-            # print(f'INFO Teff:{teff}, Logg:{logg}, Mass:{mass}, Rad:{rad}, Dist:{dist}')
+            print(max_data_catalog)
 
-            
-            # catalog_data = Catalogs.query_object(star_name, radius=.02, catalog="TIC")
-            # table2 = catalog_data[0]
+            # print(search_vizier(star_name))
 
-            # teff2 = table2['Teff']
-            # logg2 = table2['logg']
-            # mass2 = table2['mass']
-            # rad2 = table2['rad']
-            # dist2A = table2['d']
-            # dist2B = table2['dstArcSec']
-            # print(f'INFO2 Teff:{teff2}, Logg:{logg2}, Mass:{mass2}, Rad:{rad2}, DistA:{dist2A}, DistB:{dist2B}')
-
-            star_info = {
-                'teff' : float(tic82_table['Teff']),
-                'logg' : float(tic82_table['logg']),
-                'mass' : float(tic82_table['Mass']),
-                'rad' : float(tic82_table['Rad']),
-                'dist' : float(tic82_table['Dist'])
-            }
-
-            print(star_info)
-
-            return jsonify(data=star_info)
-
-            return json.dumps(star_info)
+            return jsonify(data=max_data_catalog)
             
             # return redirect(url_for('main.ex_result', formname='name'))
 
     return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form)
-
-@main.route('/star-data', methods=['GET', 'POST'])
-def get_star_name_data():
-    form = StarNameForm(form)
-
-    if request.method == 'POST' and form.validate_on_submit():
-        star_name = form.name.data
-
-        print(f'name form validated with star: {star_name}')
-
-        '''GETTING FLUX VALUES FROM GALEX'''
-        fluxes = search_galex(star_name)
-        fuv, nuv = fluxes[0], fluxes[1]
-        print(f'FLUXES {fuv}, {nuv}')
-
-        '''GETTING OTHER STELLAR VALUES'''
-        result = Vizier.query_region(star_name, radius=0.1*u.deg)
-        tic82_table = result['IV/39/tic82'][0]
-
-        teff = tic82_table['Teff']
-        logg = tic82_table['logg']
-        mass = tic82_table['Mass']
-        rad = tic82_table['Rad']
-        dist = tic82_table['Dist']
-        print(f'INFO Teff:{teff}, Logg:{logg}, Mass:{mass}, Rad:{rad}, Dist:{dist}')
-
-        
-        catalog_data = Catalogs.query_object(star_name, radius=.02, catalog="TIC")
-        table2 = catalog_data[0]
-
-        teff2 = table2['Teff']
-        logg2 = table2['logg']
-        mass2 = table2['mass']
-        rad2 = table2['rad']
-        dist2A = table2['d']
-        dist2B = table2['dstArcSec']
-        print(f'INFO2 Teff:{teff2}, Logg:{logg2}, Mass:{mass2}, Rad:{rad2}, DistA:{dist2A}, DistB:{dist2B}')
             
 
 @main.route('/ex-spectra', methods=['GET', 'POST'])
