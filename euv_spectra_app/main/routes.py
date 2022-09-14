@@ -23,14 +23,15 @@ main = Blueprint("main", __name__)
 def search_galex(search_input):
     galex_data = Catalogs.query_object(search_input, radius=.02, catalog="GALEX")
     return_info = {
-        'catalog_name' : 'GALEX',
+        'name' : 'GALEX',
         'data' : None,
         'error_msg' : None
     }
     if len(galex_data) > 0:
-        MIN_DIST = galex_data['distance_arcmin'] < 0.1
+        MIN_DIST = galex_data['distance_arcmin'] < 0.3 # can try 0.5 as well
         if len(galex_data[MIN_DIST]) > 0:
             filtered_data = galex_data[MIN_DIST][0]
+            # add dist arcmin value
             fluxes = {
                 'fuv' : filtered_data['fuv_flux'],
                 'nuv' : filtered_data['nuv_flux']
@@ -46,7 +47,7 @@ def search_galex(search_input):
 def search_tic(search_input):
     tic_data = Catalogs.query_object(search_input, radius=.02, catalog="TIC")
     return_info = {
-        'catalog_name' : 'TESS Input Catalog',
+        'name' : 'TESS Input Catalog',
         'valid_info' : 0,
         'data' : None,
         'error_msg' : None
@@ -77,7 +78,7 @@ def search_tic(search_input):
 def search_nea(search_input):
     nea_data = NasaExoplanetArchive.query_criteria(table="pscomppars", where=f"hostname like '%{search_input}%'", order="hostname")
     return_info = {
-        'catalog_name' : 'NASA Exoplanet Archive',
+        'name' : 'NASA Exoplanet Archive',
         'valid_info' : 0,
         'data' : None,
         'error_msg' : None
@@ -110,7 +111,7 @@ def search_vizier(search_input):
     keywords = ['teff', 'logg', 'mass', 'rad', 'dist']
 
     return_info = {
-        'catalog_name' : 'Vizier',
+        'name' : 'Vizier',
         'data' : [],
         'error_msg' : None
     }
@@ -146,7 +147,13 @@ def search_vizier(search_input):
             # print(f'TABLE NAME: {table_name}')
             # print(star_info)
             # print(f'VALID INFO: {valid_info}')
-            return_info['data'].append((table_name, star_info, valid_info))
+            table_dict = {
+                'name' : table_name,
+                'data' : star_info,
+                'valid_info' : valid_info
+            }
+
+            return_info['data'].append(table_dict)
     else:
         return_info['error_msg'] = 'Nothing found for this target'
     return(return_info)
@@ -196,13 +203,23 @@ def homepage():
             galex_data = search_galex(star_name)
             print(galex_data)
 
-            catalog_data = [search_tic(star_name), search_nea(star_name)]
-            max_data_catalog = max(catalog_data, key=lambda x:x['valid_info'])
+            catalog_data = [search_tic(star_name), search_nea(star_name), search_vizier(star_name)]
+            final_catalogs = []
 
-            print(max_data_catalog)
+            for catalog in catalog_data:
+                if catalog['error_msg'] == None:
+                    if catalog['name'] == 'Vizier':
+                        for sub_catalog in catalog['data']:
+                            final_catalogs.append(sub_catalog)
+                    else:
+                        final_catalogs.append(catalog)
 
-            # print(search_vizier(star_name))
-            return json.dumps(max_data_catalog, ignore_nan=True)
+            
+            print(final_catalogs)
+            # max_data_catalog = max(catalog_data, key=lambda x:x['valid_info'])
+            # print(max_data_catalog)
+
+            return json.dumps(final_catalogs, ignore_nan=True)
             
             # return redirect(url_for('main.ex_result', formname='name'))
 

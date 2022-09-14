@@ -144,15 +144,24 @@
                 </form>
             </div>
 
-            <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal fade" id="myModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="myModalLabel">Modal title</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            ...
+                            <p>The following catalogs provide data for your target.</p>
+                            <p>Please use the buttons below to view each catalog. Feel free to edit any data, then save and continue.</p>
+                            <ul class="nav nav-tabs" id="modal-catalog-tabs">
+                                <li class="nav-item">
+                                    <a class="nav-link active" aria-current="page" href="#">Active</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#">Link</a>
+                                </li>
+                            </ul>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -220,20 +229,25 @@
                 body: formData,
             }).then(function(response) {
                 response.text().then(function(data) {
-                    console.log(data);
-                    const myObj = JSON.parse(data).data;
-                    console.log(myObj)
+                    // console.log(data);
 
-                    // var myModal = new bootstrap.Modal(document.getElementById('myModal'))
+                    // PARSE DATA
+                    const myObj = JSON.parse(data);
+                    console.log(myObj)
+                    for (var i = 0; i < myObj.length; i++) {
+                        console.log(myObj[i]);
+                    }
+
+                    // ACTIVATE MODAL
+                    var myModalEl = document.getElementById('myModal');
+                    var modal = new bootstrap.Modal(myModalEl);
+                    modal.show();
+
+                    // APPEND TABS FOR EACH CATALOG
+                    const tabCont = document.getElementById('modal-catalog-tabs');
                     
 
-                    var myModalEl = document.getElementById('myModal')
-                    var modal = new bootstrap.Modal(myModalEl)
-                    // var modal = bootstrap.Modal.getInstance(myModalEl)
-                    modal.show()
 
-                    // $('#myModal').modal('show');
-                    // console.log(myObj.dist)
                 });
             });
         });
