@@ -31,42 +31,21 @@
                             {{ parameter_form.teff(class="form-control", placeholder="Teff — Stellar Effective Temperature (K)") }}
                             {{ parameter_form.teff.label(text='* ' + parameter_form.teff.label.text) }}
                         </div>
-                        
-                        <ul>
-                            {% for error in parameter_form.teff.errors %}
-                                <li class="error">{{ error }}</li>
-                            {% endfor %}
-                        </ul>
     
                         <div class="form-floating mb-3">
                             {{ parameter_form.logg(class="form-control", placeholder="log g — Surface Gravity (cm/s2)") }}
                             {{ parameter_form.logg.label(text='* ' + parameter_form.logg.label.text) }}
                         </div>
-                        <ul>
-                            {% for error in parameter_form.logg.errors %}
-                                <li class="error">{{ error }}</li>
-                            {% endfor %}
-                        </ul>
     
                         <div class="form-floating mb-3">
                             {{ parameter_form.mass(class="form-control", placeholder="M ☉ - Mass in Solar Masses") }}
                             {{ parameter_form.mass.label(text='* ' + parameter_form.mass.label.text) }}
                         </div>
-                        <ul>
-                            {% for error in parameter_form.mass.errors %}
-                                <li class="error">{{ error }}</li>
-                            {% endfor %}
-                        </ul>
     
                         <div class="form-floating mb-3">
                             {{ parameter_form.stell_rad(class="form-control", placeholder="R ☉ — Stellar Radius in Solar Radian") }}
                             {{ parameter_form.stell_rad.label(text='* ' + parameter_form.stell_rad.label.text) }}
                         </div>
-                        <ul>
-                            {% for error in parameter_form.stell_rad.errors %}
-                                <li class="error">{{ error }}</li>
-                            {% endfor %}
-                        </ul>
     
                         <div class="row">
                             <div class="col-sm-9">
@@ -74,22 +53,12 @@
                                     {{ parameter_form.dist(class="form-control", placeholder="d — Distance") }}
                                     {{ parameter_form.dist.label(text='* ' + parameter_form.dist.label.text) }}
                                 </div>
-                                <ul>
-                                    {% for error in parameter_form.dist.errors %}
-                                        <li class="error">{{ error }}</li>
-                                    {% endfor %}
-                                </ul>
                             </div>
                             <div class="col-sm-3">
                                 <div class="form-floating mb-3">
                                     {{ parameter_form.dist_unit(class="form-select") }}
                                     {{ parameter_form.dist_unit.label(text='* ' + parameter_form.dist_unit.label.text) }}
                                 </div>
-                                <ul>
-                                    {% for error in parameter_form.dist_unit.errors %}
-                                        <li class="error">{{ error }}</li>
-                                    {% endfor %}
-                                </ul>
                             </div>
                         </div>
                         <div class="d-flex justify-content-end">
@@ -109,11 +78,6 @@
                             {{ name_form.name(class="form-control", placeholder="Star Name") }}
                             {{ name_form.name.label }}
                         </div>
-                        <ul>
-                            {% for error in name_form.name.errors %}
-                                <li class="error">{{ error }}</li>
-                            {% endfor %}
-                        </ul>
                         <div class="d-flex justify-content-end">
                             {{ name_form.submit(class="btn btn-primary mb-3", onclick="displayLoading();") }}
                         </div>
@@ -130,20 +94,10 @@
                             {{ position_form.ra(class="form-control", placeholder="RA") }}
                             {{ position_form.ra.label }}
                         </div>
-                        <ul>
-                            {% for error in position_form.ra.errors %}
-                                <li class="error">{{ error }}</li>
-                            {% endfor %}
-                        </ul>
                         <div class="form-floating mb-3">
                             {{ position_form.dec(class="form-control", placeholder="dec") }}
                             {{ position_form.dec.label }}
                         </div>
-                        <ul>
-                            {% for error in position_form.dec.errors %}
-                                <li class="error">{{ error }}</li>
-                            {% endfor %}
-                        </ul>
                         <div class="d-flex justify-content-end">
                             {{ position_form.submit(class="btn btn-primary mb-3", onclick="displayLoading();") }}
                         </div>
