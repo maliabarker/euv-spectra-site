@@ -24,3 +24,12 @@ class PositionForm(FlaskForm):
     ra = IntegerField('RA — Right Ascension (deg)', validators=[DataRequired()])
     dec = IntegerField('Dec — Declination (deg)', validators=[DataRequired()])
     submit = SubmitField('Next →')
+
+class StarNameParametersForm(FlaskForm):
+    catalog_name = RadioField(u'Catalog Name')
+    teff = RadioField(u'Stellar Effective Temperature (K)', validators=[DataRequired()])
+    logg = RadioField(u'Surface Gravity (cm/s²)', validators=[DataRequired()])
+    mass = RadioField(u'Mass (Solar Masses)', validators=[DataRequired()])
+    stell_rad = RadioField(u'Stellar Radius (Solar Radii)', validators=[DataRequired()])
+    dist = RadioField(u'Distance', validators=[DataRequired()])
+    submit = SubmitField('Next →')

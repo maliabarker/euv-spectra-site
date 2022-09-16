@@ -1,9 +1,10 @@
 from cmath import nan
 from flask import Blueprint, request, render_template, redirect, url_for, jsonify
 import simplejson as json
+from collections import defaultdict
 
 from euv_spectra_app.models import Star
-from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm
+from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm, StarNameParametersForm
 
 # FOR ASTROQUERY/GALEX DATA
 from astroquery.mast import Catalogs
@@ -148,7 +149,7 @@ def search_vizier(search_input):
             # print(star_info)
             # print(f'VALID INFO: {valid_info}')
             table_dict = {
-                'name' : table_name,
+                'name' : f'Vizier table: {table_name}',
                 'data' : star_info,
                 'valid_info' : valid_info
             }
@@ -180,6 +181,7 @@ def homepage():
     parameter_form = StarForm()
     name_form = StarNameForm()
     position_form = PositionForm()
+    star_name_parameters_form = StarNameParametersForm()
 
     if request.method == 'POST':
         print('————————POSTING————————')
@@ -196,7 +198,7 @@ def homepage():
 
 
         elif name_form.validate_on_submit():
-
+            
             star_name = name_form.name.data
             print(f'name form validated with star: {star_name}')
 
@@ -214,16 +216,40 @@ def homepage():
                     else:
                         final_catalogs.append(catalog)
 
+            print(catalog_data)
+
+            res = defaultdict(list)
+            for dict in final_catalogs:
+                for key in dict:
+                    if key == 'data':
+                        for key_2 in dict[key]:
+                            res[key_2].append(dict[key][key_2])
+                    else:
+                        res[key].append(dict[key])
+
+            print(res)
+
+            star_name_parameters_form.catalog_name.choices = [('catalog_name', value) for value in res['name']]
+            star_name_parameters_form.teff.choices = [('teff', value) for value in res['teff']]
+            star_name_parameters_form.logg.choices = [('logg', value) for value in res['logg']]
+            star_name_parameters_form.mass.choices = [('mass', value) for value in res['mass']]
+            star_name_parameters_form.stell_rad.choices = [('rad', value) for value in res['rad']]
+            star_name_parameters_form.dist.choices = [('dist', value) for value in res['dist']]
+
+            print(star_name_parameters_form.teff)
+
+            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, show_modal=True, star_name=star_name)
+
             
-            print(final_catalogs)
+
             # max_data_catalog = max(catalog_data, key=lambda x:x['valid_info'])
             # print(max_data_catalog)
 
-            return json.dumps(final_catalogs, ignore_nan=True)
+            return json.dumps(res, ignore_nan=True)
             
             # return redirect(url_for('main.ex_result', formname='name'))
 
-    return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form)
+    return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, show_modal=False)
             
 
 @main.route('/ex-spectra', methods=['GET', 'POST'])

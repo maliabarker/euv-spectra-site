@@ -4,6 +4,12 @@
 {% block content %}
 
     <div class="container">
+
+        
+        <div id="overlay">
+            <div id="loading"></div>
+        </div>
+
         <div class="col-sm-8 offset-sm-2 mt-3"> 
             <div class="row d-flex align-items-center">
                 <div class="col-sm-3">
@@ -95,8 +101,8 @@
             
             <div class="col-md-6">
                 <p class="text-center mb-4"><b>Search Exoplanet Archive for Stellar Parameters</b></p>
-                <!-- <form action="/" method="POST"> -->
-                <form id="star_name_form">
+                <!--—————————POSITION FORM——————————-->
+                <form action='/' method='POST' id="star_name_form">
                     <fieldset>
                         {{ name_form.csrf_token }}
                         <div class="form-floating mb-3">
@@ -109,13 +115,14 @@
                             {% endfor %}
                         </ul>
                         <div class="d-flex justify-content-end">
-                            {{ name_form.submit(class="btn btn-primary mb-3") }}
+                            {{ name_form.submit(class="btn btn-primary mb-3", onclick="displayLoading();") }}
                         </div>
                     </fieldset>
                 </form>
 
                 <p id="home-or" class="my-5"><span>or</span></p>
 
+                <!--—————————POSITION FORM——————————-->
                 <form action="/" method="POST">
                     <fieldset>
                         {{ position_form.csrf_token }}
@@ -138,39 +145,126 @@
                             {% endfor %}
                         </ul>
                         <div class="d-flex justify-content-end">
-                            {{ position_form.submit(class="btn btn-primary mb-3") }}
+                            {{ position_form.submit(class="btn btn-primary mb-3", onclick="displayLoading();") }}
                         </div>
                     </fieldset>
                 </form>
             </div>
+            {% if show_modal %}
+                
+                <div class="modal fade" id="myModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <p class="mt-2 ms-4">
+                                    The following catalogs provide data for your target: <b>{{ star_name }}</b> <br> 
+                                    Please use the buttons below to view each catalog. Feel free to edit any data, then save and continue.
+                                </p>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form>
+                                    <fieldset>
+                                        {{ star_name_parameters_form.csrf_token }}
+                                        <div class="table-responsive">
+                                            <table class="table table-borderless align-bottom" id="star_name_parameter_form_table">
+                                                <tr>
+                                                    <th><small>{{star_name_parameters_form.catalog_name.label}}</small></th>
+                                                    {% for subfield in star_name_parameters_form.catalog_name %}
+                                                        <td>
+                                                            {{ subfield.label }}
+                                                            <div class="form-check">
+                                                                {{ subfield(class="form-check-input", type="checkbox", onclick="selectAll(this);") }}
+                                                                <p>Select All</p>
+                                                            </div>
+                                                        </td>
+                                                    {% endfor %}
+                                                </tr>
 
-            <div class="modal fade" id="myModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="myModalLabel">Modal title</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>The following catalogs provide data for your target.</p>
-                            <p>Please use the buttons below to view each catalog. Feel free to edit any data, then save and continue.</p>
-                            <ul class="nav nav-tabs" id="modal-catalog-tabs">
-                                <li class="nav-item">
-                                    <a class="nav-link active" aria-current="page" href="#">Active</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="#">Link</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary">Save changes</button>
+                                                <tr>
+                                                    <th><small>{{star_name_parameters_form.teff.label}}</small></th>
+                                                    {% for subfield in star_name_parameters_form.teff %}
+                                                        <td>
+                                                            <div class="form-check my-3">
+                                                                {{ subfield(class="form-check-input") }}
+                                                                {{ subfield.label(class="form-check-label") }}
+                                                            </div>
+                                                        </td>
+                                                    {% endfor %}
+                                                </tr>
+
+                                                <tr>
+                                                    <th><small>{{star_name_parameters_form.logg.label}}</small></th>
+                                                    {% for subfield in star_name_parameters_form.logg %}
+                                                        <td>
+                                                            <div class="form-check my-3">
+                                                                {{ subfield(class="form-check-input") }}
+                                                                {{ subfield.label(class="form-check-label") }}
+                                                            </div>
+                                                        </td>
+                                                    {% endfor %}
+                                                </tr>
+
+                                                <tr>
+                                                    <th><small>{{star_name_parameters_form.mass.label}}</small></th>
+                                                    {% for subfield in star_name_parameters_form.mass %}
+                                                        <td>
+                                                            <div class="form-check my-3">
+                                                                {{ subfield(class="form-check-input") }}
+                                                                {{ subfield.label(class="form-check-label") }}
+                                                            </div>
+                                                        </td>
+                                                    {% endfor %}
+                                                </tr>
+
+                                                <tr>
+                                                    <th><small>{{star_name_parameters_form.stell_rad.label}}</small></th>
+                                                    {% for subfield in star_name_parameters_form.stell_rad %}
+                                                        <td>
+                                                            <div class="form-check my-3">
+                                                                {{ subfield(class="form-check-input") }}
+                                                                {{ subfield.label(class="form-check-label") }}
+                                                            </div>
+                                                        </td>
+                                                    {% endfor %}
+                                                </tr>
+
+                                                <tr>
+                                                    <th><small>{{star_name_parameters_form.dist.label}}</small></th>
+                                                    {% for subfield in star_name_parameters_form.dist %}
+                                                        <td>
+                                                            <div class="form-check my-3">
+                                                                {{ subfield(class="form-check-input") }}
+                                                                {{ subfield.label(class="form-check-label") }}
+                                                            </div>  
+                                                        </td>    
+                                                    {% endfor %}
+                                                </tr>
+                                                
+                                            </table>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <form action="/" method="GET">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            </form>
+                                            
+                                            {{ star_name_parameters_form.submit(class="btn btn-primary") }}
+                                            <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+                                        </div>
+                                    </fieldset>
+                                </form>
+
+                            </div>
+                            
                         </div>
                     </div>
                 </div>
-            </div>
-            
+                <script>
+                    var myModalEl = document.getElementById('myModal');
+                    var modal = new bootstrap.Modal(myModalEl);
+                    modal.show();
+                </script>
+            {% endif %}
         </div>
     </div>
 
@@ -219,37 +313,87 @@
 {% block script %}
     <script type="text/javascript">
         // $SCRIPT_ROOT = {{ request.script_root|tojson }};
+
+        function showModal() {
+            var myModalEl = document.getElementById('myModal');
+            var modal = new bootstrap.Modal(myModalEl);
+            modal.show();
+        };
+
+        const loader = document.querySelector("#loading");
+        const overlay = document.getElementById("overlay");
+        // showing loading
+        function displayLoading() {
+            loader.classList.add("display");
+            overlay.style.display = "block";
+
+            // to stop loading after some time
+            // setTimeout(() => {
+            //     loader.classList.remove("display");
+            // }, 10000);
+        }
+        // hiding loading 
+        function hideLoading() {
+            loader.classList.remove("display");
+            overlay.style.display = "none";
+        }
+
         const form = document.getElementById('star_name_form')
-        form.addEventListener('submit', function(event) {
-            event.preventDefault();    // prevent page from refreshing
-            const formData = new FormData(form);  // grab the data inside the form fields
+        // form.addEventListener('submit', function(event) {
+        //     event.preventDefault();    // prevent page from refreshing
+        //     displayLoading()
+        //     const formData = new FormData(form);  // grab the data inside the form fields
 
-            fetch('/', {   // assuming the backend is hosted on the same server
-                method: 'POST',
-                body: formData,
-            }).then(function(response) {
-                response.text().then(function(data) {
-                    // console.log(data);
+        //     fetch('/', {   // assuming the backend is hosted on the same server
+        //         method: 'POST',
+        //         body: formData,
+        //     }).then(function(response) {
+        //         hideLoading()
+        //         response.text().then(function(data) {
+        //             console.log(data);
 
-                    // PARSE DATA
-                    const myObj = JSON.parse(data);
-                    console.log(myObj)
-                    for (var i = 0; i < myObj.length; i++) {
-                        console.log(myObj[i]);
-                    }
+        //             // PARSE DATA
+        //             const myObj = JSON.parse(data);
+        //             console.log(myObj)
+        //             for (var i = 0; i < myObj.length; i++) {
+        //                 console.log(myObj[i]);
+        //             }
 
-                    // ACTIVATE MODAL
-                    var myModalEl = document.getElementById('myModal');
-                    var modal = new bootstrap.Modal(myModalEl);
-                    modal.show();
-
-                    // APPEND TABS FOR EACH CATALOG
-                    const tabCont = document.getElementById('modal-catalog-tabs');
+        //             // ACTIVATE MODAL
+        //             var myModalEl = document.getElementById('myModal');
+        //             var modal = new bootstrap.Modal(myModalEl);
                     
+        //             modal.show();
 
+        //             // APPEND TABS FOR EACH CATALOG
+        //             const tabCont = document.getElementById('catalog-list-cont');
 
-                });
-            });
-        });
+        //         });
+        //     });
+        // });
+
+        function selectAll(obj) {
+            console.log(obj.id)
+
+            // get all selectall buttons
+            const selectAllBtns = document.querySelectorAll(`[id*="catalog_name"]`);
+            console.log(selectAllBtns)
+            // check to make sure no other select all buttons are checked
+            for (i=0; i < selectAllBtns.length; i++) {
+                if ( selectAllBtns[i].id != obj.id ) {
+                    selectAllBtns[i].checked = false;
+                }
+            };
+
+            // get identifying number
+            const num = obj.id.match(/(\d+)/)[0];
+            // get all radios w identifying number
+            const btns = document.getElementById('star_name_parameter_form_table').querySelectorAll(`[id*="${num}"]`);
+            // check radio btns
+            for( i = 0 ; i < btns.length ; i++ ) {
+                btns[i].checked = true;
+            };
+        };
+
     </script>
 {% endblock %}
