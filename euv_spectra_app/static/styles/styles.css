@@ -54,7 +54,6 @@ th, td { display: block; }
     animation: spin 1s infinite linear;
     position: absolute;
     top: 47%;
-    left: 47%;
 }
 
 #loading.display {
@@ -71,3 +70,13 @@ th, td { display: block; }
 }
 
 /* TRY PURPLE BTNS */
+
+.btn-primary, .btn-primary:active, .btn-primary:visited {
+    background-color: #a881af !important;
+    border-color: #a881af;
+}
+
+.btn-primary:hover {
+    background-color: #87678d !important;
+    border-color: #87678d;
+}

@@ -1,6 +1,7 @@
+from cgitb import text
 from typing import Optional
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, SubmitField, IntegerField, validators, RadioField
+from wtforms import StringField, SelectField, SubmitField, IntegerField, validators, RadioField, widgets
 from wtforms.validators import DataRequired, Length
 
 class StarForm(FlaskForm):
@@ -27,9 +28,9 @@ class PositionForm(FlaskForm):
 
 class StarNameParametersForm(FlaskForm):
     catalog_name = RadioField(u'Catalog Name')
-    teff = RadioField(u'Stellar Effective Temperature (K)', validators=[DataRequired()])
+    teff = RadioField(u'Stellar Effective Temp (K)', validators=[DataRequired()], widget=widgets.Input(input_type=text))
     logg = RadioField(u'Surface Gravity (cm/s²)', validators=[DataRequired()])
     mass = RadioField(u'Mass (Solar Masses)', validators=[DataRequired()])
-    stell_rad = RadioField(u'Stellar Radius (Solar Radii)', validators=[DataRequired()])
+    stell_rad = RadioField(u'Stellar Rad (Solar Radii)', validators=[DataRequired()])
     dist = RadioField(u'Distance', validators=[DataRequired()])
     submit = SubmitField('Next →')

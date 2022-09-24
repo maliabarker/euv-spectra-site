@@ -10,6 +10,7 @@ from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm, Sta
 from astroquery.mast import Catalogs
 from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
 from astroquery.vizier import Vizier
+from astroquery.mast import Observations
 import astropy.units as u
 import numpy as np
 
@@ -229,16 +230,15 @@ def homepage():
 
             print(res)
 
-            star_name_parameters_form.catalog_name.choices = [('catalog_name', value) for value in res['name']]
-            star_name_parameters_form.teff.choices = [('teff', value) for value in res['teff']]
-            star_name_parameters_form.logg.choices = [('logg', value) for value in res['logg']]
-            star_name_parameters_form.mass.choices = [('mass', value) for value in res['mass']]
-            star_name_parameters_form.stell_rad.choices = [('rad', value) for value in res['rad']]
-            star_name_parameters_form.dist.choices = [('dist', value) for value in res['dist']]
+            star_name_parameters_form.catalog_name.choices = [(value, value) for value in res['name']]
+            star_name_parameters_form.teff.choices = [(value, value) for value in res['teff']]
+            star_name_parameters_form.logg.choices = [(value, value) for value in res['logg']]
+            star_name_parameters_form.mass.choices = [(value, value) for value in res['mass']]
+            star_name_parameters_form.stell_rad.choices = [(value, value) for value in res['rad']]
+            star_name_parameters_form.dist.choices = [(value, value) for value in res['dist']]
 
-            print(star_name_parameters_form.teff)
 
-            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, show_modal=True, star_name=star_name)
+            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, show_modal=True, star_name=star_name, res=res)
 
             
 

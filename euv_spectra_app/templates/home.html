@@ -3,11 +3,12 @@
 {% block title %}{% endblock %}
 {% block content %}
 
-    <div class="container">
-
+    <div class="container">     
         
         <div id="overlay">
-            <div id="loading"></div>
+            <div class="d-flex justify-content-center">
+                <div id="loading"></div>
+            </div>
         </div>
 
         <div class="col-sm-8 offset-sm-2 mt-3"> 
@@ -117,7 +118,7 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <form>
+                                <form id="modal-form">
                                     <fieldset>
                                         {{ star_name_parameters_form.csrf_token }}
                                         <div class="table-responsive">
@@ -126,73 +127,106 @@
                                                     <th><small>{{star_name_parameters_form.catalog_name.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.catalog_name %}
                                                         <td>
-                                                            {{ subfield.label }}
+                                                            <p class="my-1">{{ subfield.label }}</p>
                                                             <div class="form-check">
                                                                 {{ subfield(class="form-check-input", type="checkbox", onclick="selectAll(this);") }}
                                                                 <p>Select All</p>
                                                             </div>
                                                         </td>
                                                     {% endfor %}
+                                                    <td>
+                                                        <p>Enter Manually</p>
+                                                    </td>
                                                 </tr>
 
                                                 <tr>
                                                     <th><small>{{star_name_parameters_form.teff.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.teff %}
                                                         <td>
-                                                            <div class="form-check my-3">
+                                                            <div class="form-check my-4">
                                                                 {{ subfield(class="form-check-input") }}
                                                                 {{ subfield.label(class="form-check-label") }}
                                                             </div>
                                                         </td>
                                                     {% endfor %}
+                                                    <td>
+                                                        <div class="form-check my-2">
+                                                            <input type="radio" name="teff" value="" class="form-check-input">
+                                                            <input type="text" name="manual_teff" id="manual_teff" class="form-control" onclick="checkManualRadio(this)" size="5">
+                                                        </div>
+                                                    </td>
                                                 </tr>
 
                                                 <tr>
                                                     <th><small>{{star_name_parameters_form.logg.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.logg %}
                                                         <td>
-                                                            <div class="form-check my-3">
+                                                            <div class="form-check my-4">
                                                                 {{ subfield(class="form-check-input") }}
                                                                 {{ subfield.label(class="form-check-label") }}
                                                             </div>
                                                         </td>
                                                     {% endfor %}
+                                                    <td>
+                                                        <div class="form-check my-2">
+                                                            <input type="radio" name="logg" value="" class="form-check-input">
+                                                            <input type="text" name="manual_logg" id="manual_logg" class="form-control" onclick="checkManualRadio(this)" size="5">
+                                                        </div>
+                                                    </td>
                                                 </tr>
 
                                                 <tr>
                                                     <th><small>{{star_name_parameters_form.mass.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.mass %}
                                                         <td>
-                                                            <div class="form-check my-3">
+                                                            <div class="form-check my-4">
                                                                 {{ subfield(class="form-check-input") }}
                                                                 {{ subfield.label(class="form-check-label") }}
                                                             </div>
                                                         </td>
                                                     {% endfor %}
+                                                    <td>
+                                                        <div class="form-check my-2">
+                                                            <input type="radio" name="mass" value="" class="form-check-input">
+                                                            <input type="text" name="manual_mass" id="manual_mass" class="form-control" onclick="checkManualRadio(this)" size="5">
+                                                        </div>
+                                                    </td>
                                                 </tr>
 
                                                 <tr>
                                                     <th><small>{{star_name_parameters_form.stell_rad.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.stell_rad %}
                                                         <td>
-                                                            <div class="form-check my-3">
+                                                            <div class="form-check my-4">
                                                                 {{ subfield(class="form-check-input") }}
                                                                 {{ subfield.label(class="form-check-label") }}
                                                             </div>
                                                         </td>
                                                     {% endfor %}
+                                                    <td>
+                                                        <div class="form-check my-2">
+                                                            <input type="radio" name="stell_rad" value="" class="form-check-input">
+                                                            <input type="text" name="manual_rad" id="manual_rad" class="form-control" onclick="checkManualRadio(this)" size="5">
+                                                        </div>
+                                                    </td>
                                                 </tr>
 
                                                 <tr>
                                                     <th><small>{{star_name_parameters_form.dist.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.dist %}
                                                         <td>
-                                                            <div class="form-check my-3">
+                                                            <div class="form-check my-4">
                                                                 {{ subfield(class="form-check-input") }}
                                                                 {{ subfield.label(class="form-check-label") }}
                                                             </div>  
                                                         </td>    
                                                     {% endfor %}
+                                                    <td>
+                                                        <div class="form-check my-2">
+                                                            <input type="radio" name="dist" value="" class="form-check-input">
+                                                            <input type="text" name="manual_dist" id="manual_dist" class="form-control" onclick="checkManualRadio(this)" size="5">
+                                                        </div>
+                                                    </td>
                                                 </tr>
                                                 
                                             </table>
@@ -347,6 +381,10 @@
             for( i = 0 ; i < btns.length ; i++ ) {
                 btns[i].checked = true;
             };
+        };
+
+        function checkManualRadio(obj) {
+            obj.previousElementSibling.checked = true;
         };
 
     </script>
