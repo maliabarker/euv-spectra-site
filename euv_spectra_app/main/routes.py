@@ -1,6 +1,5 @@
 from cmath import nan
 from flask import Blueprint, request, render_template, redirect, url_for, jsonify
-import simplejson as json
 from collections import defaultdict
 
 from euv_spectra_app.models import Star
@@ -245,7 +244,7 @@ def homepage():
             # max_data_catalog = max(catalog_data, key=lambda x:x['valid_info'])
             # print(max_data_catalog)
 
-            return json.dumps(res, ignore_nan=True)
+            # return json.dumps(res, ignore_nan=True)
             
             # return redirect(url_for('main.ex_result', formname='name'))
 
