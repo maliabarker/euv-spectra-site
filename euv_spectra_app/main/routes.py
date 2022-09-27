@@ -260,15 +260,11 @@ def homepage():
             print('star name parameter form validated!')
             form_data = request.form
             for key in form_data:
-                print ('form key '+key+" "+form_data[key])
-            # for key in form_data:
-            #     print ('form key '+key+" "+form_data[key])
-            #     if form_data[key] == 'Manual':
-            #         print('MANUAL')
-            #         manual_field = f'manual_{key}'
-            #         print(f'{form_data[key]}, {form_data[manual_field]}')
-            #         form_data[key] = form_data[manual_field]
-
+                # ignoring all manual parameters, submit, csrf token, and catalog names
+                if 'manual' not in key and 'submit' not in key and 'csrf_token' not in key and 'catalog_name' not in key:
+                    print ('form key '+key+" "+form_data[key])
+                    session[key] = form_data[key]
+            print(session)
             return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, show_modal=False)
 
 
