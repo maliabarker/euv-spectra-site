@@ -1,5 +1,6 @@
 from cmath import nan
-from flask import Blueprint, request, render_template, redirect, url_for, jsonify
+from flask import Blueprint, request, render_template, redirect, url_for, jsonify, session
+from flask_session import Session
 from collections import defaultdict
 
 from euv_spectra_app.models import Star
@@ -177,17 +178,21 @@ def search_vizier(search_input):
 
 @main.route('/', methods=['GET', 'POST'])
 def homepage():
-    
+
     parameter_form = StarForm()
     name_form = StarNameForm()
     position_form = PositionForm()
-    star_name_parameters_form = StarNameParametersForm()
-
+    
     if request.method == 'POST':
-        print('————————POSTING————————')
+        print('————————POSTING...————————')
+        print('—————————FORM DATA START—————————')
+        form_data = request.form
+        for key in form_data:
+            print ('form key '+key+" "+form_data[key])
+        print('—————————FORM DATA END—————————')
 
         if parameter_form.validate_on_submit():
-            print('form validated!')
+            print('parameter form validated!')
             print(parameter_form)
 
             for fieldname, value in parameter_form.data.items():
@@ -196,14 +201,23 @@ def homepage():
             
             return redirect(url_for('main.ex_result'))
 
+        elif position_form.validate_on_submit():
+            print('position form validated!')
+
 
         elif name_form.validate_on_submit():
-            
-            star_name = name_form.name.data
+            # store name data in session
+            session["star_name"] = name_form.name.data
+
+            global star_name_parameters_form
+            star_name_parameters_form = StarNameParametersForm()
+            # star_name = name_form.name.data
+            star_name = session['star_name']
+
             print(f'name form validated with star: {star_name}')
 
-            galex_data = search_galex(star_name)
-            print(galex_data)
+            # galex_data = search_galex(star_name)
+            # print(galex_data)
 
             catalog_data = [search_tic(star_name), search_nea(star_name), search_vizier(star_name)]
             final_catalogs = []
@@ -216,7 +230,7 @@ def homepage():
                     else:
                         final_catalogs.append(catalog)
 
-            print(catalog_data)
+            # print(final_catalogs)
 
             res = defaultdict(list)
             for dict in final_catalogs:
@@ -227,6 +241,9 @@ def homepage():
                     else:
                         res[key].append(dict[key])
 
+            for key in res:
+                res[key].append('Manual')
+
             print(res)
 
             star_name_parameters_form.catalog_name.choices = [(value, value) for value in res['name']]
@@ -236,20 +253,27 @@ def homepage():
             star_name_parameters_form.stell_rad.choices = [(value, value) for value in res['rad']]
             star_name_parameters_form.dist.choices = [(value, value) for value in res['dist']]
 
+            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, show_modal=True, last_num=str(len(res['name']) - 1))
 
-            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, show_modal=True, star_name=star_name, res=res)
 
-            
+        elif session['star_name']:
+            print('star name parameter form validated!')
+            form_data = request.form
+            for key in form_data:
+                print ('form key '+key+" "+form_data[key])
+            # for key in form_data:
+            #     print ('form key '+key+" "+form_data[key])
+            #     if form_data[key] == 'Manual':
+            #         print('MANUAL')
+            #         manual_field = f'manual_{key}'
+            #         print(f'{form_data[key]}, {form_data[manual_field]}')
+            #         form_data[key] = form_data[manual_field]
 
-            # max_data_catalog = max(catalog_data, key=lambda x:x['valid_info'])
-            # print(max_data_catalog)
+            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, show_modal=False)
 
-            # return json.dumps(res, ignore_nan=True)
-            
-            # return redirect(url_for('main.ex_result', formname='name'))
 
-    return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, show_modal=False)
-            
+    return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, show_modal=False)
+
 
 @main.route('/ex-spectra', methods=['GET', 'POST'])
 def ex_result():
