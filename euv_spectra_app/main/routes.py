@@ -4,7 +4,7 @@ from flask_session import Session
 from collections import defaultdict
 
 from euv_spectra_app.models import Star
-from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm, StarNameParametersForm
+from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm, StarNameParametersForm, FluxForm
 
 # FOR ASTROQUERY/GALEX DATA
 from astroquery.mast import Catalogs
@@ -51,7 +51,7 @@ def search_tic(search_input):
     return_info = {
         'name' : 'TESS Input Catalog',
         'valid_info' : 0,
-        'data' : None,
+        'data' : {},
         'error_msg' : None
     }
     if len(tic_data) > 0:
@@ -67,11 +67,10 @@ def search_tic(search_input):
         for value in star_info.values():
             if str(value) != 'nan':
                 return_info['valid_info'] += 1
-
         # print('———————————————————————————')
         # print('TIC')
+        # print(data)
         # print(star_info)
-        # print(f'VALID INFO: {valid_info}')
     else:
         return_info['error_msg'] = 'Nothing found for this target'
     return(return_info)
@@ -82,24 +81,25 @@ def search_nea(search_input):
     return_info = {
         'name' : 'NASA Exoplanet Archive',
         'valid_info' : 0,
-        'data' : None,
+        'data' : {},
         'error_msg' : None
     }
     if len(nea_data) > 0:
         data = nea_data[0]
+        # print('———————————————————————————')
+        # print('Exoplanet Archive')
+        # print(data)
         star_info = {
-            'teff' : data['st_teff'].unmasked,
+            'teff' : data['st_teff'].unmasked.value,
             'logg' : data['st_logg'],
-            'mass' : data['st_mass'].unmasked,
-            'rad' : data['st_rad'].unmasked,
-            'dist' : data['sy_dist'].unmasked
+            'mass' : data['st_mass'].unmasked.value,
+            'rad' : data['st_rad'].unmasked.value,
+            'dist' : data['sy_dist'].unmasked.value
         }
         return_info['data'] = star_info
         for value in star_info.values():
             if str(value) != 'nan':
                 return_info['valid_info'] += 1
-        # print('———————————————————————————')
-        # print('Exoplanet Archive')
         # print(star_info)
         # print(f'VALID INFO: {valid_info}')
     else:
@@ -132,6 +132,9 @@ def search_vizier(search_input):
     if tables:
         for table_name in tables:
             table = vizier_catalogs[table_name][0]
+            # print('————————————————————————')
+            # print(f'TABLE NAME: {table_name}')
+            # print(table)
             valid_info = 0
             star_info = {
                 'teff' : float(table['Teff']),
@@ -145,15 +148,17 @@ def search_vizier(search_input):
                 if str(value) != 'nan':
                     valid_info += 1
 
-            # print('————————————————————————')
-            # print(f'TABLE NAME: {table_name}')
             # print(star_info)
             # print(f'VALID INFO: {valid_info}')
             table_dict = {
-                'name' : f'Vizier table: {table_name}',
+                'name' : f'Vizier catalog: {table_name}',
                 'data' : star_info,
-                'valid_info' : valid_info
+                'valid_info' : valid_info,
+                'error_msg' : None
             }
+
+            if valid_info == 0:
+                table_dict['error_msg'] = 'No data found'
 
             return_info['data'].append(table_dict)
     else:
@@ -182,6 +187,7 @@ def homepage():
     parameter_form = StarForm()
     name_form = StarNameForm()
     position_form = PositionForm()
+    flux_form = FluxForm()
     
     if request.method == 'POST':
         print('————————POSTING...————————')
@@ -208,29 +214,20 @@ def homepage():
         elif name_form.validate_on_submit():
             # store name data in session
             session["star_name"] = name_form.name.data
+            star_name = session['star_name']
+            print(f'name form validated with star: {star_name}')
 
             global star_name_parameters_form
             star_name_parameters_form = StarNameParametersForm()
-            # star_name = name_form.name.data
-            star_name = session['star_name']
-
-            print(f'name form validated with star: {star_name}')
 
             # galex_data = search_galex(star_name)
             # print(galex_data)
 
             catalog_data = [search_tic(star_name), search_nea(star_name), search_vizier(star_name)]
-            final_catalogs = []
 
-            for catalog in catalog_data:
-                if catalog['error_msg'] == None:
-                    if catalog['name'] == 'Vizier':
-                        for sub_catalog in catalog['data']:
-                            final_catalogs.append(sub_catalog)
-                    else:
-                        final_catalogs.append(catalog)
-
-            # print(final_catalogs)
+            final_catalogs = [catalog for catalog in catalog_data if catalog['error_msg'] == None if catalog['name'] != 'Vizier']+[sub_catalog for catalog in catalog_data for sub_catalog in catalog['data'] if catalog['name'] == 'Vizier' if sub_catalog['error_msg'] == None]
+            
+            print(f'FINAL CATALOG TEST {final_catalogs}')
 
             res = defaultdict(list)
             for dict in final_catalogs:
@@ -253,7 +250,7 @@ def homepage():
             star_name_parameters_form.stell_rad.choices = [(value, value) for value in res['rad']]
             star_name_parameters_form.dist.choices = [(value, value) for value in res['dist']]
 
-            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, show_modal=True, last_num=str(len(res['name']) - 1))
+            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, flux_form=flux_form, star_name_parameters_form=star_name_parameters_form, show_modal=True, last_num=str(len(res['name']) - 1))
 
 
         elif session['star_name']:
@@ -262,13 +259,14 @@ def homepage():
             for key in form_data:
                 # ignoring all manual parameters, submit, csrf token, and catalog names
                 if 'manual' not in key and 'submit' not in key and 'csrf_token' not in key and 'catalog_name' not in key:
-                    print ('form key '+key+" "+form_data[key])
+                    # print ('form key '+key+" "+form_data[key])
                     session[key] = form_data[key]
+                    
             print(session)
-            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, show_modal=False)
+            #return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, show_modal=False)
+            return redirect(url_for('main.homepage'))
 
-
-    return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, show_modal=False)
+    return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, flux_form=flux_form, show_modal=False)
 
 
 @main.route('/ex-spectra', methods=['GET', 'POST'])

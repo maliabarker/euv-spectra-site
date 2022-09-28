@@ -11,10 +11,6 @@ class StarForm(FlaskForm):
     stell_rad = IntegerField('R ☉ — Stellar Radius (Solar Radii)', validators=[DataRequired()])
     dist = IntegerField('d — Distance', validators=[DataRequired()])
     dist_unit = SelectField('d Unit', validators=[DataRequired()], choices=[('pc', 'Parsecs (pc)'), ('mas', 'Milliarcseconds (mas)')])
-    fuv = IntegerField('FUV — Far Ultraviolet Spectra (μJy)', validators=[validators.Optional()])
-    fuv_flag = RadioField('FUV Flag', validators=[validators.Optional()], choices=[('null', 'Not Detected'), ('upper_limit', 'Upper Limit')])
-    nuv = IntegerField('NUV — Near Ultraviolet Spectra (μJy)', validators=[validators.Optional()])
-    nuv_flag = RadioField('NUV Flag', validators=[validators.Optional()], choices=[('null', 'Not Detected'), ('upper_limit', 'Upper Limit')])
     submit = SubmitField('Next →')
 
 class StarNameForm(FlaskForm):
@@ -32,5 +28,12 @@ class StarNameParametersForm(FlaskForm):
     logg = RadioField(u'Surface Gravity (cm/s²)')
     mass = RadioField(u'Mass (Solar Masses)')
     stell_rad = RadioField(u'Stellar Rad (Solar Radii)')
-    dist = RadioField(u'Distance')
+    dist = RadioField(u'Distance (pc)')
+    submit = SubmitField('Next →')
+
+class FluxForm(FlaskForm):
+    fuv = IntegerField('FUV — Far Ultraviolet Spectra (μJy)', validators=[validators.Optional()])
+    fuv_flag = RadioField('FUV Flag', validators=[validators.Optional()], choices=[('null', 'Not Detected'), ('upper_limit', 'Upper Limit')])
+    nuv = IntegerField('NUV — Near Ultraviolet Spectra (μJy)', validators=[validators.Optional()])
+    nuv_flag = RadioField('NUV Flag', validators=[validators.Optional()], choices=[('null', 'Not Detected'), ('upper_limit', 'Upper Limit')])
     submit = SubmitField('Next →')
