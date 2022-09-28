@@ -1,7 +1,7 @@
 #home-or {
     width: 100%; 
     text-align: center; 
-    border-bottom: 1px solid #000; 
+    border-bottom: 1px solid #afb0b0; 
     line-height: 0.1em;
     margin: 10px 0 20px; 
 } 
@@ -13,7 +13,7 @@
 }
 
 #home-left-col {
-    border-right: 1px solid #000;
+    border-right: 1px solid #afb0b0;
 }
 
 /* table {
@@ -72,11 +72,33 @@ th, td { display: block; }
 /* TRY PURPLE BTNS */
 
 .btn-primary, .btn-primary:active, .btn-primary:visited {
-    background-color: #a881af !important;
-    border-color: #a881af;
+    background-color: #9c36e8 !important;
+    border-color: #9c36e8;
 }
 
 .btn-primary:hover {
-    background-color: #87678d !important;
-    border-color: #87678d;
+    background-color: #6c25a3 !important;
+    border-color: #6c25a3 ;
+}
+
+#flux-continue-btn {
+    /* flex: 1 1 auto; */
+    /* margin: 10px; */
+    padding: 15px;
+    text-align: center;
+    /* text-transform: uppercase; */
+    transition: 0.5s;
+    background-size: 200% auto;
+    color: white;
+    box-shadow: 0 0 20px #eee;
+    /* border-radius: 10px; */
+    background-image: linear-gradient(to right, #f729d9 0%, #9c36e8 51%, #3443fc 100%) !important;
+    border-color: white;
+    color: white;
+}
+
+#flux-continue-btn:hover {
+    background-position: right center; /* change the direction of the change here */
+    border-color: white;
+    color: white;
 }

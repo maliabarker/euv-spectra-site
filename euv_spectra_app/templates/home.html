@@ -11,19 +11,57 @@
             </div>
         </div>
 
-        <div class="col-sm-8 offset-sm-2 mt-3"> 
+        <div class="col-sm-10 offset-sm-1 mt-1"> 
             <div class="row d-flex align-items-center">
-                <div class="col-sm-3">
-                    <img src="{{url_for('static', filename='imgs/logo-placeholder.png')}}" alt="" class="img-fluid">
+                <div class="col-sm-2">
+                    <img src="{{url_for('static', filename='imgs/icon.png')}}" alt="" class="img img-fluid px-3 py-3">
                 </div>
-                <div class="col-sm-9">
+                <div class="col-sm-10">
                     <h2>Find the Extreme Ultraviolet (EUV) Spectrum for your Star</h2>
                 </div>
             </div>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
         </div>
 
-        <div class="row mt-2">
+        <div class="row mt-5">
             <div class="col-md-6" id="home-left-col">
+                <p class="text-center mb-4"><b>Search for Stellar Parameters by Name or Position</b></p>
+                <!--—————————NAME FORM——————————-->
+                <form action='/' method='POST' id="name-form">
+                    <fieldset>
+                        {{ name_form.csrf_token }}
+                        <div class="form-floating mb-3">
+                            {{ name_form.name(class="form-control", placeholder="Star Name") }}
+                            {{ name_form.name.label }}
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            {{ name_form.submit(class="btn btn-primary mb-3", for="name-form", onclick="displayLoading();") }}
+                        </div>
+                    </fieldset>
+                </form>
+
+                <p id="home-or" class="my-5"><span>or</span></p>
+
+                <!--—————————POSITION FORM——————————-->
+                <form action="/" method="POST" id="position-form">
+                    <fieldset>
+                        {{ position_form.csrf_token }}
+                        <div class="form-floating mb-3">
+                            {{ position_form.ra(class="form-control", placeholder="RA") }}
+                            {{ position_form.ra.label }}
+                        </div>
+                        <div class="form-floating mb-3">
+                            {{ position_form.dec(class="form-control", placeholder="dec") }}
+                            {{ position_form.dec.label }}
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            {{ position_form.submit(class="btn btn-primary mb-3", for="position-form", onclick="displayLoading();") }}
+                        </div>
+                    </fieldset>
+                </form>
+            </div>
+
+            <div class="col-md-6">
                 <p class="text-center mb-4"><b>Enter Stellar Parameters Manually</b></p>
                 <form action="/" method="POST" id="parameter-form">
                     {{ parameter_form.csrf_token }}
@@ -64,43 +102,6 @@
                         </div>
                         <div class="d-flex justify-content-end">
                             {{ parameter_form.submit(class="btn btn-primary mb-3", for="parameter-form") }}
-                        </div>
-                    </fieldset>
-                </form>
-            </div>
-            
-            <div class="col-md-6">
-                <p class="text-center mb-4"><b>Search for Stellar Parameters by Name or Position</b></p>
-                <!--—————————NAME FORM——————————-->
-                <form action='/' method='POST' id="name-form">
-                    <fieldset>
-                        {{ name_form.csrf_token }}
-                        <div class="form-floating mb-3">
-                            {{ name_form.name(class="form-control", placeholder="Star Name") }}
-                            {{ name_form.name.label }}
-                        </div>
-                        <div class="d-flex justify-content-end">
-                            {{ name_form.submit(class="btn btn-primary mb-3", for="name-form", onclick="displayLoading();") }}
-                        </div>
-                    </fieldset>
-                </form>
-
-                <p id="home-or" class="my-5"><span>or</span></p>
-
-                <!--—————————POSITION FORM——————————-->
-                <form action="/" method="POST" id="position-form">
-                    <fieldset>
-                        {{ position_form.csrf_token }}
-                        <div class="form-floating mb-3">
-                            {{ position_form.ra(class="form-control", placeholder="RA") }}
-                            {{ position_form.ra.label }}
-                        </div>
-                        <div class="form-floating mb-3">
-                            {{ position_form.dec(class="form-control", placeholder="dec") }}
-                            {{ position_form.dec.label }}
-                        </div>
-                        <div class="d-flex justify-content-end">
-                            {{ position_form.submit(class="btn btn-primary mb-3", for="position-form", onclick="displayLoading();") }}
                         </div>
                     </fieldset>
                 </form>
@@ -258,9 +259,7 @@
                                         </div>
                                     </fieldset>
                                 </form>
-
                             </div>
-                            
                         </div>
                     </div>
                 </div>
@@ -270,53 +269,57 @@
                     modal.show();
                 </script>
             {% endif %}
+
         </div>
 
-        <div class="text-center mt-2 ">
-            <h5>Continue to Fluxes</h5>
-            <button class="btn btn-primary">↓</button>
+        <div class="text-center mt-3">
+            <button class="btn btn-primary" id="flux-continue-btn">Click Here to Continue to Fluxes</button>
         </div>
 
-        {% if (session.teff and session.logg and session.mass and session.stell_rad and session.dist) %}
-            <form id="flux-form" action="/" method="POST">
-                <fieldset>
-                    {{ flux_form.csrf_token }}
-                    <div class="row mt-2">
-                        <div class="col-sm-9">
-                            <div class="form-floating mb-3">
-                                {{ flux_form.fuv(class="form-control", placeholder="FUV — Far Ultraviolet Spectra in Microjanskys (mjy)") }}
-                                {{ flux_form.fuv.label }}
+        <hr>
+        
+        <div id="flux-container">
+            {% if (session.teff and session.logg and session.mass and session.stell_rad and session.dist) %}
+                <form id="flux-form" action="/" method="POST">
+                    <fieldset>
+                        {{ flux_form.csrf_token }}
+                        <div class="row mt-2">
+                            <div class="col-sm-9">
+                                <div class="form-floating mb-3">
+                                    {{ flux_form.fuv(class="form-control", placeholder="FUV — Far Ultraviolet Spectra in Microjanskys (mjy)") }}
+                                    {{ flux_form.fuv.label }}
+                                </div>
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="form-floating mb-3">
+                                    {{ flux_form.fuv_flag(class="form-select") }}
+                                    <label for="floatingSelect">Specify</label>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-sm-3">
-                            <div class="form-floating mb-3">
-                                {{ flux_form.fuv_flag(class="form-select") }}
-                                <label for="floatingSelect">Specify</label>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-sm-9">
-                            <div class="form-floating mb-3">
-                                {{ flux_form.nuv(class="form-control", placeholder="NUV — Near Ultraviolet Spectra in Microjanskys (mjy)") }}
-                                {{ flux_form.nuv.label }}
+                        <div class="row">
+                            <div class="col-sm-9">
+                                <div class="form-floating mb-3">
+                                    {{ flux_form.nuv(class="form-control", placeholder="NUV — Near Ultraviolet Spectra in Microjanskys (mjy)") }}
+                                    {{ flux_form.nuv.label }}
+                                </div>
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="form-floating mb-3">
+                                    {{ flux_form.nuv_flag(class="form-select") }}
+                                    <label for="floatingSelect">Specify</label>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-sm-3">
-                            <div class="form-floating mb-3">
-                                {{ flux_form.nuv_flag(class="form-select") }}
-                                <label for="floatingSelect">Specify</label>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="d-flex justify-content-end">
-                        {{ flux_form.submit(class="btn btn-primary mb-3", for="flux-form") }}
-                    </div>
-                </fieldset>
-            </form>
-        {% endif %}
+                        <div class="d-flex justify-content-end">
+                            {{ flux_form.submit(class="btn btn-primary mb-3", for="flux-form") }}
+                        </div>
+                    </fieldset>
+                </form>
+            {% endif %}
+        </div>
     </div>
 
 
