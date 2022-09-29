@@ -183,11 +183,16 @@ def search_vizier(search_input):
 
 @main.route('/', methods=['GET', 'POST'])
 def homepage():
+    #session.clear()
+    print(session)
 
     parameter_form = StarForm()
     name_form = StarNameForm()
     position_form = PositionForm()
     flux_form = FluxForm()
+
+    # name_form.populate_obj(session)
+    # parameter_form.populate_obj(session)
     
     if request.method == 'POST':
         print('————————POSTING...————————')
@@ -213,7 +218,7 @@ def homepage():
 
         elif name_form.validate_on_submit():
             # store name data in session
-            session["star_name"] = name_form.name.data
+            session["star_name"] = name_form.star_name.data
             star_name = session['star_name']
             print(f'name form validated with star: {star_name}')
 
@@ -258,12 +263,14 @@ def homepage():
             form_data = request.form
             for key in form_data:
                 # ignoring all manual parameters, submit, csrf token, and catalog names
+                # to_ignore = ['manual', 'submit', 'csrf_token', 'catalog_name']
+                # print(bool([ele for ele in ['manual', 'submit', 'csrf_token', 'catalog_name'] if(ele in key)]))
+                
                 if 'manual' not in key and 'submit' not in key and 'csrf_token' not in key and 'catalog_name' not in key:
-                    # print ('form key '+key+" "+form_data[key])
+                    print ('form key '+key+" "+form_data[key])
                     session[key] = form_data[key]
                     
             print(session)
-            #return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, show_modal=False)
             return redirect(url_for('main.homepage'))
 
     return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, flux_form=flux_form, show_modal=False)

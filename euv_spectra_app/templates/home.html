@@ -3,7 +3,7 @@
 {% block title %}{% endblock %}
 {% block content %}
 
-    <div class="container">     
+    <div class="container" onload="checkSession()">     
         
         <div id="overlay">
             <div class="d-flex justify-content-center">
@@ -31,8 +31,8 @@
                     <fieldset>
                         {{ name_form.csrf_token }}
                         <div class="form-floating mb-3">
-                            {{ name_form.name(class="form-control", placeholder="Star Name") }}
-                            {{ name_form.name.label }}
+                            {{ name_form.star_name(class="form-control", placeholder="Star Name") }}
+                            {{ name_form.star_name.label }}
                         </div>
                         <div class="d-flex justify-content-end">
                             {{ name_form.submit(class="btn btn-primary mb-3", for="name-form", onclick="displayLoading();") }}
@@ -272,53 +272,98 @@
 
         </div>
 
-        <div class="text-center mt-3">
+        <div class="text-center my-5">
             <button class="btn btn-primary" id="flux-continue-btn">Click Here to Continue to Fluxes</button>
         </div>
 
-        <hr>
-        
+        <!-- <hr> -->
+
         <div id="flux-container">
+            
             {% if (session.teff and session.logg and session.mass and session.stell_rad and session.dist) %}
-                <form id="flux-form" action="/" method="POST">
-                    <fieldset>
-                        {{ flux_form.csrf_token }}
-                        <div class="row mt-2">
-                            <div class="col-sm-9">
+                <div class="row">
+
+
+                    <div class="col-sm-6" id="home-left-col">
+                        <p class="text-center mb-4 mt-2"><b>Search GALEX for Flux Values</b></p>
+                        <!--—————————NAME FORM——————————-->
+                        <form action='/' method='POST' id="name-form">
+                            <fieldset>
+                                {{ name_form.csrf_token }}
                                 <div class="form-floating mb-3">
+                                    {{ name_form.star_name(class="form-control", placeholder="Star Name") }}
+                                    {{ name_form.star_name.label }}
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    {{ name_form.submit(class="btn btn-primary mb-3", for="name-form", onclick="displayLoading();") }}
+                                </div>
+                            </fieldset>
+                        </form>
+
+                        <p id="home-or" class="mb-3"><span>or</span></p>
+
+                        <!--—————————POSITION FORM——————————-->
+                        <form action="/" method="POST" id="position-form">
+                            <fieldset>
+                                {{ position_form.csrf_token }}
+                                <div class="form-floating mb-3">
+                                    {{ position_form.ra(class="form-control", placeholder="RA") }}
+                                    {{ position_form.ra.label }}
+                                </div>
+                                <div class="form-floating mb-3">
+                                    {{ position_form.dec(class="form-control", placeholder="dec") }}
+                                    {{ position_form.dec.label }}
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    {{ position_form.submit(class="btn btn-primary mb-3", for="position-form", onclick="displayLoading();") }}
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+
+
+                    <div class="col-sm-6">
+                        <p class="text-center mb-4 mt-2"><b>Enter FUV & NUV Fluxes Manually</b></p>
+                        <form id="flux-form" action="/" method="POST">
+                            <fieldset>
+                                {{ flux_form.csrf_token }}
+
+                                <div class="form-floating mb-2">
                                     {{ flux_form.fuv(class="form-control", placeholder="FUV — Far Ultraviolet Spectra in Microjanskys (mjy)") }}
                                     {{ flux_form.fuv.label }}
                                 </div>
-                            </div>
-                            <div class="col-sm-3">
-                                <div class="form-floating mb-3">
-                                    {{ flux_form.fuv_flag(class="form-select") }}
-                                    <label for="floatingSelect">Specify</label>
+                                <div id="fuv-flags-container" class="text-center">
+                                    <span class="me-3">FUV Flags:</span>
+                                    {% for subfield in flux_form.fuv_flag %}
+                                        <div class="form-check form-check-inline my-4">
+                                            {{ subfield(class="form-check-input") }}
+                                            {{ subfield.label(class="form-check-label") }}
+                                        </div>
+                                    {% endfor %}
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-9">
-                                <div class="form-floating mb-3">
+                                
+                                <div class="form-floating mb-2">
                                     {{ flux_form.nuv(class="form-control", placeholder="NUV — Near Ultraviolet Spectra in Microjanskys (mjy)") }}
                                     {{ flux_form.nuv.label }}
                                 </div>
-                            </div>
-                            <div class="col-sm-3">
-                                <div class="form-floating mb-3">
-                                    {{ flux_form.nuv_flag(class="form-select") }}
-                                    <label for="floatingSelect">Specify</label>
+                                <div id="nuv-flags-container" class="text-center">
+                                    <span class="me-3">NUV Flags:</span>
+                                    {% for subfield in flux_form.nuv_flag %}
+                                        <div class="form-check form-check-inline my-4">
+                                            {{ subfield(class="form-check-input") }}
+                                            {{ subfield.label(class="form-check-label") }}
+                                        </div>
+                                    {% endfor %}
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-end">
-                            {{ flux_form.submit(class="btn btn-primary mb-3", for="flux-form") }}
-                        </div>
-                    </fieldset>
-                </form>
+                                <div class="d-flex justify-content-end">
+                                    {{ flux_form.submit(class="btn btn-primary mb-3", for="flux-form") }}
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
             {% endif %}
+
         </div>
     </div>
 
@@ -328,6 +373,8 @@
 
 {% block script %}
     <script type="text/javascript">
+        
+
         function showModal() {
             var myModalEl = document.getElementById('myModal');
             var modal = new bootstrap.Modal(myModalEl);
@@ -394,6 +441,24 @@
             };
             return true; // submit the form
         };
+    
+        function checkSession() {
+            var inputs;
+            const session = JSON.parse('{{ session|tojson|safe }}');
+            console.log(session);
+
+            inputs = document.getElementsByTagName('input');
+
+            for (i = 0; i < inputs.length; i++){
+                if((session.hasOwnProperty(inputs[i].name)) && (inputs[i].name != 'csrf_token')){
+                    console.log(inputs[i]);
+                    console.log(session[inputs[i].name]);
+                    inputs[i].value = session[inputs[i].name];
+                };
+            };
+        };
+
+        window.onload = checkSession;
 
     </script>
 {% endblock %}
