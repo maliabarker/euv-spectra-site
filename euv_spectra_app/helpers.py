@@ -5,7 +5,8 @@ from astroquery.vizier import Vizier
 from astroquery.gaia import Gaia
 from astroquery.simbad import Simbad
 customSimbad = Simbad()
-customSimbad.add_votable_fields('pm')
+customSimbad.remove_votable_fields('coordinates')
+customSimbad.add_votable_fields('ra', 'dec', 'pmra', 'pmdec', 'plx', 'rv_value')
 
 Gaia.MAIN_GAIA_TABLE = "gaiaedr3.gaia_source"
 Gaia.ROW_LIMIT = 1
@@ -136,12 +137,16 @@ def search_vizier(search_input):
         return_info['error_msg'] = 'Nothing found for this target'
     return(return_info)
 
+
+
+'''—————————SIMBAD START—————————'''
 def search_simbad(search_input):
     return_info = {
         'name' : 'Simbad',
         'data' : {},
         'error_msg' : None
     }
+
     result_table = customSimbad.query_object(search_input)
     if result_table and len(result_table) > 0:
         data = result_table[0]
@@ -150,49 +155,17 @@ def search_simbad(search_input):
             'ra': data['RA'], 
             'dec': data['DEC'], 
             'pmra': data['PMRA'], 
-            'pmdec': data['PMDEC']
+            'pmdec': data['PMDEC'],
+            'parallax': data['PLX_VALUE'],
+            'rad_vel': data['RV_VALUE']
         }
     else:
         return_info['error_msg'] = 'No target found for that star name. Please try again.'
     return return_info
+'''—————————SIMBAD END—————————'''
 
-def search_gaia(search_input):
-    return_info = {
-        'name' : 'Gaia',
-        'data' : {},
-        'error_msg' : None
-    }
-    
-    # try:
-    #     c = SkyCoord.from_name(search_input)
-    #     print(c.ra.degree)
-    #     print(c.dec.degree)
-    # except:
-    #     return_info['error_msg'] = 'No coordinates found for this target.'
-    
-    # if c:
-    #     coord = SkyCoord(ra=c.ra.degree, dec=c.dec.degree, unit=(u.degree, u.degree), frame='icrs')
-    #     width, height = u.Quantity(0.02, u.deg), u.Quantity(0.02, u.deg)
-    #     gaia_data = Gaia.query_object_async(coordinate=coord, width=width, height=height)
-    #     #gaia_data.pprint()
 
-    gaia_data = Catalogs.query_object(search_input, radius=.02, catalog="Gaia")
-    if len(gaia_data) > 0:
-        data = gaia_data[0]
-        #print(data)
-        return_info['data'] = {
-            'ra': data['ra'], 
-            'dec': data['dec'], 
-            'pmra': data['pmra'], 
-            'pmdec': data['pmdec'],
-            'ref_epoch' : data['ref_epoch'],
-            'parallax' : data['parallax']
-        }
-        print(return_info['data'])
-    else:
-        return_info['error_msg'] = 'No data found for this target, please try again'
-    return return_info
-
+'''—————————GALEX START—————————'''
 def search_galex(ra, dec):
     galex_data = Catalogs.query_object(f'{ra} {dec}', catalog="GALEX")
     return_info = {
@@ -215,7 +188,10 @@ def search_galex(ra, dec):
     else:
         return_info['error_msg'] = 'Nothing found for this target'
     return return_info
+'''—————————GALEX END—————————'''
 
+
+'''———————COORD CORRECTION START———————'''
 def correct_pm(data, star_name):
     return_info = {
         'name' : 'Corrected Coords',
@@ -225,20 +201,92 @@ def correct_pm(data, star_name):
 
     try:
         galex_time = Observations.query_criteria(objectname=star_name, obs_collection='GALEX')[0]['t_max']
-        print(f'TIME {galex_time}')
     except:
         return_info['error_msg'] = 'No GALEX Observations Available'
+    else:
+        print(f'TIME {galex_time}')
+        try:
+            print('trying to correct')
+            coords = data['ra'] + ' ' + data['dec']
+
+            t3 = Time(galex_time, format='mjd') - Time(51544.0, format='mjd')
+            td_year = t3.sec / 60 / 60 / 24 / 365.25
+
+            c = SkyCoord(coords, unit=(u.hourangle, u.deg), distance=Distance(parallax=data['parallax']*u.mas, allow_negative=True), pm_ra_cosdec=data['pmra']*u.mas/u.yr, pm_dec=data['pmdec']*u.mas/u.yr)
+            print(c)
+
+            # c = SkyCoord(ra=data['ra']*u.degree, dec=data['dec']*u.degree, distance=Distance(parallax=data['parallax']*u.mas, allow_negative=True), pm_ra_cosdec=data['pmra']*u.mas/u.yr, pm_dec=data['pmdec']*u.mas/u.yr, radial_velocity=data['rad_vel']*u.km/u.s, obstime=Time(data['ref_epoch'], format='jyear', scale='tcb'))
+            print(c.apply_space_motion(dt=td_year * u.yr))
+
+            return_info['data'] = {
+                'ra' : c.ra.degree,
+                'dec' : c.dec.degree
+            }
+
+            print(return_info['data'])
+        except:
+            return_info['error_msg'] = 'Could not correct coordinates'
+    return return_info
+'''———————COORD CORRECTION END———————'''
+
+
+
+
+
+'''—————————GAIA START—————————'''
+def search_gaia(search_input):
+    return_info = {
+        'name' : 'Gaia',
+        'data' : {},
+        'error_msg' : None
+    }
+
+    result_table = customSimbad.query_object(search_input)
+    data = result_table[0]
+    # try:
+    #     c = SkyCoord.from_name(search_input)
+    #     print(c.ra.degree)
+    #     print(c.dec.degree)
+    # except:
+    #     return_info['error_msg'] = 'No coordinates found for this target.'
     
-    if galex_time:
-        c = SkyCoord(ra=data['ra']*u.degree, dec=data['dec']*u.degree, distance=Distance(parallax=data['parallax']*u.mas, allow_negative=True), pm_ra_cosdec=data['pmra']*u.mas/u.yr, pm_dec=data['pmdec']*u.mas/u.yr, obstime=Time(data['ref_epoch'], format='jyear', scale='tcb'))
-        # c = SkyCoord(ra=data['ra']*u.degree, dec=data['dec']*u.degree, distance=Distance(parallax=data['parallax']*u.mas, allow_negative=True), pm_ra_cosdec=data['pmra']*u.mas/u.yr, pm_dec=data['pmdec']*u.mas/u.yr, radial_velocity=data['rad_vel']*u.km/u.s, obstime=Time(data['ref_epoch'], format='jyear', scale='tcb'))
-        c = c.apply_space_motion(new_obstime=Time(galex_time, format='mjd'))
-        print(c)
+    # if c:
+    #     coord = SkyCoord(ra=c.ra.degree, dec=c.dec.degree, unit=(u.degree, u.degree), frame='icrs')
+    #     width, height = u.Quantity(0.02, u.deg), u.Quantity(0.02, u.deg)
+    #     gaia_data = Gaia.query_object_async(coordinate=coord, width=width, height=height)
+    #     #gaia_data.pprint()
+    # print('———————————')
+    # print(data['RA'])
+    # print(data['DEC'])
+    # print('———————————')
+
+    coord = SkyCoord(ra=data['RA'], dec=data['DEC'], unit=(u.hourangle, u.deg), frame='icrs')
+    print(coord)
+    width, height = u.Quantity(0.001, u.deg), u.Quantity(0.001, u.deg)
+    gaia_data = Gaia.query_object_async(coordinate=coord, width=width, height=height)
+    # gaia_data.pprint()
+
+    #gaia_data = Catalogs.query_object(search_input, radius=0.006, catalog="Gaia")
+    
+    if len(gaia_data) > 0:
+        data = gaia_data[0]
+        #print(data)
         return_info['data'] = {
-            'ra' : c.ra.degree,
-            'dec' : c.dec.degree
+            'ra': data['ra'], 
+            'dec': data['dec'], 
+            'pmra': data['pmra'], 
+            'pmdec': data['pmdec'],
+            'ref_epoch' : data['ref_epoch'],
+            'parallax' : data['parallax']
         }
         print(return_info['data'])
     else:
-        return_info['error_msg'] = 'Could not correct coordinates'
+        return_info['error_msg'] = 'No data found for this target, please try again'
     return return_info
+'''—————————GAIA END—————————'''
+
+def test_space_motion():
+    print('TESTING SPACE MOTION')
+    c1 = SkyCoord(ra=269.44850252543836 * u.deg, dec=4.739420051112412 * u.deg, distance=Distance(parallax=546.975939730948 * u.mas), pm_ra_cosdec=-801.5509783684709 * u.mas/u.yr, pm_dec=10362.394206546573 * u.mas/u.yr, radial_velocity=-110.46822 * u.km/u.s, obstime=Time(2016, format='jyear', scale='tcb'))
+    print(c1)
+    print(c1.apply_space_motion(new_obstime=Time(2050, format='jyear', scale='tcb')))

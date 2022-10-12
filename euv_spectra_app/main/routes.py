@@ -1,3 +1,4 @@
+from cgi import test
 from flask import Blueprint, request, render_template, redirect, url_for, session
 from flask_session import Session
 from collections import defaultdict
@@ -5,7 +6,7 @@ from euv_spectra_app.extensions import app
 from datetime import timedelta
 
 from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm, StarNameParametersForm
-from euv_spectra_app.helpers import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm
+from euv_spectra_app.helpers import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion
 
 main = Blueprint("main", __name__)
 
@@ -31,6 +32,7 @@ def make_session_permanent():
 def homepage():
     #session.clear()
     print(session)
+    #test_space_motion()
 
     parameter_form = StarForm()
     name_form = StarNameForm()
@@ -64,18 +66,21 @@ def homepage():
             star_name = session['star_name']
             print(f'name form validated with star: {star_name}')        
 
-            # STEP 2: Get coordinate and motion info from Gaia
-            gaia_data = search_gaia(star_name)
+            # STEP 2: Get coordinate and motion info from Simbad
+            simbad_data = search_simbad(star_name)
 
             # STEP 3: Put PM and Coord info into correction function
-            corrected_coords = correct_pm(gaia_data['data'], star_name)
+            corrected_coords = correct_pm(simbad_data['data'], star_name)
 
             # STEP 4: Search GALEX with these corrected coordinates
-            galex_data = search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])
-            print(galex_data)
+            #print(corrected_coords)
+            if corrected_coords['error_msg'] == 'None':
+                galex_data = search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])
+                print(galex_data)
+            # else: return error page
             
             # STEP 5: 
-            catalog_data = [search_tic(star_name), search_nea(star_name), search_vizier(star_name), search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])]
+            catalog_data = [search_tic(star_name), search_nea(star_name), search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])]
             final_catalogs = [catalog for catalog in catalog_data if catalog['error_msg'] == None if catalog['name'] != 'Vizier']+[sub_catalog for catalog in catalog_data for sub_catalog in catalog['data'] if catalog['name'] == 'Vizier' if sub_catalog['error_msg'] == None]
             
             print(f'FINAL CATALOG TEST {final_catalogs}')
@@ -110,13 +115,14 @@ def homepage():
             # session['nuv'] = galex_data['data']['nuv']
 
             # check if either flux is null and make radio choice as not detected (will need to change javascript autofill function for these radio buttons)
-            print(len(res['name']))
-            last_num=str(len(res['name']) - 2)
-            galex_num=str(len(res['name']) - 2)
-            print(last_num)
-            print(galex_num)
+            if 'GALEX' in res['name']:
+                last_num=str(len(res['name']) - 2)
+                print(last_num)
+            else:
+                last_num=str(len(res['name']) - 1)
+                print(last_num)
 
-            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, show_modal=True, last_num=last_num, galex_num=galex_num)
+            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, show_modal=True, last_num=last_num)
             
 
         elif session.get('star_name'):
