@@ -39,4 +39,6 @@ class StarNameParametersForm(FlaskForm):
     mass = RadioField(mass_label)
     stell_rad = RadioField(rad_label)
     dist = RadioField(u'Distance (pc)')
+    fuv = RadioField('FUV (μJy)')
+    nuv = RadioField('NUV (μJy)')
     submit = SubmitField('Next →')

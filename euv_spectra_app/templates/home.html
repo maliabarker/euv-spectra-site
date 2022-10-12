@@ -163,6 +163,8 @@
                                                 <tr class="mx-2">
                                                     <th><small>{{star_name_parameters_form.catalog_name.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.catalog_name %}
+                                                        {% if subfield.id.endswith(galex_num) %}
+                                                        {% else %}
                                                             <td>
                                                                 <p class="my-1">{{ subfield.label }}</p>
                                                                 <div class="form-check">
@@ -170,6 +172,7 @@
                                                                     <p>Select All</p>
                                                                 </div>
                                                             </td>
+                                                        {% endif %}
                                                     {% endfor %}
                                                 </tr>
 
@@ -284,6 +287,76 @@
                                                 
                                             </table>
                                         </div>
+                                        <hr>
+                                        <div class="table-responsive">
+                                            <table class="table table-borderless align-bottom" id="star_name_flux_form_table">
+                                                <tr class="mx-2">
+                                                    <th><small>{{star_name_parameters_form.catalog_name.label}}</small></th>
+                                                    {% for subfield in star_name_parameters_form.catalog_name %}
+                                                        {% if subfield.id.endswith(galex_num) %}
+                                                            <td>
+                                                                <p class="my-1">{{ subfield.label }}</p>
+                                                                <div class="form-check">
+                                                                    {{ subfield(class="form-check-input", type="checkbox", onclick="selectAllGalex(this);") }}
+                                                                    <p>Select All</p>
+                                                                </div>
+                                                            </td>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    <td>
+                                                        <p class="my-1"><label for="catalog_name-3">Manual</label></p>
+                                                        <div class="form-check">
+                                                            <input type="checkbox" name="catalog_name" id="catalog_name-3" class="form-check-input" onclick="selectAll(this);" value="Manual">
+                                                            <p>Select All</p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+
+                                                <tr class="me-2">
+                                                    <th><small>{{star_name_parameters_form.fuv.label}}</small></th>
+                                                    {% for subfield in star_name_parameters_form.fuv %}
+                                                        {% if subfield.id.endswith('1') %}
+                                                            <td>
+                                                                <div class="form-check my-4">
+                                                                    {{ subfield(class="form-check-input") }}
+                                                                    <input type="text" name="manual_fuv" id="manual_fuv" class="form-control" onclick="checkManualRadio(this)" size="5">
+                                                                </div>
+                                                            </td>
+                                                        {% else %}
+                                                            <td>
+                                                                <div class="form-check my-4">
+                                                                    {{ subfield(class="form-check-input") }}
+                                                                    {{ subfield.label(class="form-check-label") }}
+                                                                </div>  
+                                                            </td>    
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tr>
+
+                                                <tr class="me-2">
+                                                    <th><small>{{star_name_parameters_form.nuv.label}}</small></th>
+                                                    {% for subfield in star_name_parameters_form.nuv %}
+                                                        {% if subfield.id.endswith('1') %}
+                                                            <td>
+                                                                <div class="form-check my-4">
+                                                                    {{ subfield(class="form-check-input") }}
+                                                                    <input type="text" name="manual_nuv" id="manual_nuv" class="form-control" onclick="checkManualRadio(this)" size="5">
+                                                                </div>
+                                                            </td>
+                                                        {% else %}
+                                                            <td>
+                                                                <div class="form-check my-4">
+                                                                    {{ subfield(class="form-check-input") }}
+                                                                    {{ subfield.label(class="form-check-label") }}
+                                                                </div>  
+                                                            </td>    
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </tr>
+
+
+                                            </table>
+                                        </div>
                                         <div class="modal-footer">
                                             {{ star_name_parameters_form.submit(class="btn btn-primary", form="name-parameters-form") }}
                                             <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
@@ -346,7 +419,7 @@
             console.log(obj.id)
 
             // get all selectall buttons
-            const selectAllBtns = document.querySelectorAll(`[id*="catalog_name"]`);
+            const selectAllBtns = document.getElementById('star_name_parameter_form_table').querySelectorAll(`[id*="catalog_name"]`);
             console.log(selectAllBtns)
             // check to make sure no other select all buttons are checked
             for (i=0; i < selectAllBtns.length; i++) {
@@ -364,6 +437,12 @@
                 btns[i].checked = true;
             };
         };
+
+        function selectAllGalex(obj) {
+            console.log(obj.id)
+            const fuvBtn = document.getElementById('fuv-0').checked = true;
+            const nuvBtn = document.getElementById('nuv-0').checked = true;
+        }
 //—————————————————————————SELECT ALL END————————————————————————
 
 
