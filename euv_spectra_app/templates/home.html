@@ -17,10 +17,13 @@
                     <img src="{{url_for('static', filename='imgs/icon.png')}}" alt="" class="img img-fluid px-3 py-3">
                 </div>
                 <div class="col-sm-10">
-                    <h2>Find the Extreme Ultraviolet (EUV) Spectrum for your Star</h2>
+                    <h2>Find the Extreme Ultraviolet Spectrum for your Star</h2>
                 </div>
             </div>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+            <p>The PHOENIX EUV Grid and Stellar UV Spectra (PEGASUS) webtool returns a generalized high resolution (Δλ < 0.01 Å) synthetic extreme ultraviolet (EUV; 100-1000 Å) spectrum for a searched target star of the M or K spectral type.</p>
+            <p>Required inputs for returning a spectrum are effective temperature, surface gravity, mass, radius, distance, and GALEX FUV and NUV fluxes.</p>
+            <p>Users have the option to use Star Name or ICRS coordinates to query the catalogs detailed on our <a href="">About</a> page to retrieve these parameters or they can enter the values manually.</p>
+            <!--<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>-->
         </div>
 
         <div class="row mt-5">
@@ -62,7 +65,7 @@
             </div>
 
             <div class="col-md-6">
-                <p class="text-center mb-4"><b>Enter Stellar Parameters Manually</b></p>
+                <p class="text-center mb-4"><b>Enter Stellar Parameters and Fluxes Manually</b></p>
                 <form action="/" method="POST" id="parameter-form">
                     {{ parameter_form.csrf_token }}
                     <fieldset>
@@ -85,24 +88,54 @@
                             {{ parameter_form.stell_rad(class="form-control", placeholder="R ☉ — Stellar Radius in Solar Radian") }}
                             {{ parameter_form.stell_rad.label(text='* ' + parameter_form.stell_rad.label.text) }}
                         </div>
-    
+
                         <div class="row">
-                            <div class="col-sm-9">
+                            <div class="col-sm-8">
                                 <div class="form-floating mb-3">
                                     {{ parameter_form.dist(class="form-control", placeholder="d — Distance") }}
                                     {{ parameter_form.dist.label(text='* ' + parameter_form.dist.label.text) }}
                                 </div>
                             </div>
-                            <div class="col-sm-3">
+                            <div class="col-sm-4">
                                 <div class="form-floating mb-3">
                                     {{ parameter_form.dist_unit(class="form-select") }}
                                     {{ parameter_form.dist_unit.label(text='* ' + parameter_form.dist_unit.label.text) }}
                                 </div>
                             </div>
                         </div>
-                        <div class="d-flex justify-content-end">
-                            {{ parameter_form.submit(class="btn btn-primary mb-3", for="parameter-form") }}
+
+                        <div class="form-floating">
+                            {{ parameter_form.fuv(class="form-control", placeholder="FUV — Far Ultraviolet Spectra in Microjanskys (mjy)") }}
+                            {{ parameter_form.fuv.label(text='* ' + parameter_form.fuv.label.text) }}
                         </div>
+
+                        <div id="fuv-flags-container" class="text-center">
+                            <span class="me-3">FUV Flags:</span>
+                            {% for subfield in parameter_form.fuv_flag %}
+                                <div class="form-check form-check-inline my-4">
+                                    {{ subfield(class="form-check-input") }}
+                                    {{ subfield.label(class="form-check-label") }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="form-floating">
+                            {{ parameter_form.nuv(class="form-control", placeholder="NUV — Near Ultraviolet Spectra in Microjanskys (mjy)") }}
+                            {{ parameter_form.nuv.label(text='* ' + parameter_form.nuv.label.text) }}
+                        </div>
+
+                        <div id="nuv-flags-container" class="text-center">
+                            <span class="me-3">NUV Flags:</span>
+                            {% for subfield in parameter_form.nuv_flag %}
+                                <div class="form-check form-check-inline my-4">
+                                    {{ subfield(class="form-check-input") }}
+                                    {{ subfield.label(class="form-check-label") }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {#<!-- <div class="d-flex justify-content-end">
+                            {{ parameter_form.submit(class="btn btn-primary mb-3", for="parameter-form") }}
+                        </div> -->#}
                     </fieldset>
                 </form>
             </div>
@@ -115,8 +148,8 @@
                         <div class="modal-content">
                             <div class="modal-header">
                                 <p class="mt-2 ms-4">
-                                    The following catalogs provide data for your target: <b>{{ session.star_name }}</b> <br> 
-                                    Choose the data you wish to use below, or enter your own.
+                                    The following catalogs returned data for your target: <b>{{ session.star_name }}</b> <br> 
+                                    Select the values you wish to use below or enter manually.
                                 </p>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
@@ -127,7 +160,7 @@
                                         {{ star_name_parameters_form.csrf_token }}
                                         <div class="table-responsive">
                                             <table class="table table-borderless align-bottom" id="star_name_parameter_form_table">
-                                                <tr>
+                                                <tr class="mx-2">
                                                     <th><small>{{star_name_parameters_form.catalog_name.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.catalog_name %}
                                                             <td>
@@ -140,7 +173,7 @@
                                                     {% endfor %}
                                                 </tr>
 
-                                                <tr>
+                                                <tr class="me-2">
                                                     <th><small>{{star_name_parameters_form.teff.label}}</small></th>
 
                                                     {% for subfield in star_name_parameters_form.teff %}
@@ -165,7 +198,7 @@
                                                     
                                                 </tr>
 
-                                                <tr>
+                                                <tr class="me-2">
                                                     <th><small>{{star_name_parameters_form.logg.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.logg %}
                                                         {% if subfield.id.endswith(last_num) %}
@@ -186,7 +219,7 @@
                                                     {% endfor %}
                                                 </tr>
 
-                                                <tr>
+                                                <tr class="me-2">
                                                     <th><small>{{star_name_parameters_form.mass.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.mass %}
                                                         {% if subfield.id.endswith(last_num) %}
@@ -207,7 +240,7 @@
                                                     {% endfor %}
                                                 </tr>
 
-                                                <tr>
+                                                <tr class="me-2">
                                                     <th><small>{{star_name_parameters_form.stell_rad.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.stell_rad %}
                                                         {% if subfield.id.endswith(last_num) %}
@@ -228,7 +261,7 @@
                                                     {% endfor %}
                                                 </tr>
 
-                                                <tr>
+                                                <tr class="me-2">
                                                     <th><small>{{star_name_parameters_form.dist.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.dist %}
                                                         {% if subfield.id.endswith(last_num) %}
@@ -252,8 +285,6 @@
                                             </table>
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                            
                                             {{ star_name_parameters_form.submit(class="btn btn-primary", form="name-parameters-form") }}
                                             <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
                                         </div>
@@ -273,97 +304,7 @@
         </div>
 
         <div class="text-center my-5">
-            <button class="btn btn-primary" id="flux-continue-btn">Click Here to Continue to Fluxes</button>
-        </div>
-
-        <!-- <hr> -->
-
-        <div id="flux-container">
-            
-            {% if (session.teff and session.logg and session.mass and session.stell_rad and session.dist) %}
-                <div class="row">
-
-
-                    <div class="col-sm-6" id="home-left-col">
-                        <p class="text-center mb-4 mt-2"><b>Search GALEX for Flux Values</b></p>
-                        <!--—————————NAME FORM——————————-->
-                        <form action='/' method='POST' id="name-form">
-                            <fieldset>
-                                {{ name_form.csrf_token }}
-                                <div class="form-floating mb-3">
-                                    {{ name_form.star_name(class="form-control", placeholder="Star Name") }}
-                                    {{ name_form.star_name.label }}
-                                </div>
-                                <div class="d-flex justify-content-end">
-                                    {{ name_form.submit(class="btn btn-primary mb-3", for="name-form", onclick="displayLoading();") }}
-                                </div>
-                            </fieldset>
-                        </form>
-
-                        <p id="home-or" class="mb-3"><span>or</span></p>
-
-                        <!--—————————POSITION FORM——————————-->
-                        <form action="/" method="POST" id="position-form">
-                            <fieldset>
-                                {{ position_form.csrf_token }}
-                                <div class="form-floating mb-3">
-                                    {{ position_form.ra(class="form-control", placeholder="RA") }}
-                                    {{ position_form.ra.label }}
-                                </div>
-                                <div class="form-floating mb-3">
-                                    {{ position_form.dec(class="form-control", placeholder="dec") }}
-                                    {{ position_form.dec.label }}
-                                </div>
-                                <div class="d-flex justify-content-end">
-                                    {{ position_form.submit(class="btn btn-primary mb-3", for="position-form", onclick="displayLoading();") }}
-                                </div>
-                            </fieldset>
-                        </form>
-                    </div>
-
-
-                    <div class="col-sm-6">
-                        <p class="text-center mb-4 mt-2"><b>Enter FUV & NUV Fluxes Manually</b></p>
-                        <form id="flux-form" action="/" method="POST">
-                            <fieldset>
-                                {{ flux_form.csrf_token }}
-
-                                <div class="form-floating mb-2">
-                                    {{ flux_form.fuv(class="form-control", placeholder="FUV — Far Ultraviolet Spectra in Microjanskys (mjy)") }}
-                                    {{ flux_form.fuv.label }}
-                                </div>
-                                <div id="fuv-flags-container" class="text-center">
-                                    <span class="me-3">FUV Flags:</span>
-                                    {% for subfield in flux_form.fuv_flag %}
-                                        <div class="form-check form-check-inline my-4">
-                                            {{ subfield(class="form-check-input") }}
-                                            {{ subfield.label(class="form-check-label") }}
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                                
-                                <div class="form-floating mb-2">
-                                    {{ flux_form.nuv(class="form-control", placeholder="NUV — Near Ultraviolet Spectra in Microjanskys (mjy)") }}
-                                    {{ flux_form.nuv.label }}
-                                </div>
-                                <div id="nuv-flags-container" class="text-center">
-                                    <span class="me-3">NUV Flags:</span>
-                                    {% for subfield in flux_form.nuv_flag %}
-                                        <div class="form-check form-check-inline my-4">
-                                            {{ subfield(class="form-check-input") }}
-                                            {{ subfield.label(class="form-check-label") }}
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                                <div class="d-flex justify-content-end">
-                                    {{ flux_form.submit(class="btn btn-primary mb-3", for="flux-form") }}
-                                </div>
-                            </fieldset>
-                        </form>
-                    </div>
-                </div>
-            {% endif %}
-
+            {{ parameter_form.submit(class="btn btn-primary", for="parameter-form", id="flux-continue-btn", form="parameter-form") }}
         </div>
     </div>
 
@@ -447,7 +388,8 @@
             const session = JSON.parse('{{ session|tojson|safe }}');
             console.log(session);
 
-            inputs = document.getElementsByTagName('input');
+            // inputs = document.getElementsByTagName('input');
+            inputs = document.getElementsByClassName('form-control');
 
             for (i = 0; i < inputs.length; i++){
                 if((session.hasOwnProperty(inputs[i].name)) && (inputs[i].name != 'csrf_token')){

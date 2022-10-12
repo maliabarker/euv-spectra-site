@@ -102,3 +102,21 @@ th, td { display: block; }
     border-color: white;
     color: white;
 }
+
+/* FOR REMOVING UP DOWN ARROWS ON NUMERICAL INPUTS */
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.modal-xl {
+    max-width: 65% !important;
+}
