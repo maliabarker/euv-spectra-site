@@ -1,18 +1,30 @@
 version: "3"
-
 services:
-  web:
-    build:
-      context: .
-    entrypoint:
-      - flask
-      - run
-      - --host=${HOST}
-    ports:
-      - ${FLASK_RUN_PORT}:${FLASK_RUN_PORT}
-    volumes:
-      - .:/app
-      - data:/database
-
-volumes:
-  data:
+    mongo:
+        image: mongo
+        container_name: mongo
+        restart: always
+        environment:
+            MONGO_INITDB_DATABASE: ${MONGODB_DATABASE}
+            MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
+            MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+        ports:
+            - ${MONGO_PORT}:${MONGO_PORT}
+    web:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        entrypoint:
+            - flask
+            - run
+            - --host=${HOST}
+        environment:
+          PYTHONUNBUFFERED: 1
+          FLASK_DEBUG: 1
+        ports:
+            - ${FLASK_RUN_PORT}:${FLASK_RUN_PORT}
+        depends_on:
+            - mongo
+        links:
+            - mongo
+        volumes: [".:/app"]

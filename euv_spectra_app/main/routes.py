@@ -13,12 +13,12 @@ main = Blueprint("main", __name__)
 ————TODO—————
 1. Do something about space motion function? For PM
 2. Check if either flux is null and make radio choice as not detected (will need to change javascript autofill function for these radio buttons)
+3. If no galex data found: flash no galex data was found, somehow let user know theres no galex data, maybe in template?
 '''
 
 '''
 ————NOTE————
-- Gaia data is a little messy, does not return accurate info, SIMBAD returns good quality info, should we use??
-- Two different ways of querying Gaia data, choose one
+
 '''
 
 @main.before_request
@@ -83,11 +83,6 @@ def homepage():
             # STEP 4: Search GALEX with these corrected coordinates
             galex_data = search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])
             print(galex_data)
-
-            # if galex_data['error_msg'] != None:
-            #     return render_template('error.html', error_msg=galex_data['error_msg'])
-
-            # else: flash no galex data was found
             
             # STEP 5: Query all catalogs and append them to the final catalogs list if there are no errors
             catalog_data = [search_tic(star_name), search_nea(star_name), search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])]
