@@ -173,10 +173,13 @@ def search_galex(ra, dec):
         MIN_DIST = galex_data['distance_arcmin'] < 0.3 # can try 0.5 as well
         if len(galex_data[MIN_DIST]) > 0:
             filtered_data = galex_data[MIN_DIST][0]
+            print(filtered_data)
             # add dist arcmin value
             fluxes = {
                 'fuv' : filtered_data['fuv_flux'],
-                'nuv' : filtered_data['nuv_flux']
+                'fuv_err' : filtered_data['fuv_fluxerr'],
+                'nuv' : filtered_data['nuv_flux'],
+                'nuv_err' : filtered_data['nuv_fluxerr']
             }
             return_info['data'] = fluxes
         else:
