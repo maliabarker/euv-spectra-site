@@ -1,8 +1,6 @@
 # for database migrations
 
 from flask import Flask
-# from flask_sqlalchemy import SQLAlchemy
-# from flask_migrate import Migrate
 from pymongo import MongoClient
 from os import environ
 from euv_spectra_app.config import Config
@@ -29,11 +27,3 @@ m6_grid = db.m6_grid
 m7_grid = db.m7_grid
 m8_grid = db.m8_grid
 # =========================
-
-# db=SQLAlchemy(app)
-# migrate = Migrate(app, db)
-
-
-
-# read_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/M0_models.csv')
-# read_model_parameter_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/model_parameter_grid.csv')

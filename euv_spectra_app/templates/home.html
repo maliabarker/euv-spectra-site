@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{% endblock %}
+{% block title %}Home{% endblock %}
 {% block content %}
 
     <div class="container" onload="checkSession()">     
@@ -179,8 +179,7 @@
                                                     <th><small>{{star_name_parameters_form.teff.label}}</small></th>
 
                                                     {% for subfield in star_name_parameters_form.teff %}
-                                                        
-                                                        {% if subfield.id.endswith(last_num) %}
+                                                        {% if subfield.data == 'Manual' %}
                                                             <td>
                                                                 <div class="form-check my-4">
                                                                     {{ subfield(class="form-check-input") }}
@@ -203,7 +202,7 @@
                                                 <tr class="me-2">
                                                     <th><small>{{star_name_parameters_form.logg.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.logg %}
-                                                        {% if subfield.id.endswith(last_num) %}
+                                                        {% if subfield.data == 'Manual' %}
                                                             <td>
                                                                 <div class="form-check my-4">
                                                                     {{ subfield(class="form-check-input") }}
@@ -224,7 +223,7 @@
                                                 <tr class="me-2">
                                                     <th><small>{{star_name_parameters_form.mass.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.mass %}
-                                                        {% if subfield.id.endswith(last_num) %}
+                                                        {% if subfield.data == 'Manual' %}
                                                             <td>
                                                                 <div class="form-check my-4">
                                                                     {{ subfield(class="form-check-input") }}
@@ -245,7 +244,7 @@
                                                 <tr class="me-2">
                                                     <th><small>{{star_name_parameters_form.stell_rad.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.stell_rad %}
-                                                        {% if subfield.id.endswith(last_num) %}
+                                                        {% if subfield.data == 'Manual' %}
                                                             <td>
                                                                 <div class="form-check my-4">
                                                                     {{ subfield(class="form-check-input") }}
@@ -266,7 +265,7 @@
                                                 <tr class="me-2">
                                                     <th><small>{{star_name_parameters_form.dist.label}}</small></th>
                                                     {% for subfield in star_name_parameters_form.dist %}
-                                                        {% if subfield.id.endswith(last_num) %}
+                                                        {% if subfield.data == 'Manual' %}
                                                             <td>
                                                                 <div class="form-check my-4">
                                                                     {{ subfield(class="form-check-input") }}
@@ -317,7 +316,7 @@
                                                         <tr class="me-2">
                                                             <th><small>{{star_name_parameters_form.fuv.label}}</small></th>
                                                             {% for subfield in star_name_parameters_form.fuv %}
-                                                                {% if subfield.id.endswith('1') %}
+                                                                {% if subfield.data == 'Manual' %}
                                                                     <td>
                                                                         <div class="form-check my-4">
                                                                             {{ subfield(class="form-check-input") }}
@@ -338,7 +337,7 @@
                                                         <tr class="me-2">
                                                             <th><small>{{star_name_parameters_form.nuv.label}}</small></th>
                                                             {% for subfield in star_name_parameters_form.nuv %}
-                                                                {% if subfield.id.endswith('1') %}
+                                                                {% if subfield.data == 'Manual' %}
                                                                     <td>
                                                                         <div class="form-check my-4">
                                                                             {{ subfield(class="form-check-input") }}
@@ -355,8 +354,6 @@
                                                                 {% endif %}
                                                             {% endfor %}
                                                         </tr>
-        
-        
                                                     </table>
                                                 </div>
                                             {% endif %}
@@ -385,13 +382,30 @@
             {{ parameter_form.submit(class="btn btn-primary", for="parameter-form", id="flux-continue-btn", form="parameter-form") }}
         </div>
     </div>
-
-
-    
 {% endblock %}
 
 {% block script %}
-    <script type="text/javascript">
+    <script src="{{ url_for('static', filename='js/loader.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/modal_form.js') }}"></script>
+    <script>
+        function checkSession() {
+            var inputs;
+            const session = JSON.parse('{{ session|tojson|safe }}');
+            console.log(session);
+
+            inputs = document.getElementsByClassName('form-control');
+
+            for (i = 0; i < inputs.length; i++){
+                if((session.hasOwnProperty(inputs[i].name)) && (inputs[i].name != 'csrf_token')){
+                    console.log(inputs[i]);
+                    console.log(session[inputs[i].name]);
+                    inputs[i].value = session[inputs[i].name];
+                };};};
+
+        window.onload = checkSession;
+    </script>
+
+    <!-- <script type="text/javascript">
         
 
         function showModal() {
@@ -486,5 +500,5 @@
 
         window.onload = checkSession;
 
-    </script>
+    </script> -->
 {% endblock %}

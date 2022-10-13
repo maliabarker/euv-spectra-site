@@ -1,8 +1,6 @@
-from cgitb import text
-from typing import Optional
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, SubmitField, DecimalField, validators, RadioField, widgets
-from wtforms.validators import DataRequired, Length
+from wtforms import StringField, SelectField, SubmitField, DecimalField, validators, RadioField
+from wtforms.validators import DataRequired
 from flask import Markup
 
 teff_label = Markup('T<sub>eff</sub> (K)')

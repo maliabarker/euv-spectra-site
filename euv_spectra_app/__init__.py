@@ -1,7 +1,6 @@
 # initializing main and database
 
 from flask import Flask
-# from flask_sqlalchemy import SQLAlchemy
 from euv_spectra_app.config import Config
 from flask_session import Session
 import os
@@ -12,10 +11,5 @@ app.secret_key = os.urandom(24)
 
 Session(app)
 
-# db = SQLAlchemy(app)
-
 from euv_spectra_app.main.routes import main
 app.register_blueprint(main)
-
-# with app.app_context():
-#     db.create_all()

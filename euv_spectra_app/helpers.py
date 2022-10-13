@@ -22,20 +22,18 @@ import re
 def search_tic(search_input):
     tic_data = Catalogs.query_object(search_input, radius=.02, catalog="TIC")
     return_info = {
-        'name' : 'TESS Input Catalog',
+        'catalog_name' : 'TESS Input Catalog',
         'valid_info' : 0,
         'data' : {},
         'error_msg' : None
     }
     if len(tic_data) > 0:
         data = tic_data[0]
-        # print('TIC')
-        # print(data)
         star_info = {
             'teff' : float(data['Teff']),
             'logg' : float(data['logg']),
             'mass' : float(data['mass']),
-            'rad' : float(data['rad']),
+            'stell_rad' : float(data['rad']),
             'dist' : float(data['d'])
         }
         return_info['data'] = star_info
@@ -53,31 +51,28 @@ def search_tic(search_input):
 def search_nea(search_input):
     nea_data = NasaExoplanetArchive.query_criteria(table="pscomppars", where=f"hostname like '%{search_input}%'", order="hostname")
     return_info = {
-        'name' : 'NASA Exoplanet Archive',
+        'catalog_name' : 'NASA Exoplanet Archive',
         'valid_info' : 0,
         'data' : {},
         'error_msg' : None
     }
     if len(nea_data) > 0:
         data = nea_data[0]
-        # print('NEA')
-        # print(data)
-        # print('———————————————————————————')
-        # print('Exoplanet Archive')
-        # print(data)
         star_info = {
             'teff' : data['st_teff'].unmasked.value,
             'logg' : data['st_logg'],
             'mass' : data['st_mass'].unmasked.value,
-            'rad' : data['st_rad'].unmasked.value,
+            'stell_rad' : data['st_rad'].unmasked.value,
             'dist' : data['sy_dist'].unmasked.value
         }
         return_info['data'] = star_info
         for value in star_info.values():
             if str(value) != 'nan':
                 return_info['valid_info'] += 1
+        # print('———————————————————————————')
+        # print('Exoplanet Archive')
+        # print(data)
         # print(star_info)
-        # print(f'VALID INFO: {valid_info}')
     else:
         return_info['error_msg'] = 'Nothing found for this target'
 
@@ -88,7 +83,7 @@ def search_vizier(search_input):
     keywords = ['teff', 'logg', 'mass', 'rad', 'dist']
 
     return_info = {
-        'name' : 'Vizier',
+        'catalog_name' : 'Vizier',
         'data' : [],
         'error_msg' : None
     }
@@ -107,26 +102,24 @@ def search_vizier(search_input):
     if tables:
         for table_name in tables:
             table = vizier_catalogs[table_name][0]
-            # print('————————————————————————')
-            # print(f'TABLE NAME: {table_name}')
-            # print(table)
             valid_info = 0
             star_info = {
                 'teff' : float(table['Teff']),
                 'logg' : float(table['logg']),
                 'mass' : float(table['Mass']),
-                'rad' : float(table['Rad']),
+                'stell_rad' : float(table['Rad']),
                 'dist' : float(table['Dist'])
             }
 
             for value in star_info.values():
                 if str(value) != 'nan':
                     valid_info += 1
-
+            # print('————————————————————————')
+            # print(f'TABLE NAME: {table_name}')
+            # print(table)
             # print(star_info)
-            # print(f'VALID INFO: {valid_info}')
             table_dict = {
-                'name' : f'Vizier catalog: {table_name}',
+                'catalog_name' : f'Vizier catalog: {table_name}',
                 'data' : star_info,
                 'valid_info' : valid_info,
                 'error_msg' : None
@@ -145,7 +138,7 @@ def search_vizier(search_input):
 '''—————————SIMBAD START—————————'''
 def search_simbad(search_input):
     return_info = {
-        'name' : 'Simbad',
+        'catalog_name' : 'Simbad',
         'data' : {},
         'error_msg' : None
     }
@@ -153,7 +146,7 @@ def search_simbad(search_input):
     result_table = customSimbad.query_object(search_input)
     if result_table and len(result_table) > 0:
         data = result_table[0]
-        print(data)
+        #print(data)
         return_info['data'] = {
             'ra': data['RA'], 
             'dec': data['DEC'], 
@@ -172,7 +165,7 @@ def search_simbad(search_input):
 def search_galex(ra, dec):
     galex_data = Catalogs.query_object(f'{ra} {dec}', catalog="GALEX")
     return_info = {
-        'name' : 'GALEX',
+        'catalog_name' : 'GALEX',
         'data' : {},
         'error_msg' : None
     }
@@ -197,7 +190,7 @@ def search_galex(ra, dec):
 '''———————COORD CORRECTION START———————'''
 def correct_pm(data, star_name):
     return_info = {
-        'name' : 'Corrected Coords',
+        'catalog_name' : 'Corrected Coords',
         'data' : {},
         'error_msg' : None
     }
@@ -209,7 +202,7 @@ def correct_pm(data, star_name):
     else:
         print(f'TIME {galex_time}')
         try:
-            print('trying to correct')
+            print('Correcting coords...')
             coords = data['ra'] + ' ' + data['dec']
 
             t3 = Time(galex_time, format='mjd') - Time(51544.0, format='mjd')
@@ -239,7 +232,7 @@ def correct_pm(data, star_name):
 '''—————————GAIA START—————————'''
 def search_gaia(search_input):
     return_info = {
-        'name' : 'Gaia',
+        'catalog_name' : 'Gaia',
         'data' : {},
         'error_msg' : None
     }
@@ -287,6 +280,8 @@ def search_gaia(search_input):
         return_info['error_msg'] = 'No data found for this target, please try again'
     return return_info
 '''—————————GAIA END—————————'''
+
+
 
 def test_space_motion():
     print('TESTING SPACE MOTION')
