@@ -31,9 +31,9 @@ def make_session_permanent():
 @main.route('/', methods=['GET', 'POST'])
 def homepage():
     #session.clear()
-    print(session)
     #test_space_motion()
-
+    print(session)
+    
     parameter_form = StarForm()
     name_form = StarNameForm()
     position_form = PositionForm()
@@ -127,15 +127,10 @@ def homepage():
 
         elif session.get('star_name'):
             print('star name parameter form validated!')
-
             form_data = request.form
-            print(form_data)
 
             for key in form_data:
                 # ignoring all manual parameters, submit, csrf token, and catalog names
-                # to_ignore = ['manual', 'submit', 'csrf_token', 'catalog_name']
-                # print(bool([ele for ele in ['manual', 'submit', 'csrf_token', 'catalog_name'] if(ele in key)]))
-                
                 if 'manual' not in key and 'submit' not in key and 'csrf_token' not in key and 'catalog_name' not in key:
                     print('form key '+key+" "+form_data[key])
                     session[key] = form_data[key]
@@ -153,10 +148,5 @@ def ex_result():
 
 
 
-# TODO (stretch challenge) allow for file uploads to AWS bucket if adding new models/spectra, pagination
-# from werkzeug.utils import secure_filename
-# from data_app.util.helpers import upload_file_to_s3, read_csv_from_s3
-# for uploading files
-# ALLOWED_EXTENSIONS = {'png', 'csv'}
 # FOR PAGINATION OF RESULTS OR SEARCH
 # from flask_paginate import Pagination, get_page_parameter
