@@ -111,7 +111,7 @@ def read_model_table(file_path, collection):
 #read_model_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/M0_models.csv', m0_grid)
 
 #upload_fits_file('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/fits_files/M0.Teff=3850.logg=4.78.TRgrad=7.5.cmtop=5.5.cmin=3.5.7.gz.fits')
-all_fits_files = os.listdir('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/fits_files')
+#all_fits_files = os.listdir('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/fits_files')
 #for file in all_fits_files:
     #upload_fits_file(f'/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/fits_files/{file}')
 '''——————END MONGO DATABASE STUFF——————'''

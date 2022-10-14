@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm, StarNameParametersForm
 from euv_spectra_app.helpers_astropy import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion
-from euv_spectra_app.helpers_db import *
+# from euv_spectra_app.helpers_db import *
 main = Blueprint("main", __name__)
 
 '''
