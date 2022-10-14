@@ -15,10 +15,6 @@ from astropy.coordinates import SkyCoord, Distance
 import astropy.units as u
 from astropy.time import Time
 
-from euv_spectra_app.extensions import *
-import pandas as pd
-import re
-
 def search_tic(search_input):
     tic_data = Catalogs.query_object(search_input, radius=.02, catalog="TIC")
     return_info = {
@@ -212,9 +208,11 @@ def correct_pm(data, star_name):
             td_year = t3.sec / 60 / 60 / 24 / 365.25
 
             c = SkyCoord(coords, unit=(u.hourangle, u.deg), distance=Distance(parallax=data['parallax']*u.mas, allow_negative=True), pm_ra_cosdec=data['pmra']*u.mas/u.yr, pm_dec=data['pmdec']*u.mas/u.yr)
+            print('ORIGINAL COORDS')
             print(c)
 
             # c = SkyCoord(ra=data['ra']*u.degree, dec=data['dec']*u.degree, distance=Distance(parallax=data['parallax']*u.mas, allow_negative=True), pm_ra_cosdec=data['pmra']*u.mas/u.yr, pm_dec=data['pmdec']*u.mas/u.yr, radial_velocity=data['rad_vel']*u.km/u.s, obstime=Time(data['ref_epoch'], format='jyear', scale='tcb'))
+            print('CORRECTED COORDS')
             print(c.apply_space_motion(dt=td_year * u.yr))
 
             return_info['data'] = {
@@ -291,73 +289,3 @@ def test_space_motion():
     c1 = SkyCoord(ra=269.44850252543836 * u.deg, dec=4.739420051112412 * u.deg, distance=Distance(parallax=546.975939730948 * u.mas), pm_ra_cosdec=-801.5509783684709 * u.mas/u.yr, pm_dec=10362.394206546573 * u.mas/u.yr, radial_velocity=-110.46822 * u.km/u.s, obstime=Time(2016, format='jyear', scale='tcb'))
     print(c1)
     print(c1.apply_space_motion(new_obstime=Time(2050, format='jyear', scale='tcb')))
-
-
-'''———————DATABASE STUFF———————'''
-def read_model_parameter_table(file_path):
-    # step 1: read in csv file with pandas
-    DATAPATH = file_path
-    dataset = pd.read_csv(DATAPATH)
-    for index, row in dataset.iterrows():
-        model = {
-            'model' : row['Spectral_Type'],
-            'teff' : row['Teff'],
-            'logg' : row['logg'],
-            'mass' : row['M']
-        }
-        print(model)
-        model_parameter_grid.insert_one(model)
-    return 'Completed!'
-
-def read_model_table(file_path, collection):
-    # step 1: read in csv file with pandas
-    DATAPATH = file_path
-    dataset = pd.read_csv(DATAPATH)
-
-    # step 2: iterate over each row to assign variables and input info accordingly:
-    #     FROM FILENAME (use regex)
-    #         - get full fits filename
-    #         - get model (ex: M0)
-    #         - get teff
-    #         - get logg
-    #         - get TRgrad
-    #         - get cmtop 
-    #         - get cmmin
-    #     FROM FLUXES & MASS
-    #         - Mass
-    #         - EUV
-    #         - FUV
-    #         - NUV
-    #         - J
-
-    print(f'Adding files to {collection}')
-
-    for index, row in dataset.iterrows():
-        model_str = row['Model']
-
-        # step 3: append each new row & matching info to DB
-        new_model = {
-            'fits_filename' : model_str,
-            'model' : model_str[:2],
-            'teff' : re.search("(?<=Teff=)[^aA-zZ=][.]{0,1}\d*", model_str).group(),
-            'logg' : re.search("(?<=logg=)[^aA-zZ=][.]{0,1}\d*", model_str).group(),
-            'mass' : row['Mass'],
-            'trgrad' : re.search("(?<=TRgrad=)[^aA-zZ=][.]{0,1}\d*", model_str).group(),
-            'cmtop' : re.search("(?<=cmtop=)[^aA-zZ=][.]{0,1}\d*", model_str).group(),
-            'cmin' : re.search("(?<=cmin=)[^aA-zZ=][.]{0,1}\d*", model_str).group(),
-            'euv' : row['F_EUV'],
-            'fuv' : row['F_FUV'],
-            'nuv' : row['F_NUV'],
-            'j' : row['F_J']
-        }
-
-        collection.insert_one(new_model)
-
-        print(new_model['fits_filename'], new_model['model'], new_model['teff'], new_model['logg'], new_model['mass'], new_model['trgrad'], new_model['cmtop'], new_model['cmin'], new_model['euv'], new_model['fuv'], new_model['nuv'], new_model['j'])
-    return 'Completed!'
-
-#read_model_parameter_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/model_parameter_grid.csv')
-
-
-#read_model_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/M0_models.csv', m0_grid)
-'''——————END DATABASE STUFF——————'''

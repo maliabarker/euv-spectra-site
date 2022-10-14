@@ -116,10 +116,17 @@
                         <div id="fuv-flags-container" class="text-center">
                             <span class="me-3">FUV Flags:</span>
                             {% for subfield in parameter_form.fuv_flag %}
-                                <div class="form-check form-check-inline my-4">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
-                                </div>
+                                {% if subfield.data == 'null' %}
+                                    <div class="form-check form-check-inline my-4">
+                                        {{ subfield(class="form-check-input", onclick="populateNullFlux(this);") }}
+                                        {{ subfield.label(class="form-check-label") }}
+                                    </div>
+                                {% else %}
+                                    <div class="form-check form-check-inline my-4">
+                                        {{ subfield(class="form-check-input") }}
+                                        {{ subfield.label(class="form-check-label") }}
+                                    </div>
+                                {% endif %}
                             {% endfor %}
                         </div>
                         
@@ -135,15 +142,19 @@
                         <div id="nuv-flags-container" class="text-center">
                             <span class="me-3">NUV Flags:</span>
                             {% for subfield in parameter_form.nuv_flag %}
-                                <div class="form-check form-check-inline my-4">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
-                                </div>
+                                {% if subfield.data == 'null' %}
+                                    <div class="form-check form-check-inline my-4">
+                                        {{ subfield(class="form-check-input", onclick="populateNullFlux(this);") }}
+                                        {{ subfield.label(class="form-check-label") }}
+                                    </div>
+                                {% else %}
+                                    <div class="form-check form-check-inline my-4">
+                                        {{ subfield(class="form-check-input") }}
+                                        {{ subfield.label(class="form-check-label") }}
+                                    </div>
+                                {% endif %}
                             {% endfor %}
                         </div>
-                        {#<!-- <div class="d-flex justify-content-end">
-                            {{ parameter_form.submit(class="btn btn-primary mb-3", for="parameter-form") }}
-                        </div> -->#}
                     </fieldset>
                 </form>
             </div>

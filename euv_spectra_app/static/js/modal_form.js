@@ -32,6 +32,8 @@ function selectAllGalex(obj) {
     console.log(obj.id)
     document.getElementById('fuv-0').checked = true;
     document.getElementById('nuv-0').checked = true;
+    document.getElementById('fuv_err-0').checked = true;
+    document.getElementById('nuv_err-0').checked = true;
 }
 //—————————————————————————SELECT ALL END————————————————————————
 
@@ -42,7 +44,7 @@ function checkManualRadio(obj) {
 };
 
 function checkManualInputs(){
-    // check all radio buttons and if a manual radio button is clicked assign the value to 
+    // check all radio buttons and if a manual radio button is clicked assign the value from manual input to the actual input
     const manualBtns = document.querySelectorAll(`[id*="{{ last_num }}"]`);
     for(i = 0; i < manualBtns.length; i++){
         if (manualBtns[i].checked) {
@@ -52,3 +54,16 @@ function checkManualInputs(){
     };
     return true; // submit the form
 };
+
+//—————————————————————————NOT DETECTED FLAG CHECKS————————————————————————
+function populateNullFlux(obj) {
+    console.log(obj.id)
+    whichFlux = obj.id.slice(0,3)
+    console.log(whichFlux)
+    const fluxInputs = document.getElementById('parameter-form').querySelectorAll(`[id*="${whichFlux}"]`);
+    for(i = 0; i < fluxInputs.length; i++) {
+        if (fluxInputs[i].id != obj.id){
+            fluxInputs[i].value = parseFloat(-999.0);
+        };
+    };
+}

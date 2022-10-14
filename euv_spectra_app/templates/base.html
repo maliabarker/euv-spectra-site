@@ -16,9 +16,12 @@
     <body>
 
         {% include 'partials/navbar.html' %}
+
         <div class="container">
             {% for message in get_flashed_messages() %}
-                <p class="mt-2">{{ message }}</p>
+                <div class="alert alert-primary" role="alert">
+                    {{ message }}
+                </div>
             {% endfor %}
             {% block content %}{% endblock %}
         </div>

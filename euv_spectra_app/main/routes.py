@@ -1,12 +1,11 @@
-from cgi import test
-from flask import Blueprint, request, render_template, redirect, url_for, session
+from flask import Blueprint, request, render_template, redirect, url_for, session, flash
 from collections import defaultdict
-from euv_spectra_app.extensions import app
+from euv_spectra_app.extensions import *
 from datetime import timedelta
 
 from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm, StarNameParametersForm
-from euv_spectra_app.helpers import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion
-
+from euv_spectra_app.helpers_astropy import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion
+from euv_spectra_app.helpers_db import *
 main = Blueprint("main", __name__)
 
 '''
@@ -49,12 +48,43 @@ def homepage():
 # '''————————————————————HOME PARAMETER FORM————————————————————'''
         if parameter_form.validate_on_submit():
             print('parameter form validated!')
-            print(parameter_form)
-
             for fieldname, value in parameter_form.data.items():
                 print(fieldname, value)
 
-            return redirect(url_for('main.ex_result'))
+            # add search functionality
+
+            # STEP 1: Search the model_parameter_grid collection to find closest matching subtype
+            matching_subtype = model_parameter_grid.aggregate([
+                {'$facet': {
+                    'matchedTeff': [
+                        # Project a diff field that's the absolute difference along with the original doc.
+                        {'$project': {'diff': {'$abs': {'$subtract': [float(session['teff']), '$teff']}}, 'doc': '$$ROOT'}},
+                        # Order the docs by diff, Take the first one, Add new weighted field
+                        {'$sort': {'diff': 1}}, {'$limit': 1}, {'$addFields': {'weight': 10}}],
+                    'matchedLogg': [
+                        {'$project': {'diff': {'$abs': {'$subtract': [float(session['logg']), '$logg']}}, 'doc': '$$ROOT'}},
+                        {'$sort': {'diff': 1}}, {'$limit': 1}, {'$addFields': {'weight': 5}}],
+                    'matchedMass': [
+                        {'$project': {'diff': {'$abs': {'$subtract': [float(session['mass']), '$mass']}}, 'doc': '$$ROOT'}},
+                        {'$sort': {'diff': 1}}, {'$limit': 1}, {'$addFields': {'weight': 2}}]
+                }},
+                # get them together. Should list all rules from above  
+                {'$project': {'doc': {'$concatArrays': ["$matchedTeff", "$matchedLogg", "$matchedMass"]}}},
+                # split them apart, order by weight & desc, return top document
+                {'$unwind': "$doc"}, {'$sort': {"doc.weight": -1}}, {'$limit': 1},
+                # reshape to retrieve documents in its original format 
+                {'$project': {'_id': "$doc._id", 'model': "$doc.doc.model", 'teff': "$doc.doc.teff", 'logg': "$doc.doc.logg", 'mass': "$doc.doc.mass"}}
+            ])
+
+            subtype_doc = ''
+            for doc in matching_subtype:
+                # print('closest matching doc:')
+                # print(doc)
+                subtype_doc = model_parameter_grid.find_one(doc['_id'])
+
+            print(subtype_doc['model'])
+            flash('_ Results were found within your submitted parameters')
+            return render_template('result.html', subtype=subtype_doc)
 
 
 # '''————————————————————HOME POSITION FORM————————————————————'''

@@ -4,6 +4,7 @@ from flask import Flask
 from pymongo import MongoClient
 from os import environ
 from euv_spectra_app.config import Config
+import gridfs
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -13,10 +14,12 @@ uri = environ.get('MONGODB_URI')
 client = MongoClient(uri)
 my_db = environ.get('MONGODB_DATABASE')
 db = client.get_database(my_db)
+grid_fs = gridfs.GridFS(db)
 # ===========================
 
 # ======= Collections ==========
 model_parameter_grid = db.model_parameter_grid
+fits_files = db.fits_files
 m0_grid = db.m0_grid
 m1_grid = db.m1_grid
 m2_grid = db.m2_grid
