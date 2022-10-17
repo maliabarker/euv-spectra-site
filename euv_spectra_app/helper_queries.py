@@ -32,7 +32,7 @@ def find_matching_subtype(session):
     return subtype_doc
 
 def find_matching_photosphere(session):
-    matching_temp = starter_photosphere_models.aggregate([
+    matching_temp = photosphere_models.aggregate([
         {'$project': {'diff': {'$abs': {'$subtract': [session['teff'], '$teff']}}, 'doc': '$$ROOT'}},
         {'$sort': {'diff': 1}},
         {'$limit': 1}
@@ -42,7 +42,7 @@ def find_matching_photosphere(session):
         # print(doc['doc']['teff'])
         teff = doc['doc']['teff']
 
-    matching_photospheric_flux = starter_photosphere_models.aggregate([
+    matching_photospheric_flux = photosphere_models.aggregate([
         {'$match': {'teff': teff}},
         {'$facet': {
             'matchedLogg': [

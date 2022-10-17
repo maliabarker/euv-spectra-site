@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
 from euv_spectra_app.helpers_astropy import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion
-#from euv_spectra_app.helpers_db import *
+from euv_spectra_app.helpers_db import *
 from euv_spectra_app.helper_fits import *
 from euv_spectra_app.helper_queries import *
 main = Blueprint("main", __name__)
@@ -67,35 +67,46 @@ def homepage():
             matching_photospheric_flux = find_matching_photosphere(session)
 
             # want to add numbers to queries (diff value) then add the values and return query with lowest value?
-            matching_photospheric_flux_test = starter_photosphere_models.aggregate([
-                {'$facet': {
-                    'matchedTeff': [
-                        {'$project': {'diff': {'$abs': {'$subtract': [session['teff'], '$teff']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
+            # matching_photospheric_flux_test = starter_photosphere_models.aggregate([
+            #     {'$facet': {
+            #         'matchedTeff': [
+            #             {'$project': {'diff': {'$abs': {'$subtract': [session['teff'], '$teff']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
 
-                    'matchedLogg': [
-                        {'$project': {'diff': {'$abs': {'$subtract': [session['logg'], '$logg']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
-                }},
-                # get them together. Should list all rules from above  
-                {'$project': {'doc': {'$concatArrays': ["$matchedTeff", "$matchedLogg"]}}},
-                # split them apart, order by weight & desc, return top document
-                # {'$unwind': "$doc"}, {}
-                # {'$unwind': "$doc"}, {'$sort': {"doc.diff": -1}}, 
-                {'$limit': 1},
-                # reshape to retrieve documents in its original format 
-                #{'$project': {'_id': "$doc._id", 'fits_filename': "$doc.doc.fits_filename", 'teff': "$doc.doc.teff", 'logg': "$doc.doc.logg", 'mass': "$doc.doc.mass", 'euv': "$doc.doc.euv", 'nuv': "$doc.doc.nuv", 'fuv': "$doc.doc.fuv"}}
-            ])
-            print('TESTING')
-            for doc in matching_photospheric_flux_test:
-                print(doc)
+            #         'matchedLogg': [
+            #             {'$project': {'diff': {'$abs': {'$subtract': [session['logg'], '$logg']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
+            #     }},
+            #     # get them together. Should list all rules from above  
+            #     {'$project': {'doc': {'$concatArrays': ["$matchedTeff", "$matchedLogg"]}}},
+            #     # split them apart, order by weight & desc, return top document
+            #     # {'$unwind': "$doc"}, {}
+            #     # {'$unwind': "$doc"}, {'$sort': {"doc.diff": -1}}, 
+            #     {'$limit': 1},
+            #     # reshape to retrieve documents in its original format 
+            #     #{'$project': {'_id': "$doc._id", 'fits_filename': "$doc.doc.fits_filename", 'teff': "$doc.doc.teff", 'logg': "$doc.doc.logg", 'mass': "$doc.doc.mass", 'euv': "$doc.doc.euv", 'nuv': "$doc.doc.nuv", 'fuv': "$doc.doc.fuv"}}
+            # ])
+            # print('TESTING')
+            # for doc in matching_photospheric_flux_test:
+            #     print(doc)
+
+            #STEP 3: Convert GALEX mJy t
 
             #STEP 3: Multiply FUV and NUV by dist^2/rad^2
+            # convert GALEX from mjy to erg/s/cm2/A
+            # cgs = 3e-5 * Jy / wavelength**2
+
+            # converted_galex_flux = 3e^-5 * (galex_flux*10^-6) / wavelength^2
+
+            # arb wvelength for FUV = 1542.3
+            # arb wavelength for NUV = 2274.4
+
+            # upper lim, lower lim for each flux (errors), then convert and scale as well, also subtract photospheric flux
             dist_sqr = pow(session['dist'], 2)
             rad_sqr = pow(session['stell_rad'], 2)
-            arb_num = dist_sqr/rad_sqr
-            print(arb_num)
+            scale = dist_sqr/rad_sqr
+            print(scale)
 
-            session['fuv'] = session['fuv'] * arb_num
-            session['nuv'] = session['nuv'] * arb_num
+            session['fuv'] = session['fuv'] * scale
+            session['nuv'] = session['nuv'] * scale
             print(session)
 
             #STEP 4: Subtract photospheric fluxes from FUV and NUV
@@ -104,8 +115,13 @@ def homepage():
             session['nuv'] = session['nuv'] - matching_photospheric_flux['nuv']
             print(session)
 
-            #STEP 5: Do chi squared test between all models within selected subgrid and corrected observation to find (3?) closest matching data points
+            #STEP 5: Do chi squared test between all models within selected subgrid and corrected observation ** this is on models with subtracted photospheric flux
             # final_models = find_models()
+            # chisq2= sum((modelflux[i]- GALEX[i])**2 / GALEX[i])
+            # catch if there's no fuv/nuv detection, chi squared JUST over one flux
+            # return all within upper and lower limits for fluxes (w/ chi squared values)
+            # return from lowest chi squared - highest
+            # return euv flux is <euv_flux> +/- difference from model
 
             #STEP 6: Read FITS file from matching models and create graph from data
             #file = find_fits_file(<filename>)
@@ -227,11 +243,15 @@ def send_email():
     print(form)
     if form.validate_on_submit():
         # send email
-        msg = Message(form.subject.data, sender=form.email.data, recipients=['phoenixpegasusgrid@gmail.com'])
+        print(form.email.data)
+        msg = Message(form.subject.data, sender='phoenixpegasusgrid@gmail.com', recipients=[form.email.data])
         msg.body = form.message.data
         mail.send(msg)
         flash('Email sent!')
         return redirect(url_for('main.homepage'))
+    else:
+        print(form.errors)
+        flash('error')
 
 
 

@@ -23,6 +23,7 @@ grid_fs = gridfs.GridFS(db)
 # ======= Collections ==========
 model_parameter_grid = db.model_parameter_grid
 starter_photosphere_models = db.starter_photosphere_models
+photosphere_models = db.photosphere_models
 fits_files = db.fits_files
 m0_grid = db.m0_grid
 m1_grid = db.m1_grid
@@ -33,6 +34,7 @@ m5_grid = db.m5_grid
 m6_grid = db.m6_grid
 m7_grid = db.m7_grid
 m8_grid = db.m8_grid
+
 # =========================
 
 mail.init_app(app)
