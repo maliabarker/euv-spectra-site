@@ -6,19 +6,24 @@ from datetime import timedelta
 
 from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
 from euv_spectra_app.helpers_astropy import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion
-# from euv_spectra_app.helpers_db import *
+#from euv_spectra_app.helpers_db import *
+from euv_spectra_app.helper_fits import *
+from euv_spectra_app.helper_queries import *
 main = Blueprint("main", __name__)
 
 '''
 ————TODO—————
-1. Do something about space motion function? For PM
-2. Check if either flux is null and make radio choice as not detected (will need to change javascript autofill function for these radio buttons)
-3. If no galex data found: flash no galex data was found, somehow let user know theres no galex data, maybe in template?
+1. Autofill null flux flag in parameter form if flux is null in search results (will need to change javascript autofill function for these radio buttons)
+2. If no galex data found: flash no galex data was found, somehow let user know theres no galex data, maybe in template?
+3. Change all form submissions to own routes
 '''
 
 '''
 ————NOTE————
-
+- Will we be searching for photosphere models under the specified model subtype? Or will we search this same start photosphere flux file?
+- what is point of multiplying fluxes by the dist^2/rad^2 number? do we then subtract photospheric fluxes from fluxes multiplied by this number?
+- do we find matching photospheric flux with temp, logg, and mass?
+- What are units for photospheric fluxes? Seem pretty large
 '''
 
 @main.before_request
@@ -54,40 +59,65 @@ def homepage():
             for fieldname, value in parameter_form.data.items():
                 print(fieldname, value)
 
-            # add search functionality
-
             # STEP 1: Search the model_parameter_grid collection to find closest matching subtype
-            matching_subtype = model_parameter_grid.aggregate([
+            matching_subtype = find_matching_subtype(session)
+            session['model_subtype'] = matching_subtype['model']
+
+            #STEP 2: Find closest matching photosphere model and get flux values
+            matching_photospheric_flux = find_matching_photosphere(session)
+
+            # want to add numbers to queries (diff value) then add the values and return query with lowest value?
+            matching_photospheric_flux_test = starter_photosphere_models.aggregate([
                 {'$facet': {
                     'matchedTeff': [
-                        # Project a diff field that's the absolute difference along with the original doc.
-                        {'$project': {'diff': {'$abs': {'$subtract': [float(session['teff']), '$teff']}}, 'doc': '$$ROOT'}},
-                        # Order the docs by diff, Take the first one, Add new weighted field
-                        {'$sort': {'diff': 1}}, {'$limit': 1}, {'$addFields': {'weight': 10}}],
+                        {'$project': {'diff': {'$abs': {'$subtract': [session['teff'], '$teff']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
+
                     'matchedLogg': [
-                        {'$project': {'diff': {'$abs': {'$subtract': [float(session['logg']), '$logg']}}, 'doc': '$$ROOT'}},
-                        {'$sort': {'diff': 1}}, {'$limit': 1}, {'$addFields': {'weight': 5}}],
-                    'matchedMass': [
-                        {'$project': {'diff': {'$abs': {'$subtract': [float(session['mass']), '$mass']}}, 'doc': '$$ROOT'}},
-                        {'$sort': {'diff': 1}}, {'$limit': 1}, {'$addFields': {'weight': 2}}]
+                        {'$project': {'diff': {'$abs': {'$subtract': [session['logg'], '$logg']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
                 }},
                 # get them together. Should list all rules from above  
-                {'$project': {'doc': {'$concatArrays': ["$matchedTeff", "$matchedLogg", "$matchedMass"]}}},
+                {'$project': {'doc': {'$concatArrays': ["$matchedTeff", "$matchedLogg"]}}},
                 # split them apart, order by weight & desc, return top document
-                {'$unwind': "$doc"}, {'$sort': {"doc.weight": -1}}, {'$limit': 1},
+                # {'$unwind': "$doc"}, {}
+                # {'$unwind': "$doc"}, {'$sort': {"doc.diff": -1}}, 
+                {'$limit': 1},
                 # reshape to retrieve documents in its original format 
-                {'$project': {'_id': "$doc._id", 'model': "$doc.doc.model", 'teff': "$doc.doc.teff", 'logg': "$doc.doc.logg", 'mass': "$doc.doc.mass"}}
+                #{'$project': {'_id': "$doc._id", 'fits_filename': "$doc.doc.fits_filename", 'teff': "$doc.doc.teff", 'logg': "$doc.doc.logg", 'mass': "$doc.doc.mass", 'euv': "$doc.doc.euv", 'nuv': "$doc.doc.nuv", 'fuv': "$doc.doc.fuv"}}
             ])
+            print('TESTING')
+            for doc in matching_photospheric_flux_test:
+                print(doc)
 
-            subtype_doc = ''
-            for doc in matching_subtype:
-                # print('closest matching doc:')
-                # print(doc)
-                subtype_doc = model_parameter_grid.find_one(doc['_id'])
+            #STEP 3: Multiply FUV and NUV by dist^2/rad^2
+            dist_sqr = pow(session['dist'], 2)
+            rad_sqr = pow(session['stell_rad'], 2)
+            arb_num = dist_sqr/rad_sqr
+            print(arb_num)
 
-            print(subtype_doc['model'])
+            session['fuv'] = session['fuv'] * arb_num
+            session['nuv'] = session['nuv'] * arb_num
+            print(session)
+
+            #STEP 4: Subtract photospheric fluxes from FUV and NUV
+            #ERROR: This gives huge negative value, are units the same?
+            session['fuv'] = session['fuv'] - matching_photospheric_flux['fuv']
+            session['nuv'] = session['nuv'] - matching_photospheric_flux['nuv']
+            print(session)
+
+            #STEP 5: Do chi squared test between all models within selected subgrid and corrected observation to find (3?) closest matching data points
+            # final_models = find_models()
+
+            #STEP 6: Read FITS file from matching models and create graph from data
+            #file = find_fits_file(<filename>)
+            file = find_fits_file('M0.Teff=3850.logg=4.78.TRgrad=7.5.cmtop=5.5.cmin=3.5.7.gz.fits')
+            fig = create_graph(file, session)
+
+            #STEP 7: Convert graph into html component and send to front end
+            html_string = convert_fig_to_html(fig)
+            #print(html_string)
+
             flash('_ Results were found within your submitted parameters')
-            return render_template('result.html', subtype=subtype_doc)
+            return render_template('result.html', subtype=matching_subtype, contact_form=contact_form, graph=html_string)
 
 
 # '''————————————————————HOME POSITION FORM————————————————————'''
@@ -158,13 +188,12 @@ def homepage():
                 # ignoring all manual parameters, submit, csrf token, and catalog names
                 if 'manual' not in key and 'submit' not in key and 'csrf_token' not in key and 'catalog_name' not in key:
                     print('form key '+key+" "+form_data[key])
-                    session[key] = form_data[key]
+                    session[key] = float(form_data[key])
                     
             print(session)
             return redirect(url_for('main.homepage'))
 
     return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, show_modal=False, contact_form=contact_form)
-
 
 
 

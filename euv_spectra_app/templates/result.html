@@ -8,7 +8,7 @@
         <div class="text-center"><p>Chi Squared Value of Match : ~something here?~</p></div>
         
         <div class="col-sm-6 offset-sm-3">
-            <img src="{{url_for('static', filename='imgs/ex-spectrum.png')}}" alt="" class="img-fluid">
+            <div>{{ graph|safe }}</div>
         </div>
 
         <nav aria-label="Page navigation example" class="mt-5">
