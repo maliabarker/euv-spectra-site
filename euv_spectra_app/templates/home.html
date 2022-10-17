@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
 {% block title %}Home{% endblock %}
-{% block content %}
 
+{% block content %}
     <div class="container" onload="checkSession()">     
         
         <div id="overlay">
@@ -22,8 +22,7 @@
             </div>
             <p>The PHOENIX EUV Grid and Stellar UV Spectra (PEGASUS) webtool returns a generalized high resolution (Δλ < 0.01 Å) synthetic extreme ultraviolet (EUV; 100-1000 Å) spectrum for a searched target star of the M or K spectral type.</p>
             <p>Required inputs for returning a spectrum are effective temperature, surface gravity, mass, radius, distance, and GALEX FUV and NUV fluxes.</p>
-            <p>Users have the option to use Star Name or ICRS coordinates to query the catalogs detailed on our <a href="">About</a> page to retrieve these parameters or they can enter the values manually.</p>
-            <!--<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>-->
+            <p>Users have the option to use Star Name or ICRS coordinates to query the catalogs detailed on our <a href="/about">About</a> page to retrieve these parameters or they can enter the values manually.</p>
         </div>
 
         <div class="row mt-5">
@@ -41,6 +40,7 @@
 
             <div class="col-md-6">
                 <p class="text-center mb-4"><b>Enter Stellar Parameters and Fluxes Manually</b></p>
+                <!--—————————PARAMETER FORM——————————-->
                 {% include 'partials/parameter_form.html' %}
             </div>
 
@@ -57,6 +57,7 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
+                                <!--—————————MODAL FORM——————————-->
                                 {% include 'partials/modal_form.html' %}
                             </div>
                         </div>
@@ -68,7 +69,6 @@
                     modal.show();
                 </script>
             {% endif %}
-
         </div>
 
         <div class="text-center my-5">
@@ -97,101 +97,4 @@
 
         window.onload = checkSession;
     </script>
-
-    <!-- <script type="text/javascript">
-        
-
-        function showModal() {
-            var myModalEl = document.getElementById('myModal');
-            var modal = new bootstrap.Modal(myModalEl);
-            modal.show();
-        };
-
-
-//—————————————————————————LOADER START————————————————————————
-        const loader = document.querySelector("#loading");
-        const overlay = document.getElementById("overlay");
-        
-        // showing loading
-        function displayLoading() {
-            loader.classList.add("display");
-            overlay.style.display = "block";
-        }
-
-        // hiding loading
-        function hideLoading() {
-            loader.classList.remove("display");
-            overlay.style.display = "none";
-        }
-//—————————————————————————LOADER END————————————————————————
-
-
-//—————————————————————————SELECT ALL START————————————————————————
-        function selectAll(obj) {
-            console.log(obj.id)
-
-            // get all selectall buttons
-            const selectAllBtns = document.getElementById('star_name_parameter_form_table').querySelectorAll(`[id*="catalog_name"]`);
-            console.log(selectAllBtns)
-            // check to make sure no other select all buttons are checked
-            for (i=0; i < selectAllBtns.length; i++) {
-                if ( selectAllBtns[i].id != obj.id ) {
-                    selectAllBtns[i].checked = false;
-                }
-            };
-
-            // get identifying number
-            const num = obj.id.match(/(\d+)/)[0];
-            // get all radios w identifying number
-            const btns = document.getElementById('star_name_parameter_form_table').querySelectorAll(`[id*="${num}"]`);
-            // check radio btns
-            for( i = 0 ; i < btns.length ; i++ ) {
-                btns[i].checked = true;
-            };
-        };
-
-        function selectAllGalex(obj) {
-            console.log(obj.id)
-            const fuvBtn = document.getElementById('fuv-0').checked = true;
-            const nuvBtn = document.getElementById('nuv-0').checked = true;
-        }
-//—————————————————————————SELECT ALL END————————————————————————
-
-
-        function checkManualRadio(obj) {
-            obj.previousElementSibling.checked = true;
-        };
-
-        function checkManualInputs(){
-            // check all radio buttons and if a manual radio button is clicked assign the value to 
-            const manualBtns = document.querySelectorAll(`[id*="{{ last_num }}"]`);
-            for(i = 0; i < manualBtns.length; i++){
-                if (manualBtns[i].checked) {
-                    const newVal = manualBtns[i].nextElementSibling.value
-                    manualBtns[i].value = newVal
-                };
-            };
-            return true; // submit the form
-        };
-    
-        function checkSession() {
-            var inputs;
-            const session = JSON.parse('{{ session|tojson|safe }}');
-            console.log(session);
-
-            // inputs = document.getElementsByTagName('input');
-            inputs = document.getElementsByClassName('form-control');
-
-            for (i = 0; i < inputs.length; i++){
-                if((session.hasOwnProperty(inputs[i].name)) && (inputs[i].name != 'csrf_token')){
-                    console.log(inputs[i]);
-                    console.log(session[inputs[i].name]);
-                    inputs[i].value = session[inputs[i].name];
-                };
-            };
-        };
-
-        window.onload = checkSession;
-
-    </script> -->
 {% endblock %}

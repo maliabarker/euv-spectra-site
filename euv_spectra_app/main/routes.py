@@ -174,6 +174,24 @@ def ex_result():
     return render_template('result.html', contact_form=contact_form)
 
 
+@main.route('/about', methods=['GET'])
+def about():
+    contact_form = ContactForm()
+    return render_template('about.html', contact_form=contact_form)
+
+
+@main.route('/faqs', methods=['GET'])
+def faqs():
+    contact_form = ContactForm()
+    return render_template('faqs.html', contact_form=contact_form)
+
+
+@main.route('/all-spectra', methods=['GET'])
+def index_spectra():
+    contact_form = ContactForm()
+    return render_template('index-spectra.html', contact_form=contact_form)
+
+
 @main.route('/contact', methods=['POST'])
 def send_email():
     form = ContactForm(request.form)
