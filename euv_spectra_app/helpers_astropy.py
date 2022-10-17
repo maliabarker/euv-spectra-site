@@ -14,6 +14,7 @@ Gaia.ROW_LIMIT = 1
 from astropy.coordinates import SkyCoord, Distance
 import astropy.units as u
 from astropy.time import Time
+import numpy as np
 
 def search_tic(search_input):
     tic_data = Catalogs.query_object(search_input, radius=.02, catalog="TIC")
@@ -151,6 +152,7 @@ def search_simbad(search_input):
             'parallax': data['PLX_VALUE'],
             'rad_vel': data['RV_VALUE']
         }
+        
     else:
         return_info['error_msg'] = 'No target found for that star name. Please try again.'
     return return_info
@@ -203,17 +205,23 @@ def correct_pm(data, star_name):
         try:
             print('Correcting coords...')
             coords = data['ra'] + ' ' + data['dec']
+            c = ''
 
             t3 = Time(galex_time, format='mjd') - Time(51544.0, format='mjd')
             td_year = t3.sec / 60 / 60 / 24 / 365.25
-
-            c = SkyCoord(coords, unit=(u.hourangle, u.deg), distance=Distance(parallax=data['parallax']*u.mas, allow_negative=True), pm_ra_cosdec=data['pmra']*u.mas/u.yr, pm_dec=data['pmdec']*u.mas/u.yr)
-            print('ORIGINAL COORDS')
-            print(c)
+            if type(data['rad_vel']) == np.float64:
+                c = SkyCoord(coords, unit=(u.hourangle, u.deg), distance=Distance(parallax=data['parallax']*u.mas, allow_negative=True), pm_ra_cosdec=data['pmra']*u.mas/u.yr, pm_dec=data['pmdec']*u.mas/u.yr, radial_velocity=data['rad_vel']*u.km/u.s)
+                print('ORIGINAL COORDS')
+                print(c)
+            else:
+                c = SkyCoord(coords, unit=(u.hourangle, u.deg), distance=Distance(parallax=data['parallax']*u.mas, allow_negative=True), pm_ra_cosdec=data['pmra']*u.mas/u.yr, pm_dec=data['pmdec']*u.mas/u.yr)
+                print('ORIGINAL COORDS')
+                print(c)
 
             # c = SkyCoord(ra=data['ra']*u.degree, dec=data['dec']*u.degree, distance=Distance(parallax=data['parallax']*u.mas, allow_negative=True), pm_ra_cosdec=data['pmra']*u.mas/u.yr, pm_dec=data['pmdec']*u.mas/u.yr, radial_velocity=data['rad_vel']*u.km/u.s, obstime=Time(data['ref_epoch'], format='jyear', scale='tcb'))
             print('CORRECTED COORDS')
-            print(c.apply_space_motion(dt=td_year * u.yr))
+            c = c.apply_space_motion(dt=td_year * u.yr)
+            print(c)
 
             return_info['data'] = {
                 'ra' : c.ra.degree,

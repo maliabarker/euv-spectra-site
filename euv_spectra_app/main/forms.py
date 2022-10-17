@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, SubmitField, DecimalField, validators, RadioField
-from wtforms.validators import DataRequired
+from wtforms import StringField, SelectField, SubmitField, DecimalField, validators, RadioField, TextAreaField
+from wtforms.validators import DataRequired, Email
 from flask import Markup
+import email_validator
 
 teff_label = Markup('T<sub>eff</sub> (K)')
 mass_label = Markup('Mass (M<sub>sun</sub>)')
@@ -14,11 +15,11 @@ class StarForm(FlaskForm):
     stell_rad = DecimalField('R ☉ — Stellar Radius (Solar Radii)', validators=[DataRequired()])
     dist = DecimalField('d — Distance', validators=[DataRequired()])
     dist_unit = SelectField('d Unit', validators=[DataRequired()], choices=[('pc', 'Parsecs (pc)'), ('mas', 'Milliarcseconds (mas)')])
-    fuv = DecimalField('FUV — Far Ultraviolet Flux (μJy)', validators=[DataRequired()])
-    fuv_err = DecimalField('FUV Flux Error (μJy)', validators=[DataRequired()])
+    fuv = DecimalField('FUV (μJy)', validators=[DataRequired()])
+    fuv_err = DecimalField('FUV err (μJy)', validators=[DataRequired()])
     fuv_flag = RadioField('FUV Flag', validators=[validators.Optional()], choices=[('null', 'Not Detected'), ('upper_limit', 'Upper Limit')])
-    nuv = DecimalField('NUV — Near Ultraviolet Flux (μJy)', validators=[DataRequired()])
-    nuv_err = DecimalField('NUV Flux Error (μJy)', validators=[DataRequired()])
+    nuv = DecimalField('NUV (μJy)', validators=[DataRequired()])
+    nuv_err = DecimalField('NUV err (μJy)', validators=[DataRequired()])
     nuv_flag = RadioField('NUV Flag', validators=[validators.Optional()], choices=[('null', 'Not Detected'), ('upper_limit', 'Upper Limit')])
     submit = SubmitField('Submit and Find EUV Spectrum')
 
@@ -44,3 +45,10 @@ class StarNameParametersForm(FlaskForm):
     nuv = RadioField('NUV Flux (μJy)')
     nuv_err = RadioField('NUV Flux Error (μJy)')
     submit = SubmitField('Next →')
+
+class ContactForm(FlaskForm):
+    name = StringField('Name', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email(granular_message=True)])
+    subject = StringField('Subject', validators=[DataRequired()])
+    message = TextAreaField('Message', validators=[DataRequired()])
+    submit = SubmitField('Send')

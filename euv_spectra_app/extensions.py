@@ -1,13 +1,16 @@
 # for database migrations
 
 from flask import Flask
+from flask_mail import Mail
 from pymongo import MongoClient
 from os import environ
 from euv_spectra_app.config import Config
 import gridfs
 
+mail = Mail()
 app = Flask(__name__)
 app.config.from_object(Config)
+app.secret_key = environ.get('SECRET_KEY')
 
 # ======= DB Setup ==========
 uri = environ.get('MONGODB_URI')
@@ -30,3 +33,5 @@ m6_grid = db.m6_grid
 m7_grid = db.m7_grid
 m8_grid = db.m8_grid
 # =========================
+
+mail.init_app(app)

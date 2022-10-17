@@ -1,0 +1,16 @@
+<form action="/" method="POST" id="position-form">
+    <fieldset>
+        {{ position_form.csrf_token }}
+        <div class="form-floating mb-3">
+            {{ position_form.ra(class="form-control", placeholder="RA") }}
+            {{ position_form.ra.label }}
+        </div>
+        <div class="form-floating mb-3">
+            {{ position_form.dec(class="form-control", placeholder="dec") }}
+            {{ position_form.dec.label }}
+        </div>
+        <div class="d-flex justify-content-end">
+            {{ position_form.submit(class="btn btn-primary mb-3", for="position-form", onclick="displayLoading();") }}
+        </div>
+    </fieldset>
+</form>

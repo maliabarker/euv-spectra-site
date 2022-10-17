@@ -120,3 +120,8 @@ input[type=number] {
 .modal-xl {
     max-width: 65% !important;
 }
+
+#contact-header {
+    background-image: linear-gradient(to left, #fdac59 0%, #f729d9 51%, #9c36e8 100%) !important;
+    color: white;
+}

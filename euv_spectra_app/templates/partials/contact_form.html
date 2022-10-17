@@ -1,0 +1,47 @@
+<div class="modal" id="contactModal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="card">
+                    <div class="card-header pt-3" id="contact-header">
+                        <div class="row d-flex align-items-center">
+                            <div class="col-sm-10">
+                                <h3 class="white-text mb-3 pt-3 ms-4 font-weight-bold">Contact Us</h3>
+                            </div>
+                            <div class="col-sm-2">
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <div class="card-body mx-4 mt-4">
+                        <form action="/contact" id="contact-form" method="POST">
+                            <fieldset>
+                                {{ contact_form.csrf_token }}
+                                <div class="form-floating mb-3">
+                                    {{ contact_form.name(class="form-control", placeholder="Name") }}
+                                    {{ contact_form.name.label }}
+                                </div>
+                                <div class="form-floating mb-3">
+                                    {{ contact_form.email(class="form-control", placeholder="Email") }}
+                                    {{ contact_form.email.label }}
+                                </div>
+                                <div class="form-floating mb-3">
+                                    {{ contact_form.subject(class="form-control", placeholder="Subject") }}
+                                    {{ contact_form.subject.label }}
+                                </div>
+                                <div class="form-floating">
+                                    {{ contact_form.message(class="form-control mb-3", placeholder="Leave a message here", style="height: 100px") }}
+                                    {{ contact_form.message.label }}
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    {{ contact_form.submit(class="btn btn-primary mb-3", for="contact-form") }}
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

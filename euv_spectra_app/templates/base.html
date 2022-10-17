@@ -14,9 +14,8 @@
     <title>{% block title %}{% endblock %}</title>
 </head>
     <body>
-
         {% include 'partials/navbar.html' %}
-
+        
         <div class="container">
             {% for message in get_flashed_messages() %}
                 <div class="alert alert-primary" role="alert">
@@ -24,6 +23,8 @@
                 </div>
             {% endfor %}
             {% block content %}{% endblock %}
+            {% include 'partials/contact_form.html' %}
+            {% include 'partials/footer.html' %}
         </div>
         
         {% block script %}{% endblock %}

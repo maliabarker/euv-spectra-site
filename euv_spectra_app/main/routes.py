@@ -1,9 +1,10 @@
-from flask import Blueprint, request, render_template, redirect, url_for, session, flash
+from flask import Blueprint, request, render_template, redirect, url_for, session, flash, g
+from flask_mail import Message
 from collections import defaultdict
 from euv_spectra_app.extensions import *
 from datetime import timedelta
 
-from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm, StarNameParametersForm
+from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
 from euv_spectra_app.helpers_astropy import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion
 # from euv_spectra_app.helpers_db import *
 main = Blueprint("main", __name__)
@@ -35,6 +36,8 @@ def homepage():
     parameter_form = StarForm()
     name_form = StarNameForm()
     position_form = PositionForm()
+    contact_form = ContactForm()
+    
     
     if request.method == 'POST':
         print('————————POSTING...————————')
@@ -142,7 +145,7 @@ def homepage():
                     radio_input = getattr(star_name_parameters_form, key)
                     radio_input.choices = [(value, value) for value in res[key]]
 
-            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, show_modal=True)
+            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, show_modal=True, contact_form=contact_form)
             
 
 
@@ -160,14 +163,28 @@ def homepage():
             print(session)
             return redirect(url_for('main.homepage'))
 
-    return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, show_modal=False)
+    return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, show_modal=False, contact_form=contact_form)
 
 
 
 
 @main.route('/ex-spectra', methods=['GET', 'POST'])
 def ex_result():
-    return render_template('result.html')
+    contact_form = ContactForm()
+    return render_template('result.html', contact_form=contact_form)
+
+
+@main.route('/contact', methods=['POST'])
+def send_email():
+    form = ContactForm(request.form)
+    print(form)
+    if form.validate_on_submit():
+        # send email
+        msg = Message(form.subject.data, sender=form.email.data, recipients=['phoenixpegasusgrid@gmail.com'])
+        msg.body = form.message.data
+        mail.send(msg)
+        flash('Email sent!')
+        return redirect(url_for('main.homepage'))
 
 
 
