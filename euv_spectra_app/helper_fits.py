@@ -7,6 +7,74 @@ import mpld3
 
 matplotlib.use('agg')
 
+def convert_and_scale_fluxes(session, photo_fluxes):
+    returned_fluxes = {
+        'fuv': session['fuv'],
+        'fuv_err': session['fuv_err'],
+        'nuv': session['nuv'],
+        'nuv_err': session['nuv_err']
+    }
+
+    #STEP 1: CONVERT & Compute scale value
+    radius_cm = session['stell_rad'] * 6.9e10
+    distance_cm = session['dist'] * 3.08567758e18
+    print(f'CONVERTED DIST RAD, {radius_cm} {distance_cm}')
+
+    scale = (distance_cm**2) / (radius_cm**2)
+
+    #STEP 2: Check if any fluxes are null (don't continue if true)
+    if session['fuv'] != 'null':
+        print(f'CONVERTING FUV')
+        
+        #STEP 3: Convert GALEX mJy to erg/s/cm2/A
+        fuv_arb_wv = 1542.3
+        converted_fuv = ((3e-5) * (session['fuv']* 10**-6)) / pow(fuv_arb_wv, 2)
+        converted_fuv_err = ((3e-5) * (session['fuv_err']* 10**-6)) / pow(fuv_arb_wv, 2)
+        print(f'Converted fluxes: FUV {converted_fuv} ERR {converted_fuv_err}')
+        
+        #STEP 4: Multiply flux by scale
+        print(f'SCALE {scale}')
+        scaled_fuv = converted_fuv * scale
+        scaled_fuv_err = converted_fuv_err * scale
+        print(f'Scaled fluxes: FUV {scaled_fuv} ERR {scaled_fuv_err}')
+        print(f"PHOTO FLUXES: FUV {photo_fluxes['fuv']}")
+        
+        #STEP 5: Subtract photospheric flux
+        #NOTE DO WE USE SAME PHOTOSPHERIC FLUX FOR ERROR VALUES???
+        photospheric_subtracted_fuv = scaled_fuv - photo_fluxes['fuv']
+        photospheric_subtracted_fuv_err = scaled_fuv_err - photo_fluxes['fuv']
+        print(f'Photospheric subtracted fluxes: FUV {photospheric_subtracted_fuv} ERR {photospheric_subtracted_fuv_err}')
+        
+        #STEP 6: Add new fluxes to dict
+        returned_fluxes['fuv'] = photospheric_subtracted_fuv
+        returned_fluxes['fuv_err'] = photospheric_subtracted_fuv_err
+    
+    if session['nuv'] != 'null':
+        print(f'CONVERTING NUV')
+        
+        #STEP 3: Convert GALEX mJy to erg/s/cm2/A
+        nuv_arb_wv = 2274.4
+        converted_nuv = ((3e-5) * (session['nuv']* 10**-6)) / pow(nuv_arb_wv, 2)
+        converted_nuv_err = ((3e-5) * (session['nuv_err']* 10**-6)) / pow(nuv_arb_wv, 2)
+        print(f'Converted fluxes: NUV {converted_nuv} ERR {converted_nuv_err}')
+        
+        #STEP 4: Multiply flux by scale
+        print(f'SCALE {scale}')
+        scaled_nuv = converted_nuv * scale
+        scaled_nuv_err = converted_nuv_err * scale
+        print(f'Scaled fluxes: NUV {scaled_nuv} ERR {scaled_nuv_err}')
+        
+        #STEP 5: Subtract photospheric flux
+        #NOTE DO WE USE SAME PHOTOSPHERIC FLUX FOR ERROR VALUES???
+        photospheric_subtracted_nuv = scaled_nuv - photo_fluxes['nuv']
+        photospheric_subtracted_nuv_err = scaled_nuv_err - photo_fluxes['nuv']
+        print(f'Photospheric subtracted fluxes: NUV {photospheric_subtracted_nuv} ERR {photospheric_subtracted_nuv_err}')
+        
+        #STEP 6: Add new fluxes to dict
+        returned_fluxes['nuv'] = photospheric_subtracted_nuv
+        returned_fluxes['nuv_err'] = photospheric_subtracted_nuv_err
+    return returned_fluxes
+
 def find_fits_file(filename):
     print('finding fits')
     item = fits_files.find_one({'name': filename})

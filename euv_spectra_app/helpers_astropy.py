@@ -168,7 +168,7 @@ def search_galex(ra, dec):
         'error_msg' : None
     }
     if len(galex_data) > 0:
-        MIN_DIST = galex_data['distance_arcmin'] < 0.3 # can try 0.5 as well
+        MIN_DIST = galex_data['distance_arcmin'] < 0.167 # can try 0.5 as well
         if len(galex_data[MIN_DIST]) > 0:
             filtered_data = galex_data[MIN_DIST][0]
             print(filtered_data)

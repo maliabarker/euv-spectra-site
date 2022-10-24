@@ -125,3 +125,7 @@ input[type=number] {
     background-image: linear-gradient(to left, #fdac59 0%, #f729d9 51%, #9c36e8 100%) !important;
     color: white;
 }
+
+#name-parameters-form input[type='number']{
+    width: 80px;
+} 

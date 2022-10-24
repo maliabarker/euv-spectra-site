@@ -39,6 +39,16 @@ function selectAllGalex(obj) {
 
 
 //—————————————————————————MANUAL BTN CHECKS START————————————————————————
+function populateManualValue(obj) {
+    console.log(obj);
+    console.log(obj.value);
+
+    radioBtn = obj.previousElementSibling;
+    radioBtn.value = obj.value;
+    console.log(radioBtn)
+    console.log(radioBtn.value)
+}
+
 function checkManualRadio(obj) {
     obj.previousElementSibling.checked = true;
 };
@@ -66,4 +76,9 @@ function populateNullFlux(obj) {
             fluxInputs[i].value = parseFloat(-999.0);
         };
     };
+}
+
+//————————————————————REMOVE MODAL SHOW FROM SESSION
+function removeModalShow(session){
+    console.log(session)
 }

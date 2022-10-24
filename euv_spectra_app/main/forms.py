@@ -8,7 +8,7 @@ teff_label = Markup('T<sub>eff</sub> (K)')
 mass_label = Markup('Mass (M<sub>sun</sub>)')
 rad_label = Markup('Radius (R<sub>sun</sub>)')
 
-class StarForm(FlaskForm):
+class ParameterForm(FlaskForm):
     teff = DecimalField('T𝘦𝘧𝘧 — Stellar Effective Temperature (K)', validators=[DataRequired()])
     logg = DecimalField('log(g) — Surface Gravity (cm/s²)', validators=[DataRequired()])
     mass = DecimalField('M ☉ - Mass (Solar Masses)', validators=[DataRequired()])

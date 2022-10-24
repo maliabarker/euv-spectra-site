@@ -45,7 +45,7 @@
             </div>
 
 
-            {% if show_modal %}
+            {% if session['modal_show'] %}
                 <div class="modal fade" id="myModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
                         <div class="modal-content">
@@ -90,9 +90,20 @@
 
             for (i = 0; i < inputs.length; i++){
                 if((session.hasOwnProperty(inputs[i].name)) && (inputs[i].name != 'csrf_token')){
-                    console.log(inputs[i]);
-                    console.log(session[inputs[i].name]);
-                    inputs[i].value = session[inputs[i].name];
+                    if(session[inputs[i].name] == 'null'){
+                        console.log('Null value detected')
+                        inputs[i].value = -999.0
+                        if((inputs[i].name == 'fuv') || (inputs[i].name == 'nuv')) {
+                            fluxCont = inputs[i].closest(".row")
+                            radioCont = fluxCont.nextElementSibling
+                            nullBtn = radioCont.querySelectorAll(`[id*="flag-0"]`)
+                            nullBtn[0].checked = true;
+                        }
+                    } else {
+                        console.log(inputs[i]);
+                        console.log(session[inputs[i].name]);
+                        inputs[i].value = session[inputs[i].name];
+                    }
                 };};};
 
         window.onload = checkSession;

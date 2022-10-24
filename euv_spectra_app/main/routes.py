@@ -4,7 +4,7 @@ from collections import defaultdict
 from euv_spectra_app.extensions import *
 from datetime import timedelta
 
-from euv_spectra_app.main.forms import StarForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
+from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
 from euv_spectra_app.helpers_astropy import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion
 from euv_spectra_app.helpers_db import *
 from euv_spectra_app.helper_fits import *
@@ -13,23 +13,27 @@ main = Blueprint("main", __name__)
 
 '''
 ————TODO—————
-1. Autofill null flux flag in parameter form if flux is null in search results (will need to change javascript autofill function for these radio buttons)
-2. If no galex data found: flash no galex data was found, somehow let user know theres no galex data, maybe in template?
-3. Change all form submissions to own routes
+1. If no galex data found: flash no galex data was found, somehow let user know theres no galex data, maybe in template?
 '''
 
 '''
 ————NOTE————
-- Will we be searching for photosphere models under the specified model subtype? Or will we search this same start photosphere flux file?
-- what is point of multiplying fluxes by the dist^2/rad^2 number? do we then subtract photospheric fluxes from fluxes multiplied by this number?
-- do we find matching photospheric flux with temp, logg, and mass?
-- What are units for photospheric fluxes? Seem pretty large
+- Do we subtract photospheric flux from errors too?
+- STILL GETTING NEG VALUES FOR CORRECTED FLUXES
 '''
 
 @main.before_request
 def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(minutes=5)
+    if not session.get('modal_show'):
+        session['modal_show'] = False
+
+@main.context_processor
+def inject_form():
+    form_dict = dict(contact_form=ContactForm())
+    #print(form_dict)
+    return dict(contact_form=ContactForm())
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -37,13 +41,13 @@ def homepage():
     #session.clear()
     #test_space_motion()
     print(session)
-    
-    parameter_form = StarForm()
+    session['modal_show'] = False
+    parameter_form = ParameterForm()
     name_form = StarNameForm()
     position_form = PositionForm()
-    contact_form = ContactForm()
+    star_name_parameters_form = StarNameParametersForm()
     
-    
+
     if request.method == 'POST':
         print('————————POSTING...————————')
         print('—————————FORM DATA START—————————')
@@ -53,11 +57,142 @@ def homepage():
         print('—————————FORM DATA END—————————')
 
 
-# '''————————————————————HOME PARAMETER FORM————————————————————'''
-        if parameter_form.validate_on_submit():
+# '''————————————————————HOME POSITION FORM————————————————————'''
+        if position_form.validate_on_submit():
+            print('position form validated!')
+
+
+# '''————————————————————HOME NAME FORM————————————————————'''
+        elif name_form.validate_on_submit():
+            # STEP 1: store name data in session
+            session["star_name"] = name_form.star_name.data
+            star_name = session['star_name']
+            print(f'name form validated with star: {star_name}')        
+
+            # STEP 2: Get coordinate and motion info from Simbad
+            simbad_data = search_simbad(star_name)
+            if simbad_data['error_msg'] != None:
+                return redirect(url_for('main.error', msg=simbad_data['error_msg']))
+
+            # STEP 3: Put PM and Coord info into correction function
+            corrected_coords = correct_pm(simbad_data['data'], star_name)
+            if corrected_coords['error_msg'] != None:
+                return redirect(url_for('main.error', msg=corrected_coords['error_msg']))
+
+            # STEP 4: Search GALEX with these corrected coordinates
+            galex_data = search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])
+            print(galex_data)
+            
+            # STEP 5: Query all catalogs and append them to the final catalogs list if there are no errors
+            catalog_data = [search_tic(star_name), search_nea(star_name), search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])]
+            final_catalogs = [catalog for catalog in catalog_data if catalog['error_msg'] == None if catalog['catalog_name'] != 'Vizier']+[sub_catalog for catalog in catalog_data for sub_catalog in catalog['data'] if catalog['catalog_name'] == 'Vizier' if sub_catalog['error_msg'] == None]
+            #print(f'FINAL CATALOG TEST {final_catalogs}')
+
+            # STEP 6: Create a dictionary that holds all parameters in a list ex: {'teff' : [teff_1, teff_2, teff_3]}
+                    # Will be useful for next step, dynamically adding radio buttons to flask wtform
+            res = defaultdict(list)
+            for dict in final_catalogs:
+                for key in dict:
+                    if key == 'data':
+                        for key_2 in dict[key]:
+                            res[key_2].append(dict[key][key_2])
+                    else:
+                        res[key].append(dict[key])
+
+            # STEP 7: Append a manual option to each parameter
+            for key in res:
+                res[key].append('Manual')
+            print(res)
+
+            # STEP 8: Declare the form and add the radio choices dynamically for each radio input on the form
+            # star_name_parameters_form = StarNameParametersForm()
+            
+            for key in res:
+                if key != 'valid_info' and key != 'error_msg':
+                    radio_input = getattr(star_name_parameters_form, key)
+                    radio_input.choices = [(value, value) for value in res[key]]
+
+            session['modal_show'] = True
+            #return redirect(url_for('main.homepage'))
+            flash('success!', 'success')
+            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form)
+
+    return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form)
+
+
+
+'''————————————SUBMIT ROUTE FOR MODAL FORM————————————'''
+@main.route('/modal-submit', methods=['POST'])
+def submit_modal_form():
+    if request.method == 'POST':
+        print('star name parameter form validated!')
+        form = request.form
+
+        for key in form:
+            # ignoring all manual parameters, submit, csrf token, and catalog names
+            if form[key] == '--':
+                session[key] = 'null'
+            elif 'manual' not in key and 'submit' not in key and 'csrf_token' not in key and 'catalog_name' not in key:
+                print('form key '+key+" "+form[key])
+                session[key] = float(form[key])
+        
+        # session['modal_show'] = False
+        print(session)
+        return redirect(url_for('main.homepage'))
+    flash('Submit a name or position to see this page.', 'warning')
+    return redirect(url_for('main.homepage'))
+
+    # parameter_form = StarNameParametersForm()
+    # for key in res:
+    #     if key != 'valid_info' and key != 'error_msg':
+    #         radio_input = getattr(parameter_form, key)
+    #         radio_input.choices = [(value, value) for value in res[key]]
+    
+    # parameter_form.populate_obj(request.form)
+    # print(request.form)
+    # print(parameter_form)
+
+    # print('MEEEEEEEEEEP')
+    # for key in request.form:
+    #     print(key)
+    #     print(request.form['key'])
+    #     if 'manual' in key and request.form['key'] != None:
+    #         radio_input = getattr(parameter_form, )
+
+
+    # if parameter_form.validate_on_submit():
+    #     print('star name parameter form validated!')
+        # for key in form:
+        #     # ignoring all manual parameters, submit, csrf token, and catalog names
+        #     if form[key] == '--':
+        #         session[key] = 'null'
+        #     elif 'manual' not in key and 'submit' not in key and 'csrf_token' not in key and 'catalog_name' not in key:
+        #         print('form key '+key+" "+form[key])
+        #         session[key] = float(form[key])
+        # print(session)
+
+        # return redirect(url_for('main.homepage'))
+    # else:
+    #     print('NOT VALIDATED')
+    #     print(parameter_form.errors)
+    #     flash('Whoops, something went wrong. Please check your form and try again.', 'danger')
+    #     return redirect(url_for('main.homepage'))
+
+
+
+'''————————————SUBMIT ROUTE FOR RESULTS————————————'''
+@main.route('/results', methods=['GET', 'POST'])
+def return_results():
+    if request.method == 'POST':
+        form = ParameterForm(request.form)
+        
+        if form.validate_on_submit():
             print('parameter form validated!')
-            for fieldname, value in parameter_form.data.items():
+            for fieldname, value in form.data.items():
                 print(fieldname, value)
+
+            #CHECK DISTANCE UNIT: if distance unit is mas, convert to parsecs
+            # mas_to_pc = 1/ (X mas / 1000)
 
             # STEP 1: Search the model_parameter_grid collection to find closest matching subtype
             matching_subtype = find_matching_subtype(session)
@@ -88,40 +223,22 @@ def homepage():
             # for doc in matching_photospheric_flux_test:
             #     print(doc)
 
-            #STEP 3: Convert GALEX mJy t
-
-            #STEP 3: Multiply FUV and NUV by dist^2/rad^2
-            # convert GALEX from mjy to erg/s/cm2/A
-            # cgs = 3e-5 * Jy / wavelength**2
-
-            # converted_galex_flux = 3e^-5 * (galex_flux*10^-6) / wavelength^2
-
-            # arb wvelength for FUV = 1542.3
-            # arb wavelength for NUV = 2274.4
-
-            # upper lim, lower lim for each flux (errors), then convert and scale as well, also subtract photospheric flux
-            dist_sqr = pow(session['dist'], 2)
-            rad_sqr = pow(session['stell_rad'], 2)
-            scale = dist_sqr/rad_sqr
-            print(scale)
-
-            session['fuv'] = session['fuv'] * scale
-            session['nuv'] = session['nuv'] * scale
-            print(session)
-
-            #STEP 4: Subtract photospheric fluxes from FUV and NUV
-            #ERROR: This gives huge negative value, are units the same?
-            session['fuv'] = session['fuv'] - matching_photospheric_flux['fuv']
-            session['nuv'] = session['nuv'] - matching_photospheric_flux['nuv']
+            #STEP 3: Convert, scale, and subtract photospheric contribution from fluxes (more detail in function)
+            corrected_fluxes = convert_and_scale_fluxes(session, matching_photospheric_flux)
+            session['corrected_nuv'] = corrected_fluxes['nuv']
+            session['corrected_nuv_err'] = corrected_fluxes['nuv_err']
+            session['corrected_fuv'] = corrected_fluxes['fuv']
+            session['corrected_fuv_err'] = corrected_fluxes['fuv_err']
             print(session)
 
             #STEP 5: Do chi squared test between all models within selected subgrid and corrected observation ** this is on models with subtracted photospheric flux
             # final_models = find_models()
             # chisq2= sum((modelflux[i]- GALEX[i])**2 / GALEX[i])
             # catch if there's no fuv/nuv detection, chi squared JUST over one flux
-            # return all within upper and lower limits for fluxes (w/ chi squared values)
-            # return from lowest chi squared - highest
-            # return euv flux is <euv_flux> +/- difference from model
+            # return all results within upper and lower limits of fluxes (w/ chi squared values)
+                # compute upper lim and lower lim for each flux and find within those values
+            # return from lowest chi squared -> highest
+            # return euv flux as <euv_flux> +/- difference from model
 
             #STEP 6: Read FITS file from matching models and create graph from data
             #file = find_fits_file(<filename>)
@@ -130,113 +247,38 @@ def homepage():
 
             #STEP 7: Convert graph into html component and send to front end
             html_string = convert_fig_to_html(fig)
-            #print(html_string)
 
-            flash('_ Results were found within your submitted parameters')
-            return render_template('result.html', subtype=matching_subtype, contact_form=contact_form, graph=html_string)
-
-
-# '''————————————————————HOME POSITION FORM————————————————————'''
-        elif position_form.validate_on_submit():
-            print('position form validated!')
-
-
-
-# '''————————————————————HOME NAME FORM————————————————————'''
-        elif name_form.validate_on_submit():
-            # STEP 1: store name data in session
-            session["star_name"] = name_form.star_name.data
-            star_name = session['star_name']
-            print(f'name form validated with star: {star_name}')        
-
-            # STEP 2: Get coordinate and motion info from Simbad
-            simbad_data = search_simbad(star_name)
-            if simbad_data['error_msg'] != None:
-                return render_template('error.html', error_msg=simbad_data['error_msg'])
-
-            # STEP 3: Put PM and Coord info into correction function
-            corrected_coords = correct_pm(simbad_data['data'], star_name)
-            if corrected_coords['error_msg'] != None:
-                return render_template('error.html', error_msg=corrected_coords['error_msg'])
-
-            # STEP 4: Search GALEX with these corrected coordinates
-            galex_data = search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])
-            print(galex_data)
-            
-            # STEP 5: Query all catalogs and append them to the final catalogs list if there are no errors
-            catalog_data = [search_tic(star_name), search_nea(star_name), search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])]
-            final_catalogs = [catalog for catalog in catalog_data if catalog['error_msg'] == None if catalog['catalog_name'] != 'Vizier']+[sub_catalog for catalog in catalog_data for sub_catalog in catalog['data'] if catalog['catalog_name'] == 'Vizier' if sub_catalog['error_msg'] == None]
-            #print(f'FINAL CATALOG TEST {final_catalogs}')
-
-            # STEP 6: Create a dictionary that holds all parameters in a list ex: {'teff' : [teff_1, teff_2, teff_3]}
-                    # Will be useful for next step, dynamically adding radio buttons to flask wtform
-            res = defaultdict(list)
-            for dict in final_catalogs:
-                for key in dict:
-                    if key == 'data':
-                        for key_2 in dict[key]:
-                            res[key_2].append(dict[key][key_2])
-                    else:
-                        res[key].append(dict[key])
-
-            # STEP 7: Append a manual option to each parameter
-            for key in res:
-                res[key].append('Manual')
-            print(res)
-
-            # STEP 8: Declare the form and add the radio choices dynamically for each radio input on the form
-            star_name_parameters_form = StarNameParametersForm()
-            for key in res:
-                if key != 'valid_info' and key != 'error_msg':
-                    radio_input = getattr(star_name_parameters_form, key)
-                    radio_input.choices = [(value, value) for value in res[key]]
-
-            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, show_modal=True, contact_form=contact_form)
-            
-
-
-#'''————————————————————MODAL NAME PARAMETER FORM————————————————————'''
-        elif session.get('star_name'):
-            print('star name parameter form validated!')
-            form_data = request.form
-
-            for key in form_data:
-                # ignoring all manual parameters, submit, csrf token, and catalog names
-                if 'manual' not in key and 'submit' not in key and 'csrf_token' not in key and 'catalog_name' not in key:
-                    print('form key '+key+" "+form_data[key])
-                    session[key] = float(form_data[key])
-                    
-            print(session)
+            flash('_ Results were found within your submitted parameters', 'success')
+            return render_template('result.html', subtype=matching_subtype, graph=html_string)
+        else:
+            flash('Whoops, something went wrong. Please check your inputs and try again!', 'danger')
             return redirect(url_for('main.homepage'))
-
-    return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, show_modal=False, contact_form=contact_form)
-
-
-
-@main.route('/ex-spectra', methods=['GET', 'POST'])
-def ex_result():
-    contact_form = ContactForm()
-    return render_template('result.html', contact_form=contact_form)
+    else:
+        flash('Submit the required data through the manual parameters form to view this page.', 'warning')
+        return redirect(url_for('main.homepage'))
 
 
+'''————————————ABOUT PAGE————————————'''
 @main.route('/about', methods=['GET'])
 def about():
-    contact_form = ContactForm()
-    return render_template('about.html', contact_form=contact_form)
+    
+    return render_template('about.html')
 
 
+'''————————————FAQ PAGE————————————'''
 @main.route('/faqs', methods=['GET'])
 def faqs():
-    contact_form = ContactForm()
-    return render_template('faqs.html', contact_form=contact_form)
+    
+    return render_template('faqs.html')
 
 
+'''————————————ALL SPECTRA PAGE————————————'''
 @main.route('/all-spectra', methods=['GET'])
 def index_spectra():
-    contact_form = ContactForm()
-    return render_template('index-spectra.html', contact_form=contact_form)
+    return render_template('index-spectra.html')
 
 
+'''————————————CONTACT SUBMIT————————————'''
 @main.route('/contact', methods=['POST'])
 def send_email():
     form = ContactForm(request.form)
@@ -247,14 +289,35 @@ def send_email():
         msg = Message(form.subject.data, sender='phoenixpegasusgrid@gmail.com', recipients=[form.email.data])
         msg.body = form.message.data
         mail.send(msg)
-        flash('Email sent!')
+        flash('Email sent!', 'success')
         return redirect(url_for('main.homepage'))
     else:
         print(form.errors)
-        flash('error')
+        flash('error', 'danger')
+        return redirect(url_for('main.error', msg='Contact form unavailable at this time'))
 
 
 
+''' ————————————ERROR HANDLING FOR HTML ERRORS———————————— '''
+@main.route('/error/<msg>')
+def error(msg):
+    session['modal_show'] = False
+    return render_template('error.html', error_msg=msg)
 
-# FOR PAGINATION OF RESULTS OR SEARCH
-# from flask_paginate import Pagination, get_page_parameter
+@main.app_errorhandler(500)
+def internal_error(e):
+    print(e)
+    session['modal_show'] = False
+    return render_template('error.html', error_msg='Something went wrong. Please try again later or contact us. (500)'), 500
+
+@main.app_errorhandler(503)
+def internal_error(e):
+    print(e)
+    session['modal_show'] = False
+    return render_template('error.html', error_msg='Something went wrong. Please try again later or contact us. (503)'), 503
+
+@main.app_errorhandler(404)
+def page_not_found(e):
+    print(e)
+    session['modal_show'] = False
+    return render_template('error.html', error_msg='Page not found!'), 404

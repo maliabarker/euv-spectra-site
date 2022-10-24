@@ -17,11 +17,12 @@
         {% include 'partials/navbar.html' %}
         
         <div class="container">
-            {% for message in get_flashed_messages() %}
-                <div class="alert alert-primary" role="alert">
+            {% for category, message in get_flashed_messages(with_categories=true) %}
+                <div class="alert alert-{{category}} mt-2" role="alert">
                     {{ message }}
                 </div>
             {% endfor %}
+
             {% block content %}{% endblock %}
             {% include 'partials/contact_form.html' %}
             {% include 'partials/footer.html' %}
