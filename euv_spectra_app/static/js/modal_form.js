@@ -77,8 +77,3 @@ function populateNullFlux(obj) {
         };
     };
 }
-
-//————————————————————REMOVE MODAL SHOW FROM SESSION
-function removeModalShow(session){
-    console.log(session)
-}

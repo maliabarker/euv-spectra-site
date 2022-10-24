@@ -2,7 +2,6 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, SubmitField, DecimalField, validators, RadioField, TextAreaField
 from wtforms.validators import DataRequired, Email
 from flask import Markup
-import email_validator
 
 teff_label = Markup('T<sub>eff</sub> (K)')
 mass_label = Markup('Mass (M<sub>sun</sub>)')
