@@ -296,7 +296,10 @@ def send_email():
         flash('error', 'danger')
         return redirect(url_for('main.error', msg='Contact form unavailable at this time'))
 
-
+@main.route('/clear-session')
+def clear_session():
+    session.clear()
+    return redirect(url_for('main.homepage'))
 
 ''' ————————————ERROR HANDLING FOR HTML ERRORS———————————— '''
 @main.route('/error/<msg>')

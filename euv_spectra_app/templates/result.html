@@ -1,32 +1,21 @@
 {% extends 'base.html' %}
-{% block title %}{% endblock %}
+{% block title %}Results{% endblock %}
 {% block content %}
     <div class="container" style="height: 100vh;">
-        <h3 class="mt-3 text-center">Your resulting spectra for stellar subtype {{ subtype.model }}</h3>
-        <div class="text-center"><p>Model Parameters : Teff = {{ subtype.teff }}, log(g) = {{ subtype.logg }}, Mass = {{ subtype.mass }}</p></div>
-        <div class="text-center"><p>Your Parameters : Teff = {{ session.teff }}, log(g) = {{ session.logg }}, Mass = {{ session.mass }}</p></div>
-        <div class="text-center"><p>Chi Squared Value of Match : ~something here?~</p></div>
+        <h3 class="mt-3 text-center">Closest Match PHOENIX Model for Your Star's Parameters</h3>
+        <div class="text-center mb-2"><p>Chi Squared Value of Subtype {{ session['model_subtype'] }} Match : <\value> </p></div>
+        <div class="text-center"><small>Model Parameters : Teff = {{ subtype.teff }}, log(g) = {{ subtype.logg }}, Mass = {{ subtype.mass }}</small></div>
+        <div class="text-center"><small>Your Parameters : Teff = {{ session.teff }}, log(g) = {{ session.logg }}, Mass = {{ session.mass }}</small></div>
         
-        <div class="col-sm-6 offset-sm-3">
-            <div>{{ graph|safe }}</div>
+        <div class="row mt-5">
+            <div class="col-sm-9 ms-5">
+                <div>{{ graph|safe }}</div>
+            </div>
+            <div class="col-sm-2">
+                <button class="btn btn-primary mb-2">Download Spectrum 1 <i>(Best Match)</i></button>
+                <button class="btn btn-primary mb-2">Download Spectrum 2</button>
+                <button class="btn btn-primary mb-2">Download Spectrum 3</button>
+            </div>
         </div>
-
-        <nav aria-label="Page navigation example" class="mt-5">
-            <ul class="pagination justify-content-center">
-                <li class="page-item">
-                    <a class="page-link" href="#" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-                <li class="page-item"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item">
-                    <a class="page-link" href="#" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
     </div>
 {% endblock %}

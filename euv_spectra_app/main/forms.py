@@ -16,10 +16,10 @@ class ParameterForm(FlaskForm):
     dist_unit = SelectField('d Unit', validators=[DataRequired()], choices=[('pc', 'Parsecs (pc)'), ('mas', 'Milliarcseconds (mas)')])
     fuv = DecimalField('FUV (μJy)', validators=[DataRequired()])
     fuv_err = DecimalField('FUV err (μJy)', validators=[DataRequired()])
-    fuv_flag = RadioField('FUV Flag', validators=[validators.Optional()], choices=[('null', 'Not Detected'), ('upper_limit', 'Upper Limit')])
+    fuv_flag = RadioField('FUV Flag', validators=[validators.Optional()], choices=[('null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated')])
     nuv = DecimalField('NUV (μJy)', validators=[DataRequired()])
     nuv_err = DecimalField('NUV err (μJy)', validators=[DataRequired()])
-    nuv_flag = RadioField('NUV Flag', validators=[validators.Optional()], choices=[('null', 'Not Detected'), ('upper_limit', 'Upper Limit')])
+    nuv_flag = RadioField('NUV Flag', validators=[validators.Optional()], choices=[('null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated')])
     submit = SubmitField('Submit and Find EUV Spectrum')
 
 class StarNameForm(FlaskForm):

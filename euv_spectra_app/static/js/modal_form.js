@@ -22,18 +22,47 @@ function selectAll(obj) {
     const num = obj.id.match(/(\d+)/)[0];
     // get all radios w identifying number
     const btns = document.getElementById('star_name_parameter_form_table').querySelectorAll(`[id*="${num}"]`);
-    // check radio btns
-    for( i = 0 ; i < btns.length ; i++ ) {
-        btns[i].checked = true;
-    };
+
+    if (obj.checked) {
+        console.log('checked, now we need to select all')
+        // check radio btns
+        for( i = 0 ; i < btns.length ; i++ ) {
+            if(!(btns[i].disabled)){
+                btns[i].checked = true;
+            };
+        };
+        obj.nextElementSibling.innerHTML = 'Deselect All'
+    } else {
+        console.log('unchecked, now we need to uncheck and deselect all')
+        obj.checked = false;
+        // uncheck radio btns
+        for( i = 0 ; i < btns.length ; i++ ) {
+            if(!(btns[i].disabled)){
+                btns[i].checked = false;
+            };
+        };
+        obj.nextElementSibling.innerHTML = 'Select All'
+    }
 };
 
 function selectAllGalex(obj) {
-    console.log(obj.id)
-    document.getElementById('fuv-0').checked = true;
-    document.getElementById('nuv-0').checked = true;
-    document.getElementById('fuv_err-0').checked = true;
-    document.getElementById('nuv_err-0').checked = true;
+    if (obj.checked) {
+        console.log('unchecked, now we need to check and select all')
+        document.getElementById('fuv-0').checked = true;
+        document.getElementById('nuv-0').checked = true;
+        document.getElementById('fuv_err-0').checked = true;
+        document.getElementById('nuv_err-0').checked = true;
+        obj.nextElementSibling.innerHTML = 'Deselect All'
+    } else {
+        console.log('checked, now we need to uncheck and deselect all')
+        obj.checked = false;
+        document.getElementById('fuv-0').checked = false;
+        document.getElementById('nuv-0').checked = false;
+        document.getElementById('fuv_err-0').checked = false;
+        document.getElementById('nuv_err-0').checked = false;
+        obj.nextElementSibling.innerHTML = 'Select All'
+    }
+    
 }
 //—————————————————————————SELECT ALL END————————————————————————
 

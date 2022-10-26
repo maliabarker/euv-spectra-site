@@ -30,6 +30,13 @@
                                     <input type="number" step="0.000000000001" name="manual_teff" id="manual_teff" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5">
                                 </div>
                             </td>
+                        {% elif subfield.data|int(-1) == -1 %}
+                            <td>
+                                <div class="form-check my-4">
+                                    {{ subfield(disabled=true, class="form-check-input") }}
+                                    {{ subfield.label(class="form-check-label") }}
+                                </div>
+                            </td>
                         {% else %}
                             <td>
                                 <div class="form-check my-4">

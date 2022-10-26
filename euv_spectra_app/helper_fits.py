@@ -1,3 +1,4 @@
+from cProfile import label
 from astropy.io import fits
 import matplotlib.pyplot as plt
 from euv_spectra_app.extensions import *
@@ -89,19 +90,27 @@ def create_graph(file, session):
     print(w_obs)
     print(f_obs)
 
+    
     fig = plt.figure()
-    plt.plot(w_obs, f_obs, color='#5240f7')
+    fig.set_size_inches(10, 4)
+    '''FOR FUTURE WITH MULTIPLE LINES:
+        colors=[list of colors]
+        line1, = plt.plot(w_obs, f_obs, color=colors[0], label='Spectrum 1 (Best Match), χ2=<value>')
+        line2, = plt.plot(w_obs, f_obs, color=colors[1], label='Spectrum 2, χ2=<value>')...
+        plt.legend(handles=[line1, line2])
+    '''
+    plt.plot(w_obs, f_obs, color='#5240f7', label='Spectrum 1 (Best Match), χ2=?')
     plt.xlabel('Wavelength (Å)')
     plt.ylabel('Flux Density (erg/cm2/s/Å)')
     plt.yscale('log')
     # set x lim to 10-100
-    plt.xlim(1000,3000)
+    plt.xlim(10,3000)
     # set y lim to min flux and max flux
-    plt.ylim(1e-16,5e-11)
+    plt.ylim(1e+6,1e+18)
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.175), ncol=3, fancybox=True, shadow=True)
     # plt.legend(loc='lower right')
-    plt.title(session['model_subtype'])
     # PLOT ALL CHI SQUARED MATCHES AND ADD LEGEND
-    # 
+    # <!-- Add legend for lines (with intent of plotting all matching chi squared lines on single graph) -->
     return fig
 
 def convert_fig_to_html(fig):
