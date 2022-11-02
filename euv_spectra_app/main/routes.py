@@ -13,19 +13,18 @@ main = Blueprint("main", __name__)
 
 '''
 ————TODO—————
-1. If no galex data found: flash no galex data was found, somehow let user know theres no galex data, maybe in template?
+
 '''
 
 '''
 ————NOTE————
-- Do we subtract photospheric flux from errors too?
-- STILL GETTING NEG VALUES FOR CORRECTED FLUXES
+- photosphere subtract fluxes are much larger than the galex photosphere subtracted fluxes (ex: 89.15518504954082 vs 2903269277063.380)
 '''
 
 @main.before_request
 def make_session_permanent():
     session.permanent = True
-    app.permanent_session_lifetime = timedelta(minutes=5)
+    app.permanent_session_lifetime = timedelta(minutes=20)
     if not session.get('modal_show'):
         session['modal_show'] = False
 
@@ -71,11 +70,13 @@ def homepage():
 
             # STEP 2: Get coordinate and motion info from Simbad
             simbad_data = search_simbad(star_name)
+            print('simbad ran with no errors')
             if simbad_data['error_msg'] != None:
                 return redirect(url_for('main.error', msg=simbad_data['error_msg']))
 
             # STEP 3: Put PM and Coord info into correction function
             corrected_coords = correct_pm(simbad_data['data'], star_name)
+            print('coordinate correction ran with no errors')
             if corrected_coords['error_msg'] != None:
                 return redirect(url_for('main.error', msg=corrected_coords['error_msg']))
 
@@ -233,9 +234,74 @@ def return_results():
 
             #STEP 5: Do chi squared test between all models within selected subgrid and corrected observation ** this is on models with subtracted photospheric flux
             # final_models = find_models()
+            model_collection = f'{session["model_subtype"].lower()}_grid'
+            print(f'NUV UPPER LIM {session["corrected_nuv"] + session["corrected_nuv_err"]} LOWER LIM {session["corrected_nuv"] - session["corrected_nuv_err"]}')
+            print(f'FUV UPPER LIM {session["corrected_fuv"] + session["corrected_fuv_err"]} LOWER LIM {session["corrected_fuv"] - session["corrected_fuv_err"]}')
+            
+            if model_collection in db.list_collection_names():
+                models_with_chi_squared = db.get_collection(model_collection).aggregate([
+                    # { "$match" :
+                    #     { "$expr":
+                    #         {"$switch": { 
+                    #             "branches": [
+                    #             # no NUV
+                    #             { "case": {"$eq": [session.get("corrected_nuv"), False] }, "then": {"fuv": {"$gte": {"$subtract": [session['corrected_fuv'], session['corrected_fuv_err']]}, "$lte":{"$add": [session['corrected_fuv'], session['corrected_fuv_err']]}}}},
+                    #             # no FUV
+                    #             { "case": {"$eq": [session.get("corrected_fuv"), False] }, "then": {"nuv": {"$gte": {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}, "$lte":{"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}}}}
+                    #             ],
+                    #             "default": 
+                    #                 {"$nuv": {"$gte": {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}, "$lte":{"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}},
+                    #                 "$fuv": {"$gte":{"$subtract": [session['corrected_fuv'], session['corrected_fuv_err']]}, "$lte":{"$add": [session['corrected_fuv'], session['corrected_fuv_err']]}}}
+                    #         }}
+                    #     }
+                    # },
+                    { "$match": {
+                        "nuv": { "$elemMatch": {"$gte": {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}, "$lte":{"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}}},
+                        "fuv": { "$elemMatch": {"$gte":{"$subtract": [session['corrected_fuv'], session['corrected_fuv_err']]}, "$lte":{"$add": [session['corrected_fuv'], session['corrected_fuv_err']]}}}
+                        }
+                    },
+                    { "$project": {  
+                            "fits_filename": 1, "mass": 1, "euv": 1, "fuv": 1, "nuv": 1, "chiSquared": { 
+                                "$switch": { 
+                                    "branches": [
+                                    { "case": {"$eq": [session.get("corrected_nuv"), False] }, "then": { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }},
+                                    { "case": {"$eq": [session.get("corrected_fuv"), False] }, "then": { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }}
+                                    ],
+                                    "default": { "$add" : [
+                                        { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] },
+                                        { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }
+                                    ]}
+                                }
+                            }
+                        }
+                    }])
+
+                print('MODELS W CHI SQUARED')
+                for doc in models_with_chi_squared:
+                    print(doc)
+            else:
+                return redirect(url_for('main.error', msg=f'The grid for model subtype {session["model_subtype"]} is currently unavailable. Please contact us with your stellar parameters and returned subtype.'))
+
+            #FOR NUV { "$divide": [ { "$pow": [ { "$subtract": [ "$NUV", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }
+            #FOR FUV { "$divide": [ { "$pow": [ { "$subtract": [ "$FUV", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }
+            
             # chisq2= sum((modelflux[i]- GALEX[i])**2 / GALEX[i])
             # catch if there's no fuv/nuv detection, chi squared JUST over one flux
+
             # return all results within upper and lower limits of fluxes (w/ chi squared values)
+                # db.get_collection(model_collection).find({'nuv': {"$gte":<lower_lim_nuv>, "$lte":<upper_lim_nuv>}, 'fuv': {$gte:<lower_lim_fuv>, $lte:<upper_lim_fuv>}})
+                
+                # lower_lim = {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}
+                # session['corrected_nuv'] - session['corrected_nuv_err']
+                # upper_lim = {"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}
+                # session['corrected_nuv'] + session['corrected_nuv_err']
+                
+                # !!!!!!!!
+                # NOTE does this mean we return all matching documents in model grid that match between...
+                    # 1. galex_fuv +- err
+                    # 2. galex_nuv +- err
+                # !!!!!!!!
+
                 # compute upper lim and lower lim for each flux and find within those values
             # return from lowest chi squared -> highest
             # return euv flux as <euv_flux> +/- difference from model

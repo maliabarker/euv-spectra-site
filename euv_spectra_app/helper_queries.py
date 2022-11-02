@@ -1,6 +1,6 @@
 from euv_spectra_app.extensions import *
 
-def find_matching_subtype(session):    
+def find_matching_subtype(session):
     matching_subtype = model_parameter_grid.aggregate([
         {'$facet': {
             'matchedTeff': [
@@ -25,13 +25,14 @@ def find_matching_subtype(session):
 
     subtype_doc = ''
     for doc in matching_subtype:
-        print(doc)
+        #print(doc)
         subtype_doc = model_parameter_grid.find_one(doc['_id'])
 
     print(f"SUBTYPE: {subtype_doc['model']}")
     return subtype_doc
 
 def find_matching_photosphere(session):
+    # iterate list and create pointer for lowest diff value ** reduce On^2 to On
     matching_temp = photosphere_models.aggregate([
         {'$project': {'diff': {'$abs': {'$subtract': [session['teff'], '$teff']}}, 'doc': '$$ROOT'}},
         {'$sort': {'diff': 1}},
@@ -57,9 +58,8 @@ def find_matching_photosphere(session):
         {'$project': {'_id': "$doc._id", 'fits_filename': "$doc.doc.fits_filename", 'teff': "$doc.doc.teff", 'logg': "$doc.doc.logg", 'mass': "$doc.doc.mass", 'euv': "$doc.doc.euv", 'nuv': "$doc.doc.nuv", 'fuv': "$doc.doc.fuv"}}
     ])
 
-    print('MATCHING PHOTOSPHERE')
     matching_photosphere_doc = ''
     for doc in matching_photospheric_flux:
-        print(doc)
+        print(f'MATCHING PHOTOSPHERE: {doc}')
         matching_photosphere_doc = doc
     return matching_photosphere_doc
