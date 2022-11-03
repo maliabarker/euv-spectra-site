@@ -3,6 +3,7 @@ from flask_mail import Message
 from collections import defaultdict
 from euv_spectra_app.extensions import *
 from datetime import timedelta
+from astroquery.mast import Catalogs, Observations
 
 from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
 from euv_spectra_app.helpers_astropy import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion
@@ -66,7 +67,10 @@ def homepage():
             # STEP 1: store name data in session
             session["star_name"] = name_form.star_name.data
             star_name = session['star_name']
-            print(f'name form validated with star: {star_name}')        
+            print(f'name form validated with star: {star_name}')
+
+            # galex_time = Catalogs.query_object(star_name, radius=.02, catalog="GALEX")[0]
+            # print(galex_time)
 
             # STEP 2: Get coordinate and motion info from Simbad
             simbad_data = search_simbad(star_name)
@@ -105,6 +109,8 @@ def homepage():
                 res[key].append('Manual')
             print(res)
 
+            session['res'] = res
+
             # STEP 8: Declare the form and add the radio choices dynamically for each radio input on the form
             # star_name_parameters_form = StarNameParametersForm()
             
@@ -123,35 +129,43 @@ def homepage():
 
 
 '''————————————SUBMIT ROUTE FOR MODAL FORM————————————'''
-@main.route('/modal-submit', methods=['POST'])
+@main.route('/modal-submit', methods=['GET', 'POST'])
 def submit_modal_form():
+    parameter_form_1 = ParameterForm()
+    name_form = StarNameForm()
+    position_form = PositionForm()
+    parameter_form = StarNameParametersForm()
+
+    res = session['res']
+    for key in res:
+        if key != 'valid_info' and key != 'error_msg':
+            radio_input = getattr(parameter_form, key)
+            radio_input.choices = [(value, value) for value in res[key]]
+    
+    parameter_form.populate_obj(request.form)
+    print(request.form)
+    print(parameter_form)
+
     if request.method == 'POST':
         print('star name parameter form validated!')
-        form = request.form
+    #     form = request.form
 
-        for key in form:
-            # ignoring all manual parameters, submit, csrf token, and catalog names
-            if form[key] == '--':
-                session[key] = 'null'
-            elif 'manual' not in key and 'submit' not in key and 'csrf_token' not in key and 'catalog_name' not in key:
-                print('form key '+key+" "+form[key])
-                session[key] = float(form[key])
+    #     for key in form:
+    #         # ignoring all manual parameters, submit, csrf token, and catalog names
+    #         if form[key] == '--':
+    #             session[key] = 'null'
+    #         elif 'manual' not in key and 'submit' not in key and 'csrf_token' not in key and 'catalog_name' not in key:
+    #             print('form key '+key+" "+form[key])
+    #             session[key] = float(form[key])
         
-        # session['modal_show'] = False
-        print(session)
-        return redirect(url_for('main.homepage'))
-    flash('Submit a name or position to see this page.', 'warning')
-    return redirect(url_for('main.homepage'))
+    #     # session['modal_show'] = False
+    #     print(session)
+    #     return redirect(url_for('main.homepage'))
+    # flash('Submit a name or position to see this page.', 'warning')
+    # return redirect(url_for('main.homepage'))
 
-    # parameter_form = StarNameParametersForm()
-    # for key in res:
-    #     if key != 'valid_info' and key != 'error_msg':
-    #         radio_input = getattr(parameter_form, key)
-    #         radio_input.choices = [(value, value) for value in res[key]]
-    
-    # parameter_form.populate_obj(request.form)
-    # print(request.form)
-    # print(parameter_form)
+        
+        
 
     # print('MEEEEEEEEEEP')
     # for key in request.form:
@@ -161,23 +175,37 @@ def submit_modal_form():
     #         radio_input = getattr(parameter_form, )
 
 
-    # if parameter_form.validate_on_submit():
-    #     print('star name parameter form validated!')
-        # for key in form:
-        #     # ignoring all manual parameters, submit, csrf token, and catalog names
-        #     if form[key] == '--':
-        #         session[key] = 'null'
-        #     elif 'manual' not in key and 'submit' not in key and 'csrf_token' not in key and 'catalog_name' not in key:
-        #         print('form key '+key+" "+form[key])
-        #         session[key] = float(form[key])
-        # print(session)
+    if parameter_form.validate_on_submit():
+        session.pop('res')
+        print('star name parameter form validated!')
+        for field in parameter_form:
+            print('AHHHHH pt.2')
+            print(field.name, field.data)
+            # ignoring all manual parameters, submit, csrf token, and catalog names
+            if field.data == '--':
+                # set flux to null if it equals --
+                print('null flux detected')
+                session[field.name] = 'null'
+            elif 'manual' in field.name and field.data != None:
+                print('MANUAL INPUT DETECTED')
+                print(field.name, field.data)
+                unmanual_field = field.name.replace('manual_', '')
+                print(unmanual_field)
+                session[unmanual_field] = float(field.data)
+                print(session)
+                print('DONE')
+            elif 'manual' not in field.name and 'submit' not in field.name and 'csrf_token' not in field.name and 'catalog_name' not in field.name and 'Manual' not in field.data:
+                print('form key '+field.name+" "+field.data)
+                session[field.name] = float(field.data)
+        print(session)
 
+        return redirect(url_for('main.homepage'))
+    else:
+        print('NOT VALIDATED')
+        print(parameter_form.errors)
+        flash('Whoops, something went wrong. Please check your form and try again.', 'danger')
         # return redirect(url_for('main.homepage'))
-    # else:
-    #     print('NOT VALIDATED')
-    #     print(parameter_form.errors)
-    #     flash('Whoops, something went wrong. Please check your form and try again.', 'danger')
-    #     return redirect(url_for('main.homepage'))
+    return render_template('home.html', parameter_form=parameter_form_1, name_form=name_form, position_form=position_form, star_name_parameters_form=parameter_form)
 
 
 

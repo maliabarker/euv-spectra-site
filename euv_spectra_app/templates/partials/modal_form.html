@@ -27,7 +27,8 @@
                                 <div class="form-check my-4">
                                     {{ subfield(class="form-check-input") }}
                                     <!-- <input type="radio" name="teff" value="manual" class="form-check-input"> -->
-                                    <input type="number" step="0.000000000001" name="manual_teff" id="manual_teff" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5">
+                                    {{ star_name_parameters_form.manual_teff(class="form-control", onclick="checkManualRadio(this)") }}
+                                    <!-- <input type="number" step="0.000000000001" name="manual_teff" id="manual_teff" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
                                 </div>
                             </td>
                         {% elif subfield.data|int(-1) == -1 %}
@@ -56,7 +57,8 @@
                             <td>
                                 <div class="form-check my-4">
                                     {{ subfield(class="form-check-input") }}
-                                    <input type="number" step="0.000000000001" name="manual_logg" id="manual_logg" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5">
+                                    {{ star_name_parameters_form.manual_logg(class="form-control", onclick="checkManualRadio(this)") }}
+                                    <!-- <input type="number" step="0.000000000001" name="manual_logg" id="manual_logg" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
                                 </div>
                             </td>
                         {% else %}
@@ -77,7 +79,8 @@
                             <td>
                                 <div class="form-check my-4">
                                     {{ subfield(class="form-check-input") }}
-                                    <input type="number" step="0.000000000001" name="manual_mass" id="manual_mass" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5">
+                                    {{ star_name_parameters_form.manual_mass(class="form-control", onclick="checkManualRadio(this)") }}
+                                    <!-- <input type="number" step="0.000000000001" name="manual_mass" id="manual_mass" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
                                 </div>
                             </td>
                         {% else %}
@@ -98,7 +101,8 @@
                             <td>
                                 <div class="form-check my-4">
                                     {{ subfield(class="form-check-input") }}
-                                    <input type="number" step="0.000000000001" name="manual_rad" id="manual_rad" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5">
+                                    {{ star_name_parameters_form.manual_stell_rad(class="form-control", onclick="checkManualRadio(this)") }}
+                                    <!-- <input type="number" step="0.000000000001" name="manual_rad" id="manual_rad" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
                                 </div>
                             </td>
                         {% else %}
@@ -119,7 +123,8 @@
                             <td>
                                 <div class="form-check my-4">
                                     {{ subfield(class="form-check-input") }}
-                                    <input type="number" step="0.000000000001" name="manual_dist" id="manual_dist" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5">
+                                    {{ star_name_parameters_form.manual_dist(class="form-control", onclick="checkManualRadio(this)") }}
+                                    <!-- <input type="number" step="0.000000000001" name="manual_dist" id="manual_dist" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
                                 </div>
                             </td>
                         {% else %}
@@ -170,7 +175,8 @@
                                     <td>
                                         <div class="form-check my-4">
                                             {{ subfield(class="form-check-input") }}
-                                            <input type="number" step="0.000000000001" name="manual_fuv" id="manual_fuv" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5">
+                                            {{ star_name_parameters_form.manual_fuv(class="form-control", onclick="checkManualRadio(this)") }}
+                                            <!-- <input type="number" step="0.000000000001" name="manual_fuv" id="manual_fuv" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
                                         </div>
                                     </td>
                                 {% else %}
@@ -191,7 +197,8 @@
                                     <td>
                                         <div class="form-check my-4">
                                             {{ subfield(class="form-check-input") }}
-                                            <input type="number" step="0.000000000001" name="manual_fuv_err" id="manual_fuv_err" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5">
+                                            {{ star_name_parameters_form.manual_fuv_err(class="form-control", onclick="checkManualRadio(this)") }}
+                                            <!-- <input type="number" step="0.000000000001" name="manual_fuv_err" id="manual_fuv_err" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
                                         </div>
                                     </td>
                                 {% else %}
@@ -212,7 +219,8 @@
                                     <td>
                                         <div class="form-check my-4">
                                             {{ subfield(class="form-check-input") }}
-                                            <input type="number" step="0.000000000001" name="manual_nuv" id="manual_nuv" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5">
+                                            {{ star_name_parameters_form.manual_nuv(class="form-control", onclick="checkManualRadio(this)") }}
+                                            <!-- <input type="number" step="0.000000000001" name="manual_nuv" id="manual_nuv" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
                                         </div>
                                     </td>
                                 {% else %}
@@ -233,7 +241,8 @@
                                     <td>
                                         <div class="form-check my-4">
                                             {{ subfield(class="form-check-input") }}
-                                            <input type="number" step="0.000000000001" name="manual_nuv_err" id="manual_nuv_err" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5">
+                                            {{ star_name_parameters_form.manual_nuv_err(class="form-control", onclick="checkManualRadio(this)") }}
+                                            <!-- <input type="number" step="0.000000000001" name="manual_nuv_err" id="manual_nuv_err" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
                                         </div>
                                     </td>
                                 {% else %}
@@ -241,7 +250,7 @@
                                         <div class="form-check my-4">
                                             {{ subfield(class="form-check-input") }}
                                             {{ subfield.label(text='+/- ' + subfield.label.text|string, class="form-check-label") }}
-                                        </div>  
+                                        </div>
                                     </td>    
                                 {% endif %}
                             {% endfor %}
@@ -257,3 +266,13 @@
         </div>
     </fieldset>
 </form>
+
+{% if star_name_parameters_form.errors %}
+
+    <script>
+        var myModalEl = document.getElementById('myModal');
+        var modal = new bootstrap.Modal(myModalEl);
+        modal.show();
+    </script>
+
+{% endif %}

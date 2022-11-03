@@ -59,8 +59,8 @@ def convert_and_scale_fluxes(session, photo_fluxes):
         print(f'Photospheric subtracted fluxes: FUV {photospheric_subtracted_fuv} ERR {avg_err_fuv}')
         
         #STEP 6: Add new fluxes to dict
-        returned_fluxes['fuv'] = photospheric_subtracted_fuv
-        returned_fluxes['fuv_err'] = avg_err_fuv
+        returned_fluxes['fuv'] = photospheric_subtracted_fuv * (10**8)
+        returned_fluxes['fuv_err'] = avg_err_fuv * (10**8)
     
     if session['nuv'] != 'null':
         print(f'CONVERTING NUV')
@@ -97,8 +97,8 @@ def convert_and_scale_fluxes(session, photo_fluxes):
         print(f'Photospheric subtracted fluxes: NUV {photospheric_subtracted_nuv} ERR {avg_err_nuv}')
         
         #STEP 6: Add new fluxes to dict
-        returned_fluxes['nuv'] = photospheric_subtracted_nuv
-        returned_fluxes['nuv_err'] = avg_err_nuv
+        returned_fluxes['nuv'] = photospheric_subtracted_nuv * (10**8)
+        returned_fluxes['nuv_err'] = avg_err_nuv * (10**8)
     return returned_fluxes
 
 

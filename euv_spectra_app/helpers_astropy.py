@@ -171,7 +171,7 @@ def search_galex(ra, dec):
         MIN_DIST = galex_data['distance_arcmin'] < 0.167 # can try 0.5 as well
         if len(galex_data[MIN_DIST]) > 0:
             filtered_data = galex_data[MIN_DIST][0]
-            print(filtered_data)
+            #print(filtered_data)
             # add dist arcmin value
             fluxes = {
                 'fuv' : filtered_data['fuv_flux'],
@@ -198,6 +198,7 @@ def correct_pm(data, star_name):
 
     try:
         galex_time = Observations.query_criteria(objectname=star_name, obs_collection='GALEX')[0]['t_max']
+        print(galex_time)
     except:
         return_info['error_msg'] = 'No GALEX Observations Available'
     else:

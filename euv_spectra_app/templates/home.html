@@ -11,6 +11,44 @@
             </div>
         </div>
 
+        <div class="full-width" id="home-img-cont">
+            <img src="{{url_for('static', filename='imgs/logo-blue.png')}}" alt="" class="img-fluid mx-auto d-block" style="width: 400px;">
+        </div>
+
+        <div class="row full-width" id="search-bar-cont">
+            <div class="col-sm-8 offset-sm-2 mt-3">
+                <h5 class="text-center mt-4 mb-5" style="color: white;">Enter Star Name or Coordinates to Get Started</h5>
+                <div class="row g-0">
+                    <div class="col-sm-4">
+                        <div class="form-floating">
+                            <select class="form-select" id="floatingSelect" aria-label="Floating label select example" style="border-radius: 0px;">
+                                <option selected>Star Name</option>
+                                <option value="1">J2000 Coordinates</option>
+                            </select>
+                            <label for="floatingSelect">Search By</label>
+                        </div>
+                    </div>
+    
+                    <div class="col-sm-8">
+                        <div class="input-group mb-3">
+                            <div class="form-floating form-floating-group flex-grow-1" >
+                                <input type="text" class="form-control" name="code1" placeholder="Enter Name of Star" style="border-radius: 0px;">
+                                <label for="code1">Enter Star Name</label>
+                            </div>
+                            <button class="btn btn-primary" style="border-radius: 0px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="20" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+
+
         <div class="col-sm-10 offset-sm-1 mt-1"> 
             <div class="row d-flex align-items-center">
                 <div class="col-sm-2">
@@ -232,7 +270,9 @@
 
 
         <!--—————————MODAL—————————-->
-        {% if session['modal_show'] %}
+        {% if session['modal_show'] or (star_name_parameters_form and star_name_parameters_form.errors) %}
+            
+
             <div class="modal fade" id="myModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
                     <div class="modal-content">
@@ -244,6 +284,12 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
+                            {% for field, errors in star_name_parameters_form.errors.items() %}
+                                <div class="alert alert-danger mt-2" role="alert">
+                                    {{ star_name_parameters_form[field].label }}: {{ ', '.join(errors) }}
+                                </div>
+                            {% endfor %}
+                            
                             <!--—————————MODAL FORM——————————-->
                             {% include 'partials/modal_form.html' %}
                         </div>
