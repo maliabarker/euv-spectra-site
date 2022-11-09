@@ -1,0 +1,12 @@
+<form action='/' method='POST' id="position-form-2">
+    <fieldset>
+        {{ position_form.csrf_token }}
+        <div class="input-group mb-3">
+            <div class="form-floating form-floating-group flex-grow-1">
+                {{ position_form.coords(class="form-control", placeholder="Coordinates", style="border-radius: 0px;") }}
+                {{ position_form.coords.label }}
+            </div>
+            {{ position_form.submit(class="btn btn-primary", form="position-form-2", style="border-radius: 0px;", onclick="displayLoading();") }}
+        </div>
+    </fieldset>
+</form>

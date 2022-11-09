@@ -1,0 +1,20 @@
+<form action='/' method='POST' id="name-form-2">
+    <fieldset>
+        {{ name_form.csrf_token }}
+        <div class="input-group mb-3">
+            <div class="form-floating form-floating-group flex-grow-1">
+                {{ name_form.star_name(class="form-control", placeholder="Star Name", style="border-radius: 0px;") }}
+                {{ name_form.star_name.label }}
+            </div>
+            {{ name_form.submit(class="btn btn-primary", form="name-form-2", style="border-radius: 0px;", onclick="displayLoading();") }}
+            <!-- <button type="submit" class="btn btn-success" style="border-radius: 0px;", onclick="displayLoading();" form="name-form">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button> -->
+            <!-- <button type="submit" form="name-form" class="btn btn-primary" style="border-radius: 0px;" onclick="displayLoading();">
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="20" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+            </button> -->
+        </div>
+    </fieldset>
+</form>

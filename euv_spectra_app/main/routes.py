@@ -1,12 +1,12 @@
-from flask import Blueprint, request, render_template, redirect, url_for, session, flash, g
+from flask import Blueprint, request, render_template, redirect, url_for, session, flash
 from flask_mail import Message
 from collections import defaultdict
 from euv_spectra_app.extensions import *
 from datetime import timedelta
-from astroquery.mast import Catalogs, Observations
+import json
 
 from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
-from euv_spectra_app.helpers_astropy import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion
+from euv_spectra_app.helpers_astropy import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion, search_vizier_galex
 from euv_spectra_app.helpers_db import *
 from euv_spectra_app.helper_fits import *
 from euv_spectra_app.helper_queries import *
@@ -22,19 +22,19 @@ main = Blueprint("main", __name__)
 - photosphere subtract fluxes are much larger than the galex photosphere subtracted fluxes (ex: 89.15518504954082 vs 2903269277063.380)
 '''
 
-@main.before_request
-def make_session_permanent():
-    session.permanent = True
-    app.permanent_session_lifetime = timedelta(minutes=20)
-    if not session.get('modal_show'):
-        session['modal_show'] = False
-
 @main.context_processor
 def inject_form():
     form_dict = dict(contact_form=ContactForm())
     #print(form_dict)
     return dict(contact_form=ContactForm())
 
+@main.before_request
+def before_request():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=30)
+    session.modified = True
+    if not session.get('modal_show'):
+        session['modal_show'] = False
 
 @main.route('/', methods=['GET', 'POST'])
 def homepage():
@@ -69,14 +69,14 @@ def homepage():
             star_name = session['star_name']
             print(f'name form validated with star: {star_name}')
 
-            # galex_time = Catalogs.query_object(star_name, radius=.02, catalog="GALEX")[0]
-            # print(galex_time)
-
             # STEP 2: Get coordinate and motion info from Simbad
             simbad_data = search_simbad(star_name)
             print('simbad ran with no errors')
             if simbad_data['error_msg'] != None:
                 return redirect(url_for('main.error', msg=simbad_data['error_msg']))
+
+            vizier_galex_data = search_vizier_galex(star_name)
+            print(vizier_galex_data)
 
             # STEP 3: Put PM and Coord info into correction function
             corrected_coords = correct_pm(simbad_data['data'], star_name)
@@ -94,22 +94,24 @@ def homepage():
             #print(f'FINAL CATALOG TEST {final_catalogs}')
 
             # STEP 6: Create a dictionary that holds all parameters in a list ex: {'teff' : [teff_1, teff_2, teff_3]}
-                    # Will be useful for next step, dynamically adding radio buttons to flask wtform
+                    # useful for next step, dynamically adding radio buttons to flask wtform
             res = defaultdict(list)
             for dict in final_catalogs:
                 for key in dict:
                     if key == 'data':
                         for key_2 in dict[key]:
-                            res[key_2].append(dict[key][key_2])
+                            if key_2 != 'error_msg' and key_2 != 'valid_info':
+                                res[key_2].append(dict[key][key_2])
                     else:
-                        res[key].append(dict[key])
+                        if key != 'error_msg' and key != 'valid_info':
+                            res[key].append(dict[key])
 
             # STEP 7: Append a manual option to each parameter
             for key in res:
                 res[key].append('Manual')
             print(res)
 
-            session['res'] = res
+            session['modal_choices'] = json.dumps(res)
 
             # STEP 8: Declare the form and add the radio choices dynamically for each radio input on the form
             # star_name_parameters_form = StarNameParametersForm()
@@ -120,7 +122,7 @@ def homepage():
                     radio_input.choices = [(value, value) for value in res[key]]
 
             session['modal_show'] = True
-            #return redirect(url_for('main.homepage'))
+
             flash('success!', 'success')
             return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form)
 
@@ -136,75 +138,51 @@ def submit_modal_form():
     position_form = PositionForm()
     parameter_form = StarNameParametersForm()
 
-    res = session['res']
-    for key in res:
+    choices = json.loads(session['modal_choices'])
+    print(choices)
+    
+    for key in choices:
         if key != 'valid_info' and key != 'error_msg':
             radio_input = getattr(parameter_form, key)
-            radio_input.choices = [(value, value) for value in res[key]]
+            radio_input.choices = [(value, value) for value in choices[key]]
     
     parameter_form.populate_obj(request.form)
+
     print(request.form)
     print(parameter_form)
 
     if request.method == 'POST':
-        print('star name parameter form validated!')
-    #     form = request.form
+        if parameter_form.validate_on_submit():
+            print('star name parameter form validated!')
 
-    #     for key in form:
-    #         # ignoring all manual parameters, submit, csrf token, and catalog names
-    #         if form[key] == '--':
-    #             session[key] = 'null'
-    #         elif 'manual' not in key and 'submit' not in key and 'csrf_token' not in key and 'catalog_name' not in key:
-    #             print('form key '+key+" "+form[key])
-    #             session[key] = float(form[key])
-        
-    #     # session['modal_show'] = False
-    #     print(session)
-    #     return redirect(url_for('main.homepage'))
-    # flash('Submit a name or position to see this page.', 'warning')
-    # return redirect(url_for('main.homepage'))
+            for field in parameter_form:
+                # print('AHHHHH pt.2')
+                # print(field.name, field.data)
+                # ignoring all manual parameters, submit, csrf token, and catalog names
+                if field.data == '--':
+                    # set flux to null if it equals --
+                    print('null flux detected')
+                    session[field.name] = 'null'
+                elif 'manual' in field.name and field.data != None:
+                    print('MANUAL INPUT DETECTED')
+                    print(field.name, field.data)
+                    unmanual_field = field.name.replace('manual_', '')
+                    print(unmanual_field)
+                    session[unmanual_field] = float(field.data)
+                    print(session)
+                    print('DONE')
+                elif 'manual' not in field.name and 'submit' not in field.name and 'csrf_token' not in field.name and 'catalog_name' not in field.name and 'Manual' not in field.data:
+                    print('form key '+field.name+" "+field.data)
+                    session[field.name] = float(field.data)
+            
+            print(session)
 
-        
-        
-
-    # print('MEEEEEEEEEEP')
-    # for key in request.form:
-    #     print(key)
-    #     print(request.form['key'])
-    #     if 'manual' in key and request.form['key'] != None:
-    #         radio_input = getattr(parameter_form, )
-
-
-    if parameter_form.validate_on_submit():
-        session.pop('res')
-        print('star name parameter form validated!')
-        for field in parameter_form:
-            print('AHHHHH pt.2')
-            print(field.name, field.data)
-            # ignoring all manual parameters, submit, csrf token, and catalog names
-            if field.data == '--':
-                # set flux to null if it equals --
-                print('null flux detected')
-                session[field.name] = 'null'
-            elif 'manual' in field.name and field.data != None:
-                print('MANUAL INPUT DETECTED')
-                print(field.name, field.data)
-                unmanual_field = field.name.replace('manual_', '')
-                print(unmanual_field)
-                session[unmanual_field] = float(field.data)
-                print(session)
-                print('DONE')
-            elif 'manual' not in field.name and 'submit' not in field.name and 'csrf_token' not in field.name and 'catalog_name' not in field.name and 'Manual' not in field.data:
-                print('form key '+field.name+" "+field.data)
-                session[field.name] = float(field.data)
-        print(session)
-
-        return redirect(url_for('main.homepage'))
-    else:
-        print('NOT VALIDATED')
-        print(parameter_form.errors)
-        flash('Whoops, something went wrong. Please check your form and try again.', 'danger')
-        # return redirect(url_for('main.homepage'))
+            return redirect(url_for('main.homepage'))
+        else:
+            print('NOT VALIDATED')
+            print(parameter_form.errors)
+            flash('Whoops, something went wrong. Please check your form and try again.', 'danger')
+            # return redirect(url_for('main.homepage'))
     return render_template('home.html', parameter_form=parameter_form_1, name_form=name_form, position_form=position_form, star_name_parameters_form=parameter_form)
 
 
