@@ -160,6 +160,22 @@ def search_simbad(search_input):
 
 
 '''—————————GALEX START—————————'''
+def search_vizier_galex(search_term):
+    return_info = {
+        'catalog_name' : 'GALEX',
+        'data' : {},
+        'error_msg' : None
+    }
+    galex_data = Vizier.query_object(search_term, catalog="GALEX")
+    print(len(galex_data))
+    if len(galex_data) > 0:
+        data = galex_data[0]
+        print(galex_data)
+        print(galex_data[0])
+        print(galex_data[1])
+
+
+        
 def search_galex(ra, dec):
     galex_data = Catalogs.query_object(f'{ra} {dec}', catalog="GALEX")
     return_info = {

@@ -16,10 +16,7 @@ class RequiredIf(DataRequired):
     # field is requiring that name field in the form is data value in the form
     def __call__(self, form, field):
         for name, data in self.conditions.items():
-            print('AHHHHHHHHH')
-            print(name, data)
             other_field = form[name]
-            print(other_field, other_field.data)
             if other_field is None:
                 raise Exception('no field named "%s" in form' % name)
             if other_field.data == data and not field.data:
@@ -55,6 +52,11 @@ class PositionForm(FlaskForm):
     # CHANGE THIS, NOT DECIMAL FIELD
     ra = DecimalField('RA — Right Ascension (h:m:s)', validators=[DataRequired()])
     dec = DecimalField('Dec — Declination (h:m:s)', validators=[DataRequired()])
+    submit = SubmitField('Search →')
+
+class PositionForm2(FlaskForm):
+    # CHANGE THIS, NOT DECIMAL FIELD
+    coords = StringField('J2000 Coordinates — hh:mm:ss.ss dd:mm:ss.ss', validators=[DataRequired()])
     submit = SubmitField('Search →')
 
 class StarNameParametersForm(FlaskForm):

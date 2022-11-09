@@ -1,0 +1,12 @@
+<form action='/' method='POST' id="name-form-2">
+    <fieldset>
+        {{ name_form.csrf_token }}
+        <div class="input-group mb-3">
+            <div class="form-floating form-floating-group flex-grow-1">
+                {{ name_form.star_name(class="form-control", placeholder="Star Name", style="border-radius: 0px;") }}
+                {{ name_form.star_name.label }}
+            </div>
+            {{ name_form.submit(class="btn btn-primary", form="name-form-2", style="border-radius: 0px;", onclick="displayLoading();") }}
+        </div>
+    </fieldset>
+</form>

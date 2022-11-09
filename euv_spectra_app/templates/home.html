@@ -21,33 +21,26 @@
                 <div class="row g-0">
                     <div class="col-sm-4">
                         <div class="form-floating">
-                            <select class="form-select" id="floatingSelect" aria-label="Floating label select example" style="border-radius: 0px;">
-                                <option selected>Star Name</option>
-                                <option value="1">J2000 Coordinates</option>
+                            <select class="form-select" id="search-select" aria-label="Floating label select example" style="border-radius: 0px;">
+                                <option selected value="name">Star Name</option>
+                                <option value="position">J2000 Coordinates</option>
                             </select>
                             <label for="floatingSelect">Search By</label>
                         </div>
                     </div>
-    
-                    <div class="col-sm-8">
-                        <div class="input-group mb-3">
-                            <div class="form-floating form-floating-group flex-grow-1" >
-                                <input type="text" class="form-control" name="code1" placeholder="Enter Name of Star" style="border-radius: 0px;">
-                                <label for="code1">Enter Star Name</label>
-                            </div>
-                            <button class="btn btn-primary" style="border-radius: 0px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="20" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                                </svg>
-                            </button>
-                        </div>
+                    
+                    <div class="col-sm-8" id="name-form-cont">
+                        {% include 'partials/name_form2.html' %}
                     </div>
+
+                    <div class="col-sm-8" id="position-form-cont" style="display:none;">
+                        {% include 'partials/position_form2.html' %}
+                    </div>
+                    
                 </div>
             </div>
         </div>
         
-
-
 
         <div class="col-sm-10 offset-sm-1 mt-1"> 
             <div class="row d-flex align-items-center">
@@ -88,191 +81,10 @@
             {{ parameter_form.submit(class="btn btn-primary", for="parameter-form", id="flux-continue-btn", form="parameter-form") }}
         </div>
         <div><p class="text-center mt-2"><a href="/clear-session" style="color: tomato;">Clear Form</a> </p></div>
-        <hr class="my-5">
-
-<!--——————————————————————————————————————IDEA 1——————————————————————————————————————-->
-        <div class="col-sm-8 offset-sm-2 mt-5">
-            <p class="text-center mb-2"><b>Enter Stellar Parameters and Fluxes for Target Star</b></p>
-            <p class="text-center"><a data-bs-toggle="collapse" href="#search" role="button" aria-expanded="false" aria-controls="collapseExample">Need Help Finding Parameters? &or;</a></p>
-            
-            <div class="col-sm-8 offset-sm-2">
-                <div class="collapse mb-2" id="search">
-                    <div class="card card-body">
-    
-                        <div class="input-group mb-3">
-                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Search By</button>
-                            
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item">Star Name</a></li>
-                                <li><a class="dropdown-item">Coordinates</a></li>
-                            </ul>
-    
-                            <input type="text" class="form-control" aria-label="Text input with dropdown button">
-                            <button type="button" class="btn btn-outline-secondary">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        
-            {% include 'partials/parameter_form.html' %}
-        </div>
-        <div class="text-center mt-5">
-            {{ parameter_form.submit(class="btn btn-primary", for="parameter-form", id="flux-continue-btn", form="parameter-form") }}
-        </div>
-        <div><p class="text-center mt-2"><a href="/clear-session" style="color: tomato;">Clear Form</a> </p></div>
-        <hr class="my-5">
-<!--——————————————————————————————————————IDEA 2——————————————————————————————————————-->
-        <p class="text-center mb-2"><b>Enter Stellar Parameters and Fluxes for Target Star</b></p>
-        <p class="text-center"><a data-bs-toggle="collapse" href="#search" role="button" aria-expanded="false" aria-controls="collapseExample">Need Help Finding Parameters? &or;</a></p>
-            
-        <div class="col-sm-8 offset-sm-2">
-            <div class="collapse mb-5" id="search">
-                <div class="input-group mb-3" style="box-shadow: 5px 2px 2px rgb(196, 196, 196);">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Search By</button>
-                    
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item">Star Name</a></li>
-                        <li><a class="dropdown-item">Coordinates</a></li>
-                    </ul>
-
-                    <input type="text" class="form-control" aria-label="Text input with dropdown button">
-                    <button type="button" class="btn btn-outline-secondary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <form action="/results" method="POST" id="parameter-form">
-            {{ parameter_form.csrf_token }}
-            <fieldset>
-                <div class="row">
-                    <div class="col-sm-6">
-                        <div class="form-floating mb-3">
-                            {{ parameter_form.teff(class="form-control", placeholder="Teff — Stellar Effective Temperature (K)") }}
-                            {{ parameter_form.teff.label(text='* ' + parameter_form.teff.label.text) }}
-                        </div>
-                
-                        <div class="form-floating mb-3">
-                            {{ parameter_form.logg(class="form-control", placeholder="log g — Surface Gravity (cm/s2)") }}
-                            {{ parameter_form.logg.label(text='* ' + parameter_form.logg.label.text) }}
-                        </div>
-                
-                        <div class="form-floating mb-3">
-                            {{ parameter_form.mass(class="form-control", placeholder="M ☉ - Mass in Solar Masses") }}
-                            {{ parameter_form.mass.label(text='* ' + parameter_form.mass.label.text) }}
-                        </div>
-                
-                        <div class="form-floating mb-3">
-                            {{ parameter_form.stell_rad(class="form-control", placeholder="R ☉ — Stellar Radius in Solar Radian") }}
-                            {{ parameter_form.stell_rad.label(text='* ' + parameter_form.stell_rad.label.text) }}
-                        </div>
-                
-                        <div class="row">
-                            <div class="col-sm-8">
-                                <div class="form-floating mb-3">
-                                    {{ parameter_form.dist(class="form-control", placeholder="d — Distance") }}
-                                    {{ parameter_form.dist.label(text='* ' + parameter_form.dist.label.text) }}
-                                </div>
-                            </div>
-                            <div class="col-sm-4">
-                                <div class="form-floating mb-3">
-                                    {{ parameter_form.dist_unit(class="form-select") }}
-                                    {{ parameter_form.dist_unit.label(text='* ' + parameter_form.dist_unit.label.text) }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-    
-                    <div class="col-sm-6">
-                        <div class="row">
-                            <div class="col-sm-6">
-                                <div class="form-floating mb-3">
-                                    {{ parameter_form.fuv(class="form-control", placeholder="FUV — Far Ultraviolet Flux in Microjanskys (mjy)") }}
-                                    {{ parameter_form.fuv.label(text='* ' + parameter_form.fuv.label.text) }}
-                                </div>
-                            </div>
-                            <div class="col-sm-1 d-flex align-items-center">
-                                <p class="justify-content-center">+/-</p>
-                            </div>
-                            <div class="col-sm-5">
-                                <div class="form-floating">
-                                    {{ parameter_form.fuv_err(class="form-control", placeholder="FUV — Far Ultraviolet Flux Error in Microjanskys (mjy)") }}
-                                    {{ parameter_form.fuv_err.label(text='* ' + parameter_form.fuv_err.label.text) }}
-                                </div>
-                            </div>
-                        </div>
-                        <div id="fuv-flags-container" class="text-center">
-                            <span class="me-3">FUV Flags:</span>
-                            {% for subfield in parameter_form.fuv_flag %}
-                                {% if subfield.data == 'null' %}
-                                    <div class="form-check form-check-inline my-4">
-                                        {{ subfield(class="form-check-input", onclick="populateNullFlux(this);") }}
-                                        {{ subfield.label(class="form-check-label") }}
-                                    </div>
-                                {% else %}
-                                    <div class="form-check form-check-inline my-4">
-                                        {{ subfield(class="form-check-input") }}
-                                        {{ subfield.label(class="form-check-label") }}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                
-                        <div class="row">
-                            <div class="col-sm-6">
-                                <div class="form-floating mb-3">
-                                    {{ parameter_form.nuv(class="form-control", placeholder="NUV — Near Ultraviolet Flux in Microjanskys (mjy)") }}
-                                    {{ parameter_form.nuv.label(text='* ' + parameter_form.nuv.label.text) }}
-                                </div>
-                            </div>
-                            <div class="col-sm-1 d-flex align-items-center">
-                                <p class="justify-content-center">+/-</p>
-                            </div>
-                            <div class="col-sm-5">
-                                <div class="form-floating">
-                                    {{ parameter_form.nuv_err(class="form-control", placeholder="NUV — Near Ultraviolet Flux Error in Microjanskys (mjy)") }}
-                                    {{ parameter_form.nuv_err.label(text='* ' + parameter_form.nuv_err.label.text) }}
-                                </div>
-                            </div>
-                        </div>
-                
-                        <div id="nuv-flags-container" class="text-center">
-                            <span class="me-3">NUV Flags:</span>
-                            {% for subfield in parameter_form.nuv_flag %}
-                                {% if subfield.data == 'null' %}
-                                    <div class="form-check form-check-inline my-4">
-                                        {{ subfield(class="form-check-input", onclick="populateNullFlux(this);") }}
-                                        {{ subfield.label(class="form-check-label") }}
-                                    </div>
-                                {% else %}
-                                    <div class="form-check form-check-inline my-4">
-                                        {{ subfield(class="form-check-input") }}
-                                        {{ subfield.label(class="form-check-label") }}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-            </fieldset>
-        </form>
-        <div class="text-center mt-5">
-            {{ parameter_form.submit(class="btn btn-primary", for="parameter-form", id="flux-continue-btn", form="parameter-form") }}
-        </div>
-        <div><p class="text-center mt-2"><a href="/clear-session" style="color: tomato;">Clear Form</a> </p></div>
 
 
-        <!--—————————MODAL—————————-->
+        <!--—————————MODAL START—————————-->
         {% if session['modal_show'] or (star_name_parameters_form and star_name_parameters_form.errors) %}
-            
-
             <div class="modal fade" id="myModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
                     <div class="modal-content">
@@ -296,24 +108,24 @@
                     </div>
                 </div>
             </div>
+
             <script>
                 var myModalEl = document.getElementById('myModal');
                 var modal = new bootstrap.Modal(myModalEl);
                 modal.show();
             </script>
         {% endif %}
+        <!--—————————MODAL END—————————-->
 
 
-        {#<!-- <div class="text-center my-5">
-            {{ parameter_form.submit(class="btn btn-primary", for="parameter-form", id="flux-continue-btn", form="parameter-form") }}
-        </div>
-        <div><p class="text-center"><a href="/clear-session" style="color: red;">Clear Form</a> </p></div> -->#}
     </div>
 {% endblock %}
+
 
 {% block script %}
     <script src="{{ url_for('static', filename='js/loader.js') }}"></script>
     <script src="{{ url_for('static', filename='js/modal_form.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/search_bar.js') }}"></script>
     <script>
         function checkSession() {
             var inputs;
