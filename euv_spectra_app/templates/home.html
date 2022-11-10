@@ -93,7 +93,7 @@
                                 The following catalogs returned data for your target: <b>{{ session.star_name }}</b> <br> 
                                 Select the values you wish to use below or enter manually.
                             </p>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="submit" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onClick="window.location.reload();"></button>
                         </div>
                         <div class="modal-body">
                             {% for field, errors in star_name_parameters_form.errors.items() %}

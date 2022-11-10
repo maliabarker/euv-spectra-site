@@ -4,6 +4,8 @@ from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
 from astroquery.vizier import Vizier
 from astroquery.gaia import Gaia
 from astroquery.simbad import Simbad
+import numpy.ma as ma
+
 customSimbad = Simbad()
 customSimbad.remove_votable_fields('coordinates')
 customSimbad.add_votable_fields('ra', 'dec', 'pmra', 'pmdec', 'plx', 'rv_value')
@@ -187,14 +189,18 @@ def search_galex(ra, dec):
         MIN_DIST = galex_data['distance_arcmin'] < 0.167 # can try 0.5 as well
         if len(galex_data[MIN_DIST]) > 0:
             filtered_data = galex_data[MIN_DIST][0]
-            #print(filtered_data)
-            # add dist arcmin value
+            # print(filtered_data)
             fluxes = {
                 'fuv' : filtered_data['fuv_flux'],
                 'fuv_err' : filtered_data['fuv_fluxerr'],
                 'nuv' : filtered_data['nuv_flux'],
                 'nuv_err' : filtered_data['nuv_fluxerr']
             }
+
+            for key, value in fluxes.items():
+                if ma.is_masked(value):
+                    fluxes[key] = 'No Detection'
+
             return_info['data'] = fluxes
         else:
             return_info['error_msg'] = 'No data points with distance arcmin under 0.1'

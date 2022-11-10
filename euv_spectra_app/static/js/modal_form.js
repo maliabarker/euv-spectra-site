@@ -46,20 +46,28 @@ function selectAll(obj) {
 };
 
 function selectAllGalex(obj) {
+    const btns = document.getElementById('star_name_flux_form_table').querySelectorAll(`[id*="0"]`);
+
     if (obj.checked) {
         console.log('unchecked, now we need to check and select all')
-        document.getElementById('fuv-0').checked = true;
-        document.getElementById('nuv-0').checked = true;
-        document.getElementById('fuv_err-0').checked = true;
-        document.getElementById('nuv_err-0').checked = true;
+        for( i = 0 ; i < btns.length ; i++ ) {
+            btns[i].checked = true;
+        };
+        // document.getElementById('fuv-0').checked = true;
+        // document.getElementById('nuv-0').checked = true;
+        // document.getElementById('fuv_err-0').checked = true;
+        // document.getElementById('nuv_err-0').checked = true;
         obj.nextElementSibling.innerHTML = 'Deselect All'
     } else {
         console.log('checked, now we need to uncheck and deselect all')
         obj.checked = false;
-        document.getElementById('fuv-0').checked = false;
-        document.getElementById('nuv-0').checked = false;
-        document.getElementById('fuv_err-0').checked = false;
-        document.getElementById('nuv_err-0').checked = false;
+        for( i = 0 ; i < btns.length ; i++ ) {
+            btns[i].checked = false;
+        };
+        // document.getElementById('fuv-0').checked = false;
+        // document.getElementById('nuv-0').checked = false;
+        // document.getElementById('fuv_err-0').checked = false;
+        // document.getElementById('nuv_err-0').checked = false;
         obj.nextElementSibling.innerHTML = 'Select All'
     }
     

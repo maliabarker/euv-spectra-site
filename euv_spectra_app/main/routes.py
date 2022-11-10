@@ -114,8 +114,7 @@ def homepage():
                 res[key].append('Manual')
             print(res)
 
-            session['res'] = res
-            session['modal_choices'] = json.dumps(res)
+            session['modal_choices'] = json.dumps(res, allow_nan=True)
 
             # STEP 8: Declare the form and add the radio choices dynamically for each radio input on the form
             # star_name_parameters_form = StarNameParametersForm()
@@ -140,6 +139,7 @@ def submit_modal_form():
     name_form = StarNameForm()
     position_form = PositionForm()
     parameter_form = StarNameParametersForm()
+    position_form2 = PositionForm2()
 
     
 
@@ -149,12 +149,6 @@ def submit_modal_form():
     for key in choices:
         radio_input = getattr(parameter_form, key)
         radio_input.choices = [(value, value) for value in choices[key]]
-
-    # res = session['res']
-    # for key in res:
-    #     if key != 'valid_info' and key != 'error_msg':
-    #         radio_input = getattr(parameter_form, key)
-    #         radio_input.choices = [(value, value) for value in res[key]]
     
     parameter_form.populate_obj(request.form)
     print(request.form)
@@ -166,18 +160,18 @@ def submit_modal_form():
 
             for field in parameter_form:
                 # ignoring all manual parameters, submit, csrf token, and catalog names
-                if field.data == '--':
+                print('AHHHHHHH')
+                print(field)
+                print(field.name, field.data)
+                if field.data == 'No Detection':
                     # set flux to null if it equals --
-                    print('null flux detected')
+                    print(f'null flux detected in {field.name}')
                     session[field.name] = 'null'
                 elif 'manual' in field.name and field.data != None:
                     print('MANUAL INPUT DETECTED')
                     print(field.name, field.data)
                     unmanual_field = field.name.replace('manual_', '')
-                    print(unmanual_field)
                     session[unmanual_field] = float(field.data)
-                    print(session)
-                    print('DONE')
                 elif 'manual' not in field.name and 'submit' not in field.name and 'csrf_token' not in field.name and 'catalog_name' not in field.name and 'Manual' not in field.data:
                     print('form key '+field.name+" "+field.data)
                     session[field.name] = float(field.data)
@@ -188,9 +182,7 @@ def submit_modal_form():
         else:
             print('NOT VALIDATED')
             print(parameter_form.errors)
-            flash('Whoops, something went wrong. Please check your form and try again.', 'danger')
-
-    return render_template('home.html', parameter_form=parameter_form_1, name_form=name_form, position_form=position_form, star_name_parameters_form=parameter_form)
+    return render_template('home.html', parameter_form=parameter_form_1, name_form=name_form, position_form=position_form, star_name_parameters_form=parameter_form, position_form2=position_form2)
 
 
 

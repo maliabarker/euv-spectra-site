@@ -61,6 +61,13 @@
                                     <!-- <input type="number" step="0.000000000001" name="manual_logg" id="manual_logg" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
                                 </div>
                             </td>
+                        {% elif subfield.data|int(-1) == -1 %}
+                            <td>
+                                <div class="form-check my-4">
+                                    {{ subfield(disabled=true, class="form-check-input") }}
+                                    {{ subfield.label(class="form-check-label") }}
+                                </div>
+                            </td>
                         {% else %}
                             <td>
                                 <div class="form-check my-4">
@@ -81,6 +88,13 @@
                                     {{ subfield(class="form-check-input") }}
                                     {{ star_name_parameters_form.manual_mass(class="form-control", onclick="checkManualRadio(this)") }}
                                     <!-- <input type="number" step="0.000000000001" name="manual_mass" id="manual_mass" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
+                                </div>
+                            </td>
+                        {% elif subfield.data|int(-1) == -1 %}
+                            <td>
+                                <div class="form-check my-4">
+                                    {{ subfield(disabled=true, class="form-check-input") }}
+                                    {{ subfield.label(class="form-check-label") }}
                                 </div>
                             </td>
                         {% else %}
@@ -105,6 +119,13 @@
                                     <!-- <input type="number" step="0.000000000001" name="manual_rad" id="manual_rad" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
                                 </div>
                             </td>
+                        {% elif subfield.data|int(-1) == -1 %}
+                            <td>
+                                <div class="form-check my-4">
+                                    {{ subfield(disabled=true, class="form-check-input") }}
+                                    {{ subfield.label(class="form-check-label") }}
+                                </div>
+                            </td>
                         {% else %}
                             <td>
                                 <div class="form-check my-4">
@@ -125,6 +146,13 @@
                                     {{ subfield(class="form-check-input") }}
                                     {{ star_name_parameters_form.manual_dist(class="form-control", onclick="checkManualRadio(this)") }}
                                     <!-- <input type="number" step="0.000000000001" name="manual_dist" id="manual_dist" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
+                                </div>
+                            </td>
+                        {% elif subfield.data|int(-1) == -1 %}
+                            <td>
+                                <div class="form-check my-4">
+                                    {{ subfield(disabled=true, class="form-check-input") }}
+                                    {{ subfield.label(class="form-check-label") }}
                                 </div>
                             </td>
                         {% else %}
