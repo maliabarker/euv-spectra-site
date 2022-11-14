@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, redirect, url_for, session, flash, g
+from flask import Blueprint, request, render_template, redirect, url_for, session, flash
 from flask_mail import Message
 from collections import defaultdict
 from euv_spectra_app.extensions import *
@@ -78,9 +78,6 @@ def homepage():
             if simbad_data['error_msg'] != None:
                 return redirect(url_for('main.error', msg=simbad_data['error_msg']))
 
-            vizier_galex_data = search_vizier_galex(star_name)
-            print(vizier_galex_data)
-
             # STEP 3: Put PM and Coord info into correction function
             corrected_coords = correct_pm(simbad_data['data'], star_name)
             print('coordinate correction ran with no errors')
@@ -89,6 +86,7 @@ def homepage():
 
             # STEP 4: Search GALEX with these corrected coordinates
             galex_data = search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])
+            #galex_data = search_vizier_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])
             print(galex_data)
             
             # STEP 5: Query all catalogs and append them to the final catalogs list if there are no errors
@@ -178,154 +176,158 @@ def submit_modal_form():
             
             print(session)
 
-            return redirect(url_for('main.homepage'))
+            return redirect(url_for('main.return_results'))
         else:
             print('NOT VALIDATED')
             print(parameter_form.errors)
     return render_template('home.html', parameter_form=parameter_form_1, name_form=name_form, position_form=position_form, star_name_parameters_form=parameter_form, position_form2=position_form2)
 
-
-
-'''————————————SUBMIT ROUTE FOR RESULTS————————————'''
-@main.route('/results', methods=['GET', 'POST'])
-def return_results():
+'''————————————SUBMIT ROUTE FOR MANUAL INPUT————————————'''
+@main.route('/manual-submit', methods=['GET', 'POST'])
+def submit_manual_form():
+    
     if request.method == 'POST':
         form = ParameterForm(request.form)
-        
         if form.validate_on_submit():
             print('parameter form validated!')
             for fieldname, value in form.data.items():
                 print(fieldname, value)
-
-            #CHECK DISTANCE UNIT: if distance unit is mas, convert to parsecs
-            # mas_to_pc = 1/ (X mas / 1000)
-
-            # STEP 1: Search the model_parameter_grid collection to find closest matching subtype
-            matching_subtype = find_matching_subtype(session)
-            session['model_subtype'] = matching_subtype['model']
-
-            #STEP 2: Find closest matching photosphere model and get flux values
-            matching_photospheric_flux = find_matching_photosphere(session)
-
-            # want to add numbers to queries (diff value) then add the values and return query with lowest value?
-            # matching_photospheric_flux_test = starter_photosphere_models.aggregate([
-            #     {'$facet': {
-            #         'matchedTeff': [
-            #             {'$project': {'diff': {'$abs': {'$subtract': [session['teff'], '$teff']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
-
-            #         'matchedLogg': [
-            #             {'$project': {'diff': {'$abs': {'$subtract': [session['logg'], '$logg']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
-            #     }},
-            #     # get them together. Should list all rules from above  
-            #     {'$project': {'doc': {'$concatArrays': ["$matchedTeff", "$matchedLogg"]}}},
-            #     # split them apart, order by weight & desc, return top document
-            #     # {'$unwind': "$doc"}, {}
-            #     # {'$unwind': "$doc"}, {'$sort': {"doc.diff": -1}}, 
-            #     {'$limit': 1},
-            #     # reshape to retrieve documents in its original format 
-            #     #{'$project': {'_id': "$doc._id", 'fits_filename': "$doc.doc.fits_filename", 'teff': "$doc.doc.teff", 'logg': "$doc.doc.logg", 'mass': "$doc.doc.mass", 'euv': "$doc.doc.euv", 'nuv': "$doc.doc.nuv", 'fuv': "$doc.doc.fuv"}}
-            # ])
-            # print('TESTING')
-            # for doc in matching_photospheric_flux_test:
-            #     print(doc)
-
-            #STEP 3: Convert, scale, and subtract photospheric contribution from fluxes (more detail in function)
-            corrected_fluxes = convert_and_scale_fluxes(session, matching_photospheric_flux)
-            session['corrected_nuv'] = corrected_fluxes['nuv']
-            session['corrected_nuv_err'] = corrected_fluxes['nuv_err']
-            session['corrected_fuv'] = corrected_fluxes['fuv']
-            session['corrected_fuv_err'] = corrected_fluxes['fuv_err']
-            print(session)
-
-            #STEP 5: Do chi squared test between all models within selected subgrid and corrected observation ** this is on models with subtracted photospheric flux
-            # final_models = find_models()
-            model_collection = f'{session["model_subtype"].lower()}_grid'
-            print(f'NUV UPPER LIM {session["corrected_nuv"] + session["corrected_nuv_err"]} LOWER LIM {session["corrected_nuv"] - session["corrected_nuv_err"]}')
-            print(f'FUV UPPER LIM {session["corrected_fuv"] + session["corrected_fuv_err"]} LOWER LIM {session["corrected_fuv"] - session["corrected_fuv_err"]}')
-            
-            if model_collection in db.list_collection_names():
-                models_with_chi_squared = db.get_collection(model_collection).aggregate([
-                    # { "$match" :
-                    #     { "$expr":
-                    #         {"$switch": { 
-                    #             "branches": [
-                    #             # no NUV
-                    #             { "case": {"$eq": [session.get("corrected_nuv"), False] }, "then": {"fuv": {"$gte": {"$subtract": [session['corrected_fuv'], session['corrected_fuv_err']]}, "$lte":{"$add": [session['corrected_fuv'], session['corrected_fuv_err']]}}}},
-                    #             # no FUV
-                    #             { "case": {"$eq": [session.get("corrected_fuv"), False] }, "then": {"nuv": {"$gte": {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}, "$lte":{"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}}}}
-                    #             ],
-                    #             "default": 
-                    #                 {"$nuv": {"$gte": {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}, "$lte":{"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}},
-                    #                 "$fuv": {"$gte":{"$subtract": [session['corrected_fuv'], session['corrected_fuv_err']]}, "$lte":{"$add": [session['corrected_fuv'], session['corrected_fuv_err']]}}}
-                    #         }}
-                    #     }
-                    # },
-                    { "$match": {
-                        "nuv": { "$elemMatch": {"$gte": {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}, "$lte":{"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}}},
-                        "fuv": { "$elemMatch": {"$gte":{"$subtract": [session['corrected_fuv'], session['corrected_fuv_err']]}, "$lte":{"$add": [session['corrected_fuv'], session['corrected_fuv_err']]}}}
-                        }
-                    },
-                    { "$project": {  
-                            "fits_filename": 1, "mass": 1, "euv": 1, "fuv": 1, "nuv": 1, "chiSquared": { 
-                                "$switch": { 
-                                    "branches": [
-                                    { "case": {"$eq": [session.get("corrected_nuv"), False] }, "then": { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }},
-                                    { "case": {"$eq": [session.get("corrected_fuv"), False] }, "then": { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }}
-                                    ],
-                                    "default": { "$add" : [
-                                        { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] },
-                                        { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }
-                                    ]}
-                                }
-                            }
-                        }
-                    }])
-
-                print('MODELS W CHI SQUARED')
-                for doc in models_with_chi_squared:
-                    print(doc)
-            else:
-                return redirect(url_for('main.error', msg=f'The grid for model subtype {session["model_subtype"]} is currently unavailable. Please contact us with your stellar parameters and returned subtype.'))
-
-            #FOR NUV { "$divide": [ { "$pow": [ { "$subtract": [ "$NUV", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }
-            #FOR FUV { "$divide": [ { "$pow": [ { "$subtract": [ "$FUV", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }
-            
-            # chisq2= sum((modelflux[i]- GALEX[i])**2 / GALEX[i])
-            # catch if there's no fuv/nuv detection, chi squared JUST over one flux
-
-            # return all results within upper and lower limits of fluxes (w/ chi squared values)
-                # db.get_collection(model_collection).find({'nuv': {"$gte":<lower_lim_nuv>, "$lte":<upper_lim_nuv>}, 'fuv': {$gte:<lower_lim_fuv>, $lte:<upper_lim_fuv>}})
-                
-                # lower_lim = {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}
-                # session['corrected_nuv'] - session['corrected_nuv_err']
-                # upper_lim = {"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}
-                # session['corrected_nuv'] + session['corrected_nuv_err']
-                
-                # !!!!!!!!
-                # NOTE does this mean we return all matching documents in model grid that match between...
-                    # 1. galex_fuv +- err
-                    # 2. galex_nuv +- err
-                # !!!!!!!!
-
-                # compute upper lim and lower lim for each flux and find within those values
-            # return from lowest chi squared -> highest
-            # return euv flux as <euv_flux> +/- difference from model
-
-            #STEP 6: Read FITS file from matching models and create graph from data
-            #file = find_fits_file(<filename>)
-            file = find_fits_file('M0.Teff=3850.logg=4.78.TRgrad=7.5.cmtop=5.5.cmin=3.5.7.gz.fits')
-            fig = create_graph(file, session)
-
-            #STEP 7: Convert graph into html component and send to front end
-            html_string = convert_fig_to_html(fig)
-
-            flash('_ Results were found within your submitted parameters', 'success')
-            return render_template('result.html', subtype=matching_subtype, graph=html_string)
+            #TODO append all inputs to session
         else:
             flash('Whoops, something went wrong. Please check your inputs and try again!', 'danger')
             return redirect(url_for('main.homepage'))
+
+'''————————————SUBMIT ROUTE FOR RESULTS————————————'''
+@main.route('/results', methods=['GET', 'POST'])
+def return_results():
+    #TODO find a better way to check that all data needed is here before continuing
+    if session.get('teff') and session.get('logg') and session.get('mass') and session.get('stell_rad') and session.get('dist'):
+        #CHECK DISTANCE UNIT: if distance unit is mas, convert to parsecs
+        # mas_to_pc = 1/ (X mas / 1000)
+
+        # STEP 1: Search the model_parameter_grid collection to find closest matching subtype
+        matching_subtype = find_matching_subtype(session)
+        session['model_subtype'] = matching_subtype['model']
+
+        #STEP 2: Find closest matching photosphere model and get flux values
+        matching_photospheric_flux = find_matching_photosphere(session)
+
+        # want to add numbers to queries (diff value) then add the values and return query with lowest value?
+        # matching_photospheric_flux_test = starter_photosphere_models.aggregate([
+        #     {'$facet': {
+        #         'matchedTeff': [
+        #             {'$project': {'diff': {'$abs': {'$subtract': [session['teff'], '$teff']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
+
+        #         'matchedLogg': [
+        #             {'$project': {'diff': {'$abs': {'$subtract': [session['logg'], '$logg']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
+        #     }},
+        #     # get them together. Should list all rules from above  
+        #     {'$project': {'doc': {'$concatArrays': ["$matchedTeff", "$matchedLogg"]}}},
+        #     # split them apart, order by weight & desc, return top document
+        #     # {'$unwind': "$doc"}, {}
+        #     # {'$unwind': "$doc"}, {'$sort': {"doc.diff": -1}}, 
+        #     {'$limit': 1},
+        #     # reshape to retrieve documents in its original format 
+        #     #{'$project': {'_id': "$doc._id", 'fits_filename': "$doc.doc.fits_filename", 'teff': "$doc.doc.teff", 'logg': "$doc.doc.logg", 'mass': "$doc.doc.mass", 'euv': "$doc.doc.euv", 'nuv': "$doc.doc.nuv", 'fuv': "$doc.doc.fuv"}}
+        # ])
+        # print('TESTING')
+        # for doc in matching_photospheric_flux_test:
+        #     print(doc)
+
+        #STEP 3: Convert, scale, and subtract photospheric contribution from fluxes (more detail in function)
+        corrected_fluxes = convert_and_scale_fluxes(session, matching_photospheric_flux)
+        session['corrected_nuv'] = corrected_fluxes['nuv']
+        session['corrected_nuv_err'] = corrected_fluxes['nuv_err']
+        session['corrected_fuv'] = corrected_fluxes['fuv']
+        session['corrected_fuv_err'] = corrected_fluxes['fuv_err']
+        print(session)
+
+        #STEP 5: Do chi squared test between all models within selected subgrid and corrected observation ** this is on models with subtracted photospheric flux
+        # final_models = find_models()
+        model_collection = f'{session["model_subtype"].lower()}_grid'
+        print(f'NUV UPPER LIM {session["corrected_nuv"] + session["corrected_nuv_err"]} LOWER LIM {session["corrected_nuv"] - session["corrected_nuv_err"]}')
+        print(f'FUV UPPER LIM {session["corrected_fuv"] + session["corrected_fuv_err"]} LOWER LIM {session["corrected_fuv"] - session["corrected_fuv_err"]}')
+        
+        if model_collection in db.list_collection_names():
+            models_with_chi_squared = db.get_collection(model_collection).aggregate([
+                # { "$match" :
+                #     { "$expr":
+                #         {"$switch": { 
+                #             "branches": [
+                #             # no NUV
+                #             { "case": {"$eq": [session.get("corrected_nuv"), False] }, "then": {"fuv": {"$gte": {"$subtract": [session['corrected_fuv'], session['corrected_fuv_err']]}, "$lte":{"$add": [session['corrected_fuv'], session['corrected_fuv_err']]}}}},
+                #             # no FUV
+                #             { "case": {"$eq": [session.get("corrected_fuv"), False] }, "then": {"nuv": {"$gte": {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}, "$lte":{"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}}}}
+                #             ],
+                #             "default": 
+                #                 {"$nuv": {"$gte": {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}, "$lte":{"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}},
+                #                 "$fuv": {"$gte":{"$subtract": [session['corrected_fuv'], session['corrected_fuv_err']]}, "$lte":{"$add": [session['corrected_fuv'], session['corrected_fuv_err']]}}}
+                #         }}
+                #     }
+                # },
+                { "$match": {
+                    "nuv": { "$elemMatch": {"$gte": {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}, "$lte":{"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}}},
+                    "fuv": { "$elemMatch": {"$gte":{"$subtract": [session['corrected_fuv'], session['corrected_fuv_err']]}, "$lte":{"$add": [session['corrected_fuv'], session['corrected_fuv_err']]}}}
+                    }
+                },
+                { "$project": {  
+                        "fits_filename": 1, "mass": 1, "euv": 1, "fuv": 1, "nuv": 1, "chiSquared": { 
+                            "$switch": { 
+                                "branches": [
+                                { "case": {"$eq": [session.get("corrected_nuv"), False] }, "then": { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }},
+                                { "case": {"$eq": [session.get("corrected_fuv"), False] }, "then": { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }}
+                                ],
+                                "default": { "$add" : [
+                                    { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] },
+                                    { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }
+                                ]}
+                            }
+                        }
+                    }
+                }])
+
+            print('MODELS W CHI SQUARED')
+            for doc in models_with_chi_squared:
+                print(doc)
+        else:
+            return redirect(url_for('main.error', msg=f'The grid for model subtype {session["model_subtype"]} is currently unavailable. Please contact us with your stellar parameters and returned subtype.'))
+
+        #FOR NUV { "$divide": [ { "$pow": [ { "$subtract": [ "$NUV", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }
+        #FOR FUV { "$divide": [ { "$pow": [ { "$subtract": [ "$FUV", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }
+        
+        # chisq2= sum((modelflux[i]- GALEX[i])**2 / GALEX[i])
+        # catch if there's no fuv/nuv detection, chi squared JUST over one flux
+
+        # return all results within upper and lower limits of fluxes (w/ chi squared values)
+            # db.get_collection(model_collection).find({'nuv': {"$gte":<lower_lim_nuv>, "$lte":<upper_lim_nuv>}, 'fuv': {$gte:<lower_lim_fuv>, $lte:<upper_lim_fuv>}})
+            
+            # lower_lim = {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}
+            # session['corrected_nuv'] - session['corrected_nuv_err']
+            # upper_lim = {"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}
+            # session['corrected_nuv'] + session['corrected_nuv_err']
+            
+            # !!!!!!!!
+            # NOTE does this mean we return all matching documents in model grid that match between...
+                # 1. galex_fuv +- err
+                # 2. galex_nuv +- err
+            # !!!!!!!!
+
+            # compute upper lim and lower lim for each flux and find within those values
+        # return from lowest chi squared -> highest
+        # return euv flux as <euv_flux> +/- difference from model
+
+        #STEP 6: Read FITS file from matching models and create graph from data
+        #file = find_fits_file(<filename>)
+        file = find_fits_file('M0.Teff=3850.logg=4.78.TRgrad=7.5.cmtop=5.5.cmin=3.5.7.gz.fits')
+        fig = create_graph(file, session)
+
+        #STEP 7: Convert graph into html component and send to front end
+        html_string = convert_fig_to_html(fig)
+
+        flash('_ Results were found within your submitted parameters', 'success')
+        return render_template('result.html', subtype=matching_subtype, graph=html_string)
     else:
-        flash('Submit the required data through the manual parameters form to view this page.', 'warning')
+        flash('Submit the required data to view this page.', 'warning')
         return redirect(url_for('main.homepage'))
 
 

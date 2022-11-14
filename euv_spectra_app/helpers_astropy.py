@@ -5,6 +5,7 @@ from astroquery.vizier import Vizier
 from astroquery.gaia import Gaia
 from astroquery.simbad import Simbad
 import numpy.ma as ma
+from euv_spectra_app.extensions import *
 
 customSimbad = Simbad()
 customSimbad.remove_votable_fields('coordinates')
@@ -162,19 +163,31 @@ def search_simbad(search_input):
 
 
 '''—————————GALEX START—————————'''
-def search_vizier_galex(search_term):
+def search_vizier_galex(ra, dec):
     return_info = {
         'catalog_name' : 'GALEX',
         'data' : {},
         'error_msg' : None
     }
-    galex_data = Vizier.query_object(search_term, catalog="GALEX")
-    print(len(galex_data))
+    galex_data = Vizier.query_region(SkyCoord(ra=ra, dec=dec, unit=(u.deg, u.deg), frame='icrs'), radius=0.1*u.deg, catalog="GALEX")
+    # galex_data = Vizier.query_object(search_term, catalog="GALEX")
     if len(galex_data) > 0:
         data = galex_data[0]
-        print(galex_data)
-        print(galex_data[0])
-        print(galex_data[1])
+        # print(galex_data)
+        # print(galex_data[0])
+        # print(galex_data[1])
+        galex_catalog = galex_data['II/335/galex_ais']
+        print(galex_catalog)
+        fluxes = {
+            'fuv' : data['FUV'],
+            'fuv_err' : data['e_FUV'],
+            'nuv' : data['NUV'],
+            'nuv_err' : data['e_NUV']
+        }
+        return_info['data'] = fluxes
+    else:
+        return_info['error_msg'] = 'No GALEX data found for this target'
+    return return_info
 
 
         
@@ -219,7 +232,8 @@ def correct_pm(data, star_name):
     }
 
     try:
-        galex_time = Observations.query_criteria(objectname=star_name, obs_collection='GALEX')[0]['t_max']
+        # galex_time = Observations.query_criteria(objectname=star_name, obs_collection='GALEX')[0]['t_max']
+        galex_time = mast_galex_times.find_one({'target': star_name})['t_min']
         print(galex_time)
     except:
         return_info['error_msg'] = 'No GALEX Observations Available'
@@ -271,27 +285,27 @@ def search_gaia(search_input):
 
     result_table = customSimbad.query_object(search_input)
     data = result_table[0]
-    # try:
-    #     c = SkyCoord.from_name(search_input)
-    #     print(c.ra.degree)
-    #     print(c.dec.degree)
-    # except:
-    #     return_info['error_msg'] = 'No coordinates found for this target.'
+    try:
+        c = SkyCoord.from_name(search_input)
+        print(c.ra.degree)
+        print(c.dec.degree)
+    except:
+        return_info['error_msg'] = 'No coordinates found for this target.'
     
-    # if c:
-    #     coord = SkyCoord(ra=c.ra.degree, dec=c.dec.degree, unit=(u.degree, u.degree), frame='icrs')
-    #     width, height = u.Quantity(0.02, u.deg), u.Quantity(0.02, u.deg)
-    #     gaia_data = Gaia.query_object_async(coordinate=coord, width=width, height=height)
-    #     #gaia_data.pprint()
+    if c:
+        coord = SkyCoord(ra=c.ra.degree, dec=c.dec.degree, unit=(u.degree, u.degree), frame='icrs')
+        width, height = u.Quantity(0.02, u.deg), u.Quantity(0.02, u.deg)
+        gaia_data = Gaia.query_object_async(coordinate=coord, width=width, height=height)
+        gaia_data.pprint()
     # print('———————————')
     # print(data['RA'])
     # print(data['DEC'])
     # print('———————————')
 
-    coord = SkyCoord(ra=data['RA'], dec=data['DEC'], unit=(u.hourangle, u.deg), frame='icrs')
-    print(coord)
-    width, height = u.Quantity(0.001, u.deg), u.Quantity(0.001, u.deg)
-    gaia_data = Gaia.query_object_async(coordinate=coord, width=width, height=height)
+    # coord = SkyCoord(ra=data['RA'], dec=data['DEC'], unit=(u.hourangle, u.deg), frame='icrs')
+    # print(coord)
+    # width, height = u.Quantity(0.001, u.deg), u.Quantity(0.001, u.deg)
+    # gaia_data = Gaia.query_object_async(coordinate=coord, width=width, height=height)
     # gaia_data.pprint()
 
     #gaia_data = Catalogs.query_object(search_input, radius=0.006, catalog="Gaia")

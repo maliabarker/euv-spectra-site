@@ -1,4 +1,4 @@
-<form action='/' method='POST' id="name-form-2">
+<form action='/' method='POST' id="name-form-2" onsubmit="displayLoading();">
     <fieldset>
         {{ name_form.csrf_token }}
         <div class="input-group mb-3">
@@ -6,7 +6,7 @@
                 {{ name_form.star_name(class="form-control", placeholder="Star Name", style="border-radius: 0px;") }}
                 {{ name_form.star_name.label }}
             </div>
-            {{ name_form.submit(class="btn btn-primary", form="name-form-2", style="border-radius: 0px;", onclick="displayLoading();") }}
+            {{ name_form.submit(class="btn btn-primary", form="name-form-2", style="border-radius: 0px;") }}
         </div>
     </fieldset>
 </form>

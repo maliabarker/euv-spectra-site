@@ -1,34 +1,10 @@
-#home-or {
-    width: 100%; 
-    text-align: center; 
-    border-bottom: 1px solid #afb0b0; 
-    line-height: 0.1em;
-    margin: 10px 0 20px; 
-} 
-
-#home-or span { 
-    background:#fff; 
-    padding:0 10px;
-    font-style: oblique;
-}
-
-#home-left-col {
-    border-right: 1px solid #afb0b0;
-}
-
-/* table {
-	display: table;
-}
-table tr {
-	display: table-cell;
-}
-table tr td {
-	display: block;
-} */
+/* FOR MODAL FORM DISPLAY */
 tr { display: block; float: left; }
 th, td { display: block; }
 
 
+
+/* FOR LOADING PAGE */
 #overlay {
     position: fixed; /* Sit on top of the page content */
     display: none; /* Hidden by default */
@@ -38,7 +14,7 @@ th, td { display: block; }
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+    background-color: rgba(0, 0, 0, 0.684); /* Black background with opacity */
     z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
     cursor: pointer; /* Add a pointer on hover */
 }
@@ -69,7 +45,9 @@ th, td { display: block; }
     }
 }
 
-/* TRY PURPLE BTNS */
+
+
+/* BUTTON STYLES */
 
 .btn-primary, .btn-primary:active, .btn-primary:visited {
     background-color: #9c36e8 !important;
@@ -103,19 +81,22 @@ th, td { display: block; }
     color: white;
 }
 
-/* FOR REMOVING UP DOWN ARROWS ON NUMERICAL INPUTS */
 
+
+
+/* FOR REMOVING UP DOWN ARROWS ON NUMERICAL INPUTS */
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
 /* Firefox */
 input[type=number] {
   -moz-appearance: textfield;
 }
+
+
 
 .modal-xl {
     max-width: 65% !important;
@@ -147,3 +128,14 @@ input[type=number] {
 	right: 50%;
 	width: 100vw;
 }
+
+a:link { text-decoration: none; }
+
+
+a:visited { text-decoration: none; }
+
+
+a:hover { text-decoration: none; }
+
+
+a:active { text-decoration: none; }
