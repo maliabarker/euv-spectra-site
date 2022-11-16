@@ -315,7 +315,7 @@ def return_results():
             return redirect(url_for('main.error', msg=f'The grid for model subtype {session["model_subtype"]} is currently unavailable. Please contact us with your stellar parameters and returned subtype.'))
 
         # TODO create catch if there are no matched in between upper and lower lims, just return chi squared with closest match and throw flash error
-        
+
         #FOR NUV { "$divide": [ { "$pow": [ { "$subtract": [ "$NUV", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }
         #FOR FUV { "$divide": [ { "$pow": [ { "$subtract": [ "$FUV", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }
         
@@ -404,11 +404,11 @@ def error(msg):
     session['modal_show'] = False
     return render_template('error.html', error_msg=msg)
 
-@main.app_errorhandler(500)
-def internal_error(e):
-    print(e)
-    session['modal_show'] = False
-    return render_template('error.html', error_msg='Something went wrong. Please try again later or contact us. (500)', contact_form=ContactForm()), 500
+# @main.app_errorhandler(500)
+# def internal_error(e):
+#     print(e)
+#     session['modal_show'] = False
+#     return render_template('error.html', error_msg='Something went wrong. Please try again later or contact us. (500)', contact_form=ContactForm()), 500
 
 @main.app_errorhandler(503)
 def internal_error(e):
