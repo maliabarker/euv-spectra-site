@@ -159,8 +159,6 @@ def homepage():
             session['modal_choices'] = json.dumps(res, allow_nan=True)
 
             # STEP 8: Declare the form and add the radio choices dynamically for each radio input on the form
-            # star_name_parameters_form = StarNameParametersForm()
-            
             for key in res:
                 radio_input = getattr(star_name_parameters_form, key)
                 radio_input.choices = [(value, value) for value in res[key]]
@@ -222,28 +220,35 @@ def submit_modal_form():
     return render_template('home.html', parameter_form=parameter_form_1, name_form=name_form, position_form=position_form, star_name_parameters_form=parameter_form)
 
 '''————————————SUBMIT ROUTE FOR MANUAL INPUT————————————'''
-@main.route('/manual-submit', methods=['GET', 'POST'])
+@main.route('/manual-submit', methods=['POST'])
 def submit_manual_form():
-    
-    if request.method == 'POST':
-        form = ParameterForm(request.form)
-        if form.validate_on_submit():
-            print('parameter form validated!')
-            for fieldname, value in form.data.items():
-                print(fieldname, value)
-            #TODO append all inputs to session
-        else:
-            flash('Whoops, something went wrong. Please check your inputs and try again!', 'danger')
-            return redirect(url_for('main.homepage'))
+    form = ParameterForm(request.form)
+    if form.validate_on_submit():
+        print('parameter form validated!')
+
+        for fieldname, value in form.data.items():
+            #CHECK DISTANCE UNIT: if distance unit is mas, convert to parsecs
+            # mas_to_pc = 1/ (X mas / 1000)
+            if fieldname == "dist_unit" or "flag" in fieldname or "csrf_token" in fieldname:
+                if value == 'mas':
+                    session['dist'] = 1 / (form.dist.data / 1000)
+                if value == 'null':
+                    which_flux = fieldname[0:2]
+                    session[which_flux] = 'null'
+                    session[f'{which_flux}_err'] = 'null'
+            else:
+                print(f'form key: {fieldname}, value: {value}')
+                session[fieldname] = float(value)
+        return redirect(url_for('main.return_results'))
+    else:
+        flash('Whoops, something went wrong. Please check your inputs and try again!', 'danger')
+        return redirect(url_for('main.homepage'))
 
 '''————————————SUBMIT ROUTE FOR RESULTS————————————'''
 @main.route('/results', methods=['GET', 'POST'])
 def return_results():
     #TODO find a better way to check that all data needed is here before continuing
     if session.get('teff') and session.get('logg') and session.get('mass') and session.get('stell_rad') and session.get('dist'):
-        #CHECK DISTANCE UNIT: if distance unit is mas, convert to parsecs
-        # mas_to_pc = 1/ (X mas / 1000)
-
         # STEP 1: Search the model_parameter_grid collection to find closest matching subtype
         matching_subtype = find_matching_subtype(session)
         session['model_subtype'] = matching_subtype['model']
@@ -423,16 +428,16 @@ def error(msg):
 def internal_error(e):
     print(e)
     session['modal_show'] = False
-    return render_template('error.html', error_msg='Something went wrong. Please try again later or contact us. (500)'), 500
+    return render_template('error.html', error_msg='Something went wrong. Please try again later or contact us. (500)', contact_form=ContactForm()), 500
 
 @main.app_errorhandler(503)
 def internal_error(e):
     print(e)
     session['modal_show'] = False
-    return render_template('error.html', error_msg='Something went wrong. Please try again later or contact us. (503)'), 503
+    return render_template('error.html', error_msg='Something went wrong. Please try again later or contact us. (503)', contact_form=ContactForm()), 503
 
 @main.app_errorhandler(404)
 def page_not_found(e):
     print(e)
     session['modal_show'] = False
-    return render_template('error.html', error_msg='Page not found!'), 404
+    return render_template('error.html', error_msg='Page not found!', contact_form=ContactForm()), 404
