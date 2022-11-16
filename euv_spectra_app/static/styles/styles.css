@@ -2,8 +2,6 @@
 tr { display: block; float: left; }
 th, td { display: block; }
 
-
-
 /* FOR LOADING PAGE */
 #overlay {
     position: fixed; /* Sit on top of the page content */
@@ -15,8 +13,28 @@ th, td { display: block; }
     right: 0;
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.684); /* Black background with opacity */
-    z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+    z-index: 10; /* Specify a stack order in case you're using a different order for other elements */
     cursor: pointer; /* Add a pointer on hover */
+}
+
+#overlay-box {
+    display: none;
+    z-index: 15;
+    background-color: #262b30;
+    color: white;
+    margin: auto;
+    position: absolute;
+    top: 40%;
+    width: 400px;
+    height: 190px;
+    text-align: end;
+    border-radius: 5px;
+}
+
+#overlay-text {
+    position: absolute;
+    bottom: 0;
+    font-size: 1rem;
 }
 
 #loading {
@@ -30,6 +48,7 @@ th, td { display: block; }
     animation: spin 1s infinite linear;
     position: absolute;
     top: 47%;
+    z-index: 20;
 }
 
 #loading.display {
@@ -111,9 +130,9 @@ input[type=number] {
     width: 80px;
 }
 
-#search-bar-cont {
+/* #search-bar-cont {
     background: radial-gradient(circle at center,#bd30e4 0, #8938ec, #3145fc 100%) no-repeat center center fixed;
-}
+} */
 
 #home-img-cont {
     background: #0b0044;
@@ -139,3 +158,62 @@ a:hover { text-decoration: none; }
 
 
 a:active { text-decoration: none; }
+
+
+/* SEARCH BAR BACKGROUND GRADIENT IDEAS */
+#something {
+
+    /* ff 3.6+ */
+    background:-moz-radial-gradient(circle at 50% 100%, rgba(253, 167, 94, 1) 14%, rgba(254, 40, 214, 1) 50%, rgba(146, 55, 236, 1) 80%, rgba(238, 130, 238, 0) 100%);
+
+    /* safari 5.1+,chrome 10+ */
+    background:-webkit-radial-gradient(circle at 50% 100%, rgba(253, 167, 94, 1) 14%, rgba(254, 40, 214, 1) 50%, rgba(146, 55, 236, 1) 80%, rgba(238, 130, 238, 0) 100%);
+
+    /* opera 11.10+ */
+    background:-o-radial-gradient(circle at 50% 100%, rgba(253, 167, 94, 1) 14%, rgba(254, 40, 214, 1) 50%, rgba(146, 55, 236, 1) 80%, rgba(238, 130, 238, 0) 100%);
+
+    /* ie 10+ */
+    background:-ms-radial-gradient(circle at 50% 100%, rgba(253, 167, 94, 1) 14%, rgba(254, 40, 214, 1) 50%, rgba(146, 55, 236, 1) 80%, rgba(238, 130, 238, 0) 100%);
+
+    /* global 92%+ browsers support */
+    background:radial-gradient(circle at 50% 100%, rgba(253, 167, 94, 1) 14%, rgba(254, 40, 214, 1) 50%, rgba(146, 55, 236, 1) 80%, rgba(238, 130, 238, 0) 100%);
+
+}
+            
+
+#search-bar-cont{
+
+    /* ff 3.6+ */
+    background:-moz-radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
+
+    /* safari 5.1+,chrome 10+ */
+    background:-webkit-radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
+
+    /* opera 11.10+ */
+    background:-o-radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
+
+    /* ie 10+ */
+    background:-ms-radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
+
+    /* global 92%+ browsers support */
+    background:radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
+
+}
+
+
+#somethin{
+    /* ff 3.6+ */
+    background:-moz-radial-gradient(circle at 50% 50%, #3145FC 0%, #753BF1 27%, #9D36E9 48%, #FF44BD 72%, #88579300 100%);
+
+    /* safari 5.1+,chrome 10+ */
+    background:-webkit-radial-gradient(circle at 50% 50%, #3145FC 0%, #753BF1 27%, #9D36E9 48%, #FF44BD 72%, #88579300 100%);
+
+    /* opera 11.10+ */
+    background:-o-radial-gradient(circle at 50% 50%, #3145FC 0%, #753BF1 27%, #9D36E9 48%, #FF44BD 72%, #88579300 100%);
+
+    /* ie 10+ */
+    background:-ms-radial-gradient(circle at 50% 50%, #3145FC 0%, #753BF1 27%, #9D36E9 48%, #FF44BD 72%, #88579300 100%);
+
+    /* global 92%+ browsers support */
+    background:radial-gradient(circle at 50% 50%, #3145FC 0%, #753BF1 27%, #9D36E9 48%, #FF44BD 72%, #88579300 100%);
+}

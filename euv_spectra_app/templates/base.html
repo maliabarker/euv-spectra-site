@@ -15,7 +15,7 @@
     <script src="https://kit.fontawesome.com/40fbc81c42.js" crossorigin="anonymous"></script>
     <title>{% block title %}{% endblock %}</title>
 </head>
-    <body>
+    <body class="d-flex flex-column min-vh-100">
         {% include 'partials/navbar.html' %}
         
         <div class="container">
@@ -27,9 +27,8 @@
 
             {% block content %}{% endblock %}
             {% include 'partials/contact_form.html' %}
-            {% include 'partials/footer.html' %}
         </div>
-        
+        {% include 'partials/footer.html' %}
         {% block script %}{% endblock %}
     </body>
 </html>

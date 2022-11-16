@@ -122,8 +122,6 @@ def homepage():
                 radio_input.choices = [(value, value) for value in res[key]]
 
             session['modal_show'] = True
-
-            flash('success!', 'success')
             return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, position_form2=position_form2, star_name_parameters_form=star_name_parameters_form)
 
     return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, position_form2=position_form2)

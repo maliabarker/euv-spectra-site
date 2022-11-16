@@ -3,17 +3,39 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-    <div class="container" onload="checkSession()">     
+    <div class="container">     
         
         <div id="overlay">
             <div class="d-flex justify-content-center">
                 <div id="loading"></div>
+                <div id="overlay-box">
+                    <div class="d-flex justify-content-center align-items-center">
+                        <h5 class="mb-4 mt-3">Querying Databases</h5>
+                        <p id="overlay-text">Hang tight! This may take up to 2 minutes...</p>
+                    </div>
+                </div>
             </div>
         </div>
+
+        
 
         <div class="full-width" id="home-img-cont">
             <img src="{{url_for('static', filename='imgs/logo-blue.png')}}" alt="" class="img-fluid mx-auto d-block" style="width: 400px;">
         </div>
+
+        {#<!-- <div class="col-sm-10 offset-sm-1 mt-1"> 
+            <div class="row d-flex align-items-center">
+                <div class="col-sm-2">
+                    <img src="{{url_for('static', filename='imgs/icon.png')}}" alt="" class="img img-fluid px-3 py-3">
+                </div>
+                <div class="col-sm-10">
+                    <h2>Find the Extreme Ultraviolet Spectrum for your Star</h2>
+                </div>
+            </div>
+            <p>The PHOENIX EUV Grid and Stellar UV Spectra (PEGASUS) webtool returns a generalized high resolution (Δλ < 0.01 Å) synthetic extreme ultraviolet (EUV; 100-1000 Å) spectrum for a searched target star of the M or K spectral type.</p>
+            <p>Required inputs for returning a spectrum are effective temperature, surface gravity, mass, radius, distance, and GALEX FUV and NUV fluxes.</p>
+            <p>Users have the option to use Star Name or ICRS coordinates to query the catalogs detailed on our <a href="/about">About</a> page to retrieve these parameters or they can enter the values manually.</p>
+        </div> -->#}
 
 
         <div class="row full-width" id="search-bar-cont">
@@ -31,7 +53,7 @@
                     </div>
                     
                     <div class="col-sm-8" id="name-form-cont">
-                        {% include 'partials/name_form2.html' %}
+                        {% include 'partials/name_form.html' %}
                     </div>
 
                     <div class="col-sm-8" id="position-form-cont" style="display:none;">
@@ -43,21 +65,8 @@
         </div>
         
 
-        {#<!-- <div class="col-sm-10 offset-sm-1 mt-1"> 
-            <div class="row d-flex align-items-center">
-                <div class="col-sm-2">
-                    <img src="{{url_for('static', filename='imgs/icon.png')}}" alt="" class="img img-fluid px-3 py-3">
-                </div>
-                <div class="col-sm-10">
-                    <h2>Find the Extreme Ultraviolet Spectrum for your Star</h2>
-                </div>
-            </div>
-            <p>The PHOENIX EUV Grid and Stellar UV Spectra (PEGASUS) webtool returns a generalized high resolution (Δλ < 0.01 Å) synthetic extreme ultraviolet (EUV; 100-1000 Å) spectrum for a searched target star of the M or K spectral type.</p>
-            <p>Required inputs for returning a spectrum are effective temperature, surface gravity, mass, radius, distance, and GALEX FUV and NUV fluxes.</p>
-            <p>Users have the option to use Star Name or ICRS coordinates to query the catalogs detailed on our <a href="/about">About</a> page to retrieve these parameters or they can enter the values manually.</p>
-        </div> -->#}
+        
 
-<!--——————————————————————————————————————ORIGINAL——————————————————————————————————————-->
         <p class="text-center mt-3"><a data-bs-toggle="collapse" href="#search" role="button" aria-expanded="false" aria-controls="collapseExample"><b>Click Here to Enter Parameters Manually </b><i class="fa-solid fa-chevron-up"></i></a></p>
         <div class="col-sm-8 offset-sm-2">
             <div class="collapse mb-5" id="search">
@@ -115,7 +124,8 @@
     <script src="{{ url_for('static', filename='js/loader.js') }}"></script>
     <script src="{{ url_for('static', filename='js/modal_form.js') }}"></script>
     <script src="{{ url_for('static', filename='js/search_bar.js') }}"></script>
-    <script>
+    
+    <!-- <script>
         function checkSession() {
             var inputs;
             const session = JSON.parse('{{ session|tojson|safe }}');
@@ -142,5 +152,5 @@
                 };};};
 
         window.onload = checkSession;
-    </script>
+    </script> -->
 {% endblock %}
