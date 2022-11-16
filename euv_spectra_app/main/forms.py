@@ -49,13 +49,7 @@ class StarNameForm(FlaskForm):
 
 class PositionForm(FlaskForm):
     # CHANGE THIS, NOT DECIMAL FIELD
-    ra = DecimalField('RA — Right Ascension (h:m:s)', validators=[DataRequired()])
-    dec = DecimalField('Dec — Declination (h:m:s)', validators=[DataRequired()])
-    submit = SubmitField('Search →')
-
-class PositionForm2(FlaskForm):
-    # CHANGE THIS, NOT DECIMAL FIELD
-    coords = StringField('J2000 Coordinates — hh:mm:ss.ss dd:mm:ss.ss', validators=[DataRequired()])
+    coords = StringField('hh mm ss.ss +/- dd mm ss.ss', validators=[DataRequired()])
     submit = SubmitField('Search →')
 
 class StarNameParametersForm(FlaskForm):

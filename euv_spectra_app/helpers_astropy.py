@@ -19,8 +19,13 @@ import astropy.units as u
 from astropy.time import Time
 import numpy as np
 
-def search_tic(search_input):
-    tic_data = Catalogs.query_object(search_input, radius=.02, catalog="TIC")
+def search_tic(search_input, search_format):
+    tic_data = []
+    if search_format == 'name':
+        tic_data = Catalogs.query_object(search_input, radius=.02, catalog="TIC")
+    elif search_format == 'positon':
+        tic_data = Catalogs.query_object(coordinates=search_input, radius=.02, catalog="TIC")
+
     return_info = {
         'catalog_name' : 'TESS Input Catalog',
         'valid_info' : 0,
@@ -48,8 +53,17 @@ def search_tic(search_input):
         return_info['error_msg'] = 'Nothing found for this target'
     return(return_info)
 
-def search_nea(search_input):
-    nea_data = NasaExoplanetArchive.query_criteria(table="pscomppars", where=f"hostname like '%{search_input}%'", order="hostname")
+def search_nea(search_input, search_format):
+    print('AHHHHHH')
+    print(search_input)
+    # print(search_input.ra.degree)
+    # print(search_input.dec.degree)
+    nea_data = []
+    if search_format == 'name':
+        nea_data = NasaExoplanetArchive.query_criteria(table="pscomppars", where=f"hostname like '%{search_input}%'", order="hostname")
+    elif search_format == 'position':
+        nea_data = NasaExoplanetArchive.query_region(table="pscomppars", coordinates=SkyCoord(ra=search_input.ra.degree * u.deg, dec=search_input.dec.degree * u.deg), radius=1.0 * u.deg)
+
     return_info = {
         'catalog_name' : 'NASA Exoplanet Archive',
         'valid_info' : 0,
@@ -134,7 +148,6 @@ def search_vizier(search_input):
     return(return_info)
 
 
-
 '''—————————SIMBAD START—————————'''
 def search_simbad(search_input):
     return_info = {
@@ -193,6 +206,7 @@ def search_vizier_galex(ra, dec):
         
 def search_galex(ra, dec):
     galex_data = Catalogs.query_object(f'{ra} {dec}', catalog="GALEX")
+    print(galex_data)
     return_info = {
         'catalog_name' : 'GALEX',
         'data' : {},
@@ -268,6 +282,23 @@ def correct_pm(data, star_name):
             print(return_info['data'])
         except:
             return_info['error_msg'] = 'Could not correct coordinates'
+    return return_info
+
+def convert_coords(coords):
+    return_info = {
+        'data' : {},
+        'error_msg' : None
+    }
+    try:
+        c = SkyCoord(coords, unit=(u.hourangle, u.deg))
+        print(c)
+        return_info['data'] = {
+            'ra' : c.ra.degree,
+            'dec' : c.dec.degree,
+            'skycoord_obj' : c
+        }
+    except:
+        return_info['error_msg'] = 'Error converting coordinates, please check your format and try again.'
     return return_info
 '''———————COORD CORRECTION END———————'''
 
