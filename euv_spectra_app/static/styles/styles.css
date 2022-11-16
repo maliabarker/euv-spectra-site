@@ -2,6 +2,10 @@
 tr { display: block; float: left; }
 th, td { display: block; }
 
+body{
+    background-color: #f5f5f5;
+}
+
 /* FOR LOADING PAGE */
 #overlay {
     position: fixed; /* Sit on top of the page content */
@@ -134,6 +138,12 @@ input[type=number] {
     background: radial-gradient(circle at center,#bd30e4 0, #8938ec, #3145fc 100%) no-repeat center center fixed;
 } */
 
+#search-bar {
+    filter: drop-shadow(0 3px 10px rgb(0 0 0 / 0.2));
+    /* box-shadow: 0 3px 10px rgb(0 0 0 / 0.2); */
+    /* box-shadow: 0 8px 8px -4px lightblue; */
+}
+
 #home-img-cont {
     background: #0b0044;
 }
@@ -181,23 +191,17 @@ a:active { text-decoration: none; }
 }
             
 
-#search-bar-cont{
-
+#somethin{
     /* ff 3.6+ */
     background:-moz-radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
-
     /* safari 5.1+,chrome 10+ */
     background:-webkit-radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
-
     /* opera 11.10+ */
     background:-o-radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
-
     /* ie 10+ */
     background:-ms-radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
-
     /* global 92%+ browsers support */
     background:radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
-
 }
 
 

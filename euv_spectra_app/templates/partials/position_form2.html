@@ -1,12 +1,15 @@
 <form action='/' method='POST' id="position-form" onsubmit="displayLoading();">
     <fieldset>
         {{ position_form.csrf_token }}
-        <div class="input-group mb-3">
+        <div class="input-group">
             <div class="form-floating form-floating-group flex-grow-1">
-                {{ position_form.coords(class="form-control", placeholder="Coordinates", style="border-radius: 0px;") }}
+                {{ position_form.coords(class="form-control", placeholder="Coordinates", style="border-radius: 0px; ") }}
                 {{ position_form.coords.label }}
             </div>
-            {{ position_form.submit(class="btn btn-primary", form="position-form", style="border-radius: 0px;") }}
+            <button type="submit" form="position-form" class="btn btn-primary" id="search-submit" style="border-radius: 0 10px 10px 0; min-width: 60px;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+            {#<!-- {{ position_form.submit(class="btn btn-primary", form="position-form", style="border-radius: 0 10px 10px 0;") }} -->#}
         </div>
     </fieldset>
 </form>

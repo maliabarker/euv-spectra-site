@@ -1,12 +1,15 @@
-<form action='/' method='POST' id="name-form-2" onsubmit="displayLoading();">
+<form action='/' method='POST' id="name-form" onsubmit="displayLoading();">
     <fieldset>
         {{ name_form.csrf_token }}
-        <div class="input-group mb-3">
-            <div class="form-floating form-floating-group flex-grow-1">
-                {{ name_form.star_name(class="form-control", placeholder="Star Name", style="border-radius: 0px;") }}
-                {{ name_form.star_name.label }}
+        <div class="input-group">
+            <div class="form-floating form-floating-group flex-grow-1" style="min-height:70px;">
+                {{ name_form.star_name(class="form-control", placeholder="Star Name", style="border-radius: 0px; min-height:70px;") }}
+                {{ name_form.star_name.label(class="mt-1") }}
             </div>
-            {{ name_form.submit(class="btn btn-primary", form="name-form-2", style="border-radius: 0px;") }}
+            <button type="submit" form="name-form" class="btn btn-primary" style="border-radius: 0 10px 10px 0; min-width: 60px;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+            {#<!-- {{ name_form.submit(class="btn btn-primary", form="name-form-2", style="border-radius: 0;") }} -->#}
         </div>
     </fieldset>
 </form>
