@@ -38,6 +38,29 @@ def find_matching_photosphere(session):
         {'$sort': {'diff': 1}},
         {'$limit': 1}
     ])
+
+    # want to add numbers to queries (diff value) then add the values and return query with lowest value?
+    # matching_photospheric_flux_test = starter_photosphere_models.aggregate([
+    #     {'$facet': {
+    #         'matchedTeff': [
+    #             {'$project': {'diff': {'$abs': {'$subtract': [session['teff'], '$teff']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
+
+    #         'matchedLogg': [
+    #             {'$project': {'diff': {'$abs': {'$subtract': [session['logg'], '$logg']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
+    #     }},
+    #     # get them together. Should list all rules from above  
+    #     {'$project': {'doc': {'$concatArrays': ["$matchedTeff", "$matchedLogg"]}}},
+    #     # split them apart, order by weight & desc, return top document
+    #     # {'$unwind': "$doc"}, {}
+    #     # {'$unwind': "$doc"}, {'$sort': {"doc.diff": -1}}, 
+    #     {'$limit': 1},
+    #     # reshape to retrieve documents in its original format 
+    #     #{'$project': {'_id': "$doc._id", 'fits_filename': "$doc.doc.fits_filename", 'teff': "$doc.doc.teff", 'logg': "$doc.doc.logg", 'mass': "$doc.doc.mass", 'euv': "$doc.doc.euv", 'nuv': "$doc.doc.nuv", 'fuv': "$doc.doc.fuv"}}
+    # ])
+    # print('TESTING')
+    # for doc in matching_photospheric_flux_test:
+    #     print(doc)
+
     teff = ''
     for doc in matching_temp:
         # print(doc['doc']['teff'])

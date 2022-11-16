@@ -3,7 +3,8 @@ tr { display: block; float: left; }
 th, td { display: block; }
 
 body{
-    background-color: #f5f5f5;
+    /* background-color: #f5f5f5; */
+    /* background-color: #e0dcff; */
 }
 
 /* FOR LOADING PAGE */

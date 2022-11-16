@@ -256,28 +256,6 @@ def return_results():
         #STEP 2: Find closest matching photosphere model and get flux values
         matching_photospheric_flux = find_matching_photosphere(session)
 
-        # want to add numbers to queries (diff value) then add the values and return query with lowest value?
-        # matching_photospheric_flux_test = starter_photosphere_models.aggregate([
-        #     {'$facet': {
-        #         'matchedTeff': [
-        #             {'$project': {'diff': {'$abs': {'$subtract': [session['teff'], '$teff']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
-
-        #         'matchedLogg': [
-        #             {'$project': {'diff': {'$abs': {'$subtract': [session['logg'], '$logg']}}, 'doc': '$$ROOT'}}, {'$limit': 1}],
-        #     }},
-        #     # get them together. Should list all rules from above  
-        #     {'$project': {'doc': {'$concatArrays': ["$matchedTeff", "$matchedLogg"]}}},
-        #     # split them apart, order by weight & desc, return top document
-        #     # {'$unwind': "$doc"}, {}
-        #     # {'$unwind': "$doc"}, {'$sort': {"doc.diff": -1}}, 
-        #     {'$limit': 1},
-        #     # reshape to retrieve documents in its original format 
-        #     #{'$project': {'_id': "$doc._id", 'fits_filename': "$doc.doc.fits_filename", 'teff': "$doc.doc.teff", 'logg': "$doc.doc.logg", 'mass': "$doc.doc.mass", 'euv': "$doc.doc.euv", 'nuv': "$doc.doc.nuv", 'fuv': "$doc.doc.fuv"}}
-        # ])
-        # print('TESTING')
-        # for doc in matching_photospheric_flux_test:
-        #     print(doc)
-
         #STEP 3: Convert, scale, and subtract photospheric contribution from fluxes (more detail in function)
         corrected_fluxes = convert_and_scale_fluxes(session, matching_photospheric_flux)
         session['corrected_nuv'] = corrected_fluxes['nuv']
@@ -336,6 +314,8 @@ def return_results():
         else:
             return redirect(url_for('main.error', msg=f'The grid for model subtype {session["model_subtype"]} is currently unavailable. Please contact us with your stellar parameters and returned subtype.'))
 
+        # TODO create catch if there are no matched in between upper and lower lims, just return chi squared with closest match and throw flash error
+        
         #FOR NUV { "$divide": [ { "$pow": [ { "$subtract": [ "$NUV", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }
         #FOR FUV { "$divide": [ { "$pow": [ { "$subtract": [ "$FUV", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }
         
