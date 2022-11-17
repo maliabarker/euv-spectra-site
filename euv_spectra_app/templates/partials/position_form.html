@@ -1,0 +1,14 @@
+<form action='/' method='POST' id="position-form" onsubmit="displayLoading();">
+    <fieldset>
+        {{ position_form.csrf_token }}
+        <div class="input-group">
+            <div class="form-floating form-floating-group flex-grow-1">
+                {{ position_form.coords(class="form-control border-0", placeholder="Coordinates", style="border-radius: 20px; min-height: 70px;") }}
+                {{ position_form.coords.label(class="mt-2 ms-2 text-muted") }}
+            </div>
+            <button type="submit" form="position-form" class="btn" style="border-radius: 0 10px 10px 0; min-width: 60px;">
+                <i class="fa-solid fa-magnifying-glass fa-lg me-4" style="color: #9c36e8;"></i>
+            </button>
+        </div>
+    </fieldset>
+</form>

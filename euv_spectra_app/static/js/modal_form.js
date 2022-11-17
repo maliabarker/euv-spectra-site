@@ -114,3 +114,13 @@ function populateNullFlux(obj) {
         };
     };
 }
+
+function validateView() {
+    form = document.getElementById('name-parameters-form')
+    // need all form-check-input and form-control in form
+    const btns = form.querySelectorAll(`[class*="form-check-input"]`);
+    const texts = form.querySelectorAll(`[class*="form-control"]`)
+    console.log(btns)
+    console.log(texts)
+
+}

@@ -120,7 +120,7 @@ def create_graph(file, session):
     # print(f_obs)
     
     fig = plt.figure()
-    fig.set_size_inches(10, 4)
+    fig.set_size_inches(9, 4)
     '''FOR FUTURE WITH MULTIPLE LINES:
         colors=[list of colors]
         line1, = plt.plot(w_obs, f_obs, color=colors[0], label='Spectrum 1 (Best Match), χ2=<value>')

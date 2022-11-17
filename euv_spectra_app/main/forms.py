@@ -40,7 +40,7 @@ class ParameterForm(FlaskForm):
     fuv_flag = RadioField('FUV Flag', validators=[validators.Optional()], choices=[('null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated')])
     nuv = DecimalField('NUV (μJy)', validators=[DataRequired()])
     nuv_err = DecimalField('NUV err (μJy)', validators=[DataRequired()])
-    nuv_flag = RadioField('NUV Flag', validators=[validators.Optional()], choices=[('null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated')])
+    nuv_flag = RadioField('NUV Flag', validators=[Optional()], choices=[('null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated')])
     submit = SubmitField('Submit and Find EUV Spectrum')
 
 class StarNameForm(FlaskForm):
@@ -54,7 +54,7 @@ class PositionForm(FlaskForm):
 
 class StarNameParametersForm(FlaskForm):
     # IDEA: add manual text inputs for each option that are required if radio choice is Manual
-    catalog_name = RadioField(u'Catalog Name')
+    catalog_name = RadioField(u'Catalog Name', validators=[Optional()])
     teff = RadioField(teff_label)
     manual_teff = DecimalField('T𝘦𝘧𝘧 — Stellar Effective Temperature (K)', validators=[RequiredIf(teff='Manual')])
     logg = RadioField(u'log(g) (cm/s²)')
@@ -65,13 +65,13 @@ class StarNameParametersForm(FlaskForm):
     manual_stell_rad = DecimalField('R ☉ — Stellar Radius (Solar Radii)', validators=[RequiredIf(stell_rad='Manual')])
     dist = RadioField(u'Distance (pc)')
     manual_dist = DecimalField('d - Distance', validators=[RequiredIf(dist='Manual')])
-    fuv = RadioField('FUV Flux (μJy)', validators=[Optional()])
+    fuv = RadioField('FUV Flux (μJy)')
     manual_fuv = DecimalField('FUV Flux (μJy)', validators=[RequiredIf(fuv='Manual')])
-    fuv_err = RadioField('FUV Flux Error (μJy)', validators=[Optional()])
+    fuv_err = RadioField('FUV Flux Error (μJy)')
     manual_fuv_err = DecimalField('FUV Flux Error (μJy)', validators=[RequiredIf(fuv_err='Manual')])
-    nuv = RadioField('NUV Flux (μJy)', validators=[Optional()])
+    nuv = RadioField('NUV Flux (μJy)')
     manual_nuv = DecimalField('NUV Flux (μJy)', validators=[RequiredIf(nuv='Manual')])
-    nuv_err = RadioField('NUV Flux Error (μJy)', validators=[Optional()])
+    nuv_err = RadioField('NUV Flux Error (μJy)')
     manual_nuv_err = DecimalField('NUV Flux Error (μJy)', validators=[RequiredIf(nuv_err='Manual')])
     submit = SubmitField('Next →')
 

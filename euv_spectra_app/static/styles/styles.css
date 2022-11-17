@@ -2,9 +2,85 @@
 tr { display: block; float: left; }
 th, td { display: block; }
 
-body{
-    /* background-color: #f5f5f5; */
-    /* background-color: #e0dcff; */
+body {
+    padding-top: 60px; /* This should be equal to the height of your header */
+}
+
+#name-form-cont .form-control {
+    outline:0px !important;
+    -webkit-appearance:none;
+    box-shadow: none !important;
+    border-radius: 20px; 
+    min-height:70px;
+}
+
+#position-form-cont .form-control {
+    outline:0px !important;
+    -webkit-appearance:none;
+    box-shadow: none !important;
+    border-radius: 20px; 
+    min-height:70px;
+}
+
+/* FOR HOMEPAGE BACKGROUND */
+#background-img {
+    background: url('/static/imgs/solar_img.png') no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+#bg {
+    width: 100vw;
+    background-color: #262b30;
+    z-index: -2;
+    position: fixed;
+}
+
+#bg-overlay {
+    position: fixed; /* Sit on top of the page content */
+    width: 100%; /* Full width (cover the whole page) */
+    height: 100%; /* Full height (cover the whole page) */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.413); /* Black background with opacity */
+    z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
+    cursor: pointer; /* Add a pointer on hover */
+}
+
+#manual-form-toggle-text {
+    color: white;
+}
+
+select {
+    background-image:
+      linear-gradient(45deg, transparent 50%, white 60%),
+      linear-gradient(135deg, white 40%, transparent 50%) !important;
+    background-position:
+      calc(100% - 30px) 14px,
+      calc(100% - 20px) 14px,
+      100% 0;
+    background-size:
+      10px 10px,
+      10px 10px;
+    background-repeat: no-repeat;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+
+/* FOR TURNING CARET ON HOME PAGE */
+.fa-caret-right{
+    transform: rotate(0deg);
+    transition: transform 0.1s linear;
+}
+
+.fa-caret-right.open{
+    transform: rotate(90deg);
+    transition: transform 0.1s linear;
 }
 
 /* FOR LOADING PAGE */
@@ -70,9 +146,7 @@ body{
 }
 
 
-
 /* BUTTON STYLES */
-
 .btn-primary, .btn-primary:active, .btn-primary:visited {
     background-color: #9c36e8 !important;
     border-color: #9c36e8;
@@ -105,9 +179,6 @@ body{
     color: white;
 }
 
-
-
-
 /* FOR REMOVING UP DOWN ARROWS ON NUMERICAL INPUTS */
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
@@ -121,7 +192,7 @@ input[type=number] {
 }
 
 
-
+/* OTHER */
 .modal-xl {
     max-width: 65% !important;
 }
@@ -135,18 +206,13 @@ input[type=number] {
     width: 80px;
 }
 
-/* #search-bar-cont {
-    background: radial-gradient(circle at center,#bd30e4 0, #8938ec, #3145fc 100%) no-repeat center center fixed;
-} */
-
 #search-bar {
     filter: drop-shadow(0 3px 10px rgb(0 0 0 / 0.2));
+    background-color: white;
+    border-radius: 20px;
+    margin: 0 30px 0 30px;
+    padding: 5px 0px 5px 0px;
     /* box-shadow: 0 3px 10px rgb(0 0 0 / 0.2); */
-    /* box-shadow: 0 8px 8px -4px lightblue; */
-}
-
-#home-img-cont {
-    background: #0b0044;
 }
 
 .full-width {
@@ -169,56 +235,3 @@ a:hover { text-decoration: none; }
 
 
 a:active { text-decoration: none; }
-
-
-/* SEARCH BAR BACKGROUND GRADIENT IDEAS */
-#something {
-
-    /* ff 3.6+ */
-    background:-moz-radial-gradient(circle at 50% 100%, rgba(253, 167, 94, 1) 14%, rgba(254, 40, 214, 1) 50%, rgba(146, 55, 236, 1) 80%, rgba(238, 130, 238, 0) 100%);
-
-    /* safari 5.1+,chrome 10+ */
-    background:-webkit-radial-gradient(circle at 50% 100%, rgba(253, 167, 94, 1) 14%, rgba(254, 40, 214, 1) 50%, rgba(146, 55, 236, 1) 80%, rgba(238, 130, 238, 0) 100%);
-
-    /* opera 11.10+ */
-    background:-o-radial-gradient(circle at 50% 100%, rgba(253, 167, 94, 1) 14%, rgba(254, 40, 214, 1) 50%, rgba(146, 55, 236, 1) 80%, rgba(238, 130, 238, 0) 100%);
-
-    /* ie 10+ */
-    background:-ms-radial-gradient(circle at 50% 100%, rgba(253, 167, 94, 1) 14%, rgba(254, 40, 214, 1) 50%, rgba(146, 55, 236, 1) 80%, rgba(238, 130, 238, 0) 100%);
-
-    /* global 92%+ browsers support */
-    background:radial-gradient(circle at 50% 100%, rgba(253, 167, 94, 1) 14%, rgba(254, 40, 214, 1) 50%, rgba(146, 55, 236, 1) 80%, rgba(238, 130, 238, 0) 100%);
-
-}
-            
-
-#somethin{
-    /* ff 3.6+ */
-    background:-moz-radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
-    /* safari 5.1+,chrome 10+ */
-    background:-webkit-radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
-    /* opera 11.10+ */
-    background:-o-radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
-    /* ie 10+ */
-    background:-ms-radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
-    /* global 92%+ browsers support */
-    background:radial-gradient(ellipse at 50% 70%, #3145FCDE 11%, #753BF1DB 30%, #9D36E9C7 43%, #88579300 100%);
-}
-
-
-#somethin{
-    /* ff 3.6+ */
-    background:-moz-radial-gradient(circle at 50% 50%, #3145FC 0%, #753BF1 27%, #9D36E9 48%, #FF44BD 72%, #88579300 100%);
-
-    /* safari 5.1+,chrome 10+ */
-    background:-webkit-radial-gradient(circle at 50% 50%, #3145FC 0%, #753BF1 27%, #9D36E9 48%, #FF44BD 72%, #88579300 100%);
-
-    /* opera 11.10+ */
-    background:-o-radial-gradient(circle at 50% 50%, #3145FC 0%, #753BF1 27%, #9D36E9 48%, #FF44BD 72%, #88579300 100%);
-
-    /* ie 10+ */
-    background:-ms-radial-gradient(circle at 50% 50%, #3145FC 0%, #753BF1 27%, #9D36E9 48%, #FF44BD 72%, #88579300 100%);
-
-    /* global 92%+ browsers support */
-    background:radial-gradient(circle at 50% 50%, #3145FC 0%, #753BF1 27%, #9D36E9 48%, #FF44BD 72%, #88579300 100%);
-}
