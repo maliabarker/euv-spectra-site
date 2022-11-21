@@ -1,3 +1,12 @@
+{% set navigation_bar = [
+    ('/', 'home', 'Home'),
+    ('/about', 'about', 'About'),
+    ('/faqs', 'faqs', 'FAQs'),
+    ('/all-spectra', 'all-spectra', 'View All Spectra')
+] -%}
+
+{% set active_page = active_page|default('home') -%}
+
 <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: rgba(0, 0, 0, 0.908);">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="/" id="navbar-icon">
@@ -9,19 +18,11 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                <li class="nav-item mx-2">
-                    <a class="nav-link" href="/">Home</a>
-                </li>
-                <li class="nav-item mx-2">
-                    <a class="nav-link" href="/about">About</a>
-                </li>
-                <li class="nav-item mx-2">
-                    <a class="nav-link" href="/faqs">FAQs</a>
-                </li>
-                <!--Maybe allow people to view spectra by filters? (stretch challenge)-->
-                <li class="nav-item mx-2">
-                    <a class="nav-link" href="/all-spectra">View All Spectra</a>
-                </li>
+                {% for href, id, caption in navigation_bar %}
+                    <li class="nav-item mx-2">
+                        <a {% if id == active_page %} class="nav-link active" {% else %} class="nav-link" {% endif%} href="{{ href|e }}">{{ caption|e }}</a>
+                    </li>
+                {% endfor %}
             </ul>
         </div>
     </div>

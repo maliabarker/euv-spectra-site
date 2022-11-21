@@ -1,237 +1,268 @@
-/* FOR MODAL FORM DISPLAY */
-tr { display: block; float: left; }
-th, td { display: block; }
-
 body {
-    padding-top: 60px; /* This should be equal to the height of your header */
-}
-
-#name-form-cont .form-control {
-    outline:0px !important;
-    -webkit-appearance:none;
-    box-shadow: none !important;
-    border-radius: 20px; 
-    min-height:70px;
-}
-
-#position-form-cont .form-control {
-    outline:0px !important;
-    -webkit-appearance:none;
-    box-shadow: none !important;
-    border-radius: 20px; 
-    min-height:70px;
-}
-
-/* FOR HOMEPAGE BACKGROUND */
-#background-img {
-    background: url('/static/imgs/solar_img.png') no-repeat center center fixed;
-    -webkit-background-size: cover;
-    -moz-background-size: cover;
-    -o-background-size: cover;
-    background-size: cover;
-}
-
-#bg {
-    width: 100vw;
-    background-color: #262b30;
-    z-index: -2;
-    position: fixed;
-}
-
-#bg-overlay {
-    position: fixed; /* Sit on top of the page content */
-    width: 100%; /* Full width (cover the whole page) */
-    height: 100%; /* Full height (cover the whole page) */
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.413); /* Black background with opacity */
-    z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
-    cursor: pointer; /* Add a pointer on hover */
-}
-
-#manual-form-toggle-text {
-    color: white;
-}
-
-select {
-    background-image:
-      linear-gradient(45deg, transparent 50%, white 60%),
-      linear-gradient(135deg, white 40%, transparent 50%) !important;
-    background-position:
-      calc(100% - 30px) 14px,
-      calc(100% - 20px) 14px,
-      100% 0;
-    background-size:
-      10px 10px,
-      10px 10px;
-    background-repeat: no-repeat;
-    -webkit-appearance: none;
-    -moz-appearance: none;
+    padding-top: 66px; /* This should be equal to the height of your header, helps with overlap of sticky navbar */
 }
 
 
-/* FOR TURNING CARET ON HOME PAGE */
-.fa-caret-right{
-    transform: rotate(0deg);
-    transition: transform 0.1s linear;
-}
 
-.fa-caret-right.open{
-    transform: rotate(90deg);
-    transition: transform 0.1s linear;
-}
+/* ———————————FOR HOMEPAGE BACKGROUND——————————— */
+    #bg {
+        width: 100vw;
+        height: 100vh;
+        background-color: #262b30;
+        /* min-height: 100%; */
+        object-fit: cover;
+        z-index: -2;
+        position: fixed;
+        overflow: hidden;
+    }
 
-/* FOR LOADING PAGE */
-#overlay {
-    position: fixed; /* Sit on top of the page content */
-    display: none; /* Hidden by default */
-    width: 100%; /* Full width (cover the whole page) */
-    height: 100%; /* Full height (cover the whole page) */
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.684); /* Black background with opacity */
-    z-index: 10; /* Specify a stack order in case you're using a different order for other elements */
-    cursor: pointer; /* Add a pointer on hover */
-}
+    #bg-overlay {
+        position: fixed; /* Sit on top of the page content */
+        width: 100%; /* Full width (cover the whole page) */
+        height: 100%; /* Full height (cover the whole page) */
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.413); /* Black background with opacity */
+        z-index: -1; /* Specify a stack order in case you're using a different order for other elements */
+        cursor: pointer; /* Add a pointer on hover */
+    }
 
-#overlay-box {
-    display: none;
-    z-index: 15;
-    background-color: #262b30;
-    color: white;
-    margin: auto;
-    position: absolute;
-    top: 40%;
-    width: 400px;
-    height: 190px;
-    text-align: end;
-    border-radius: 5px;
-}
 
-#overlay-text {
-    position: absolute;
-    bottom: 0;
-    font-size: 1rem;
-}
 
-#loading {
-    width: 4rem;
-    height: 4rem;
-    border: 5px solid #f3f3f3;
-    border-top: 6px solid #9c41f2;
-    border-radius: 100%;
-    margin: auto;
-    visibility: hidden;
-    animation: spin 1s infinite linear;
-    position: absolute;
-    top: 47%;
-    z-index: 20;
-}
+/* ————————————FOR MANUAL FORM————————————— */
+    #manual-form-toggle-text {
+        color: white;
+    }
 
-#loading.display {
-    visibility: visible;
-}
-
-@keyframes spin {
-    from {
+        /* FOR TURNING CARET ON HOME PAGE */
+    .fa-caret-right{
         transform: rotate(0deg);
+        transition: transform 0.1s linear;
     }
-    to {
-        transform: rotate(360deg);
+
+    .fa-caret-right.open{
+        transform: rotate(90deg);
+        transition: transform 0.1s linear;
     }
-}
+
+    /* for removing up down arrows on numerical inputs */
+        /* Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        /* Firefox */
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
 
 
-/* BUTTON STYLES */
-.btn-primary, .btn-primary:active, .btn-primary:visited {
-    background-color: #9c36e8 !important;
-    border-color: #9c36e8;
-}
 
-.btn-primary:hover {
-    background-color: #6c25a3 !important;
-    border-color: #6c25a3 ;
-}
+/* ————————————FOR LOADING PAGE—————————— */
+    #overlay {
+        position: fixed; /* Sit on top of the page content */
+        display: none; /* Hidden by default */
+        width: 100%; /* Full width (cover the whole page) */
+        height: 100%; /* Full height (cover the whole page) */
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.684); /* Black background with opacity */
+        z-index: 10; /* Specify a stack order in case you're using a different order for other elements */
+        cursor: pointer; /* Add a pointer on hover */
+    }
 
-#flux-continue-btn {
-    /* flex: 1 1 auto; */
-    /* margin: 10px; */
-    padding: 15px;
-    text-align: center;
-    /* text-transform: uppercase; */
-    transition: 0.5s;
-    background-size: 200% auto;
-    color: white;
-    box-shadow: 0 0 20px #eee;
-    /* border-radius: 10px; */
-    background-image: linear-gradient(to right, #f729d9 0%, #9c36e8 51%, #3443fc 100%) !important;
-    border-color: white;
-    color: white;
-}
+    #overlay-box {
+        display: none;
+        z-index: 15;
+        background-color: #262b30;
+        color: white;
+        margin: auto;
+        position: absolute;
+        top: 40%;
+        width: 400px;
+        height: 190px;
+        text-align: end;
+        border-radius: 5px;
+    }
 
-#flux-continue-btn:hover {
-    background-position: right center; /* change the direction of the change here */
-    border-color: white;
-    color: white;
-}
+    #overlay-text {
+        position: absolute;
+        bottom: 0;
+        font-size: 1rem;
+    }
 
-/* FOR REMOVING UP DOWN ARROWS ON NUMERICAL INPUTS */
-/* Chrome, Safari, Edge, Opera */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-/* Firefox */
-input[type=number] {
-  -moz-appearance: textfield;
-}
+    #loading {
+        width: 4rem;
+        height: 4rem;
+        border: 5px solid #f3f3f3;
+        border-top: 6px solid #9c41f2;
+        border-radius: 100%;
+        margin: auto;
+        visibility: hidden;
+        animation: spin 1s infinite linear;
+        position: absolute;
+        top: 47%;
+        z-index: 20;
+    }
 
+    #loading.display {
+        visibility: visible;
+    }
 
-/* OTHER */
-.modal-xl {
-    max-width: 65% !important;
-}
-
-#contact-header {
-    background-image: linear-gradient(to left, #fdac59 0%, #f729d9 51%, #9c36e8 100%) !important;
-    color: white;
-}
-
-#name-parameters-form input[type='number']{
-    width: 80px;
-}
-
-#search-bar {
-    filter: drop-shadow(0 3px 10px rgb(0 0 0 / 0.2));
-    background-color: white;
-    border-radius: 20px;
-    margin: 0 30px 0 30px;
-    padding: 5px 0px 5px 0px;
-    /* box-shadow: 0 3px 10px rgb(0 0 0 / 0.2); */
-}
-
-.full-width {
-	left: 50%;
-	margin-left: -50vw;
-	margin-right: -50vw;
-	max-width: 100vw;
-	position: relative;
-	right: 50%;
-	width: 100vw;
-}
-
-a:link { text-decoration: none; }
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
 
 
-a:visited { text-decoration: none; }
+
+/* ————————————FOR MODAL——————————— */
+    .modal-xl {
+        max-width: 65% !important;
+    }
+
+    /* for modal form display */
+    tr { display: block; float: left; }
+    th, td { display: block; }
 
 
-a:hover { text-decoration: none; }
 
 
-a:active { text-decoration: none; }
+/* ——————————FOR BUTTON STYLES————————— */
+    .btn-primary, .btn-primary:active, .btn-primary:visited {
+        background-color: #9c36e8 !important;
+        border-color: #9c36e8;
+    }
+
+    .btn-primary:hover {
+        background-color: #6c25a3 !important;
+        border-color: #6c25a3 ;
+    }
+
+    #flux-continue-btn {
+        padding: 15px;
+        text-align: center;
+        transition: 0.5s;
+        background-size: 200% auto;
+        color: white;
+        box-shadow: 0 0 20px #eee;
+        background-image: linear-gradient(to right, #f729d9 0%, #9c36e8 51%, #3443fc 100%) !important;
+        border-color: white;
+        color: white;
+    }
+
+    #flux-continue-btn:hover {
+        background-position: right center; /* change the direction of the change here */
+        border-color: white;
+        color: white;
+    }
+
+
+/* ——————————OTHER——————————— */
+    #contact-header {
+        background-image: linear-gradient(to left, #fdac59 0%, #f729d9 51%, #9c36e8 100%) !important;
+        color: white;
+    }
+
+    /* Full width class to break elements out of parent container */
+    .full-width {
+        left: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+        max-width: 100vw;
+        position: relative;
+        right: 50%;
+        width: 100vw;
+    }
+
+    /* Getting rid of text decoration on links (a tags) */ 
+    a:link { text-decoration: none; }
+    a:visited { text-decoration: none; }
+    a:hover { text-decoration: none; }
+    a:active { text-decoration: none; }
+
+
+
+
+/* ————————————FOR SEARCH BAR————————————— */
+    #search-bar {
+        filter: drop-shadow(0 3px 10px rgb(0 0 0 / 0.2));
+        background-color: white;
+        border-radius: 20px;
+        margin: 0 30px 0 30px;
+        padding: 5px 0px 5px 0px;
+    }
+
+    #name-parameters-form input[type='number']{
+        width: 80px;
+    }
+
+    /* select {
+        background-image:
+        linear-gradient(45deg, transparent 50%, white 60%),
+        linear-gradient(135deg, white 40%, transparent 50%) !important;
+        background-position:
+        calc(100% - 30px) 14px,
+        calc(100% - 20px) 14px,
+        100% 0;
+        background-size:
+        10px 10px,
+        10px 10px;
+        background-repeat: no-repeat;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+    } */
+
+    #name-form-cont .form-control {
+        outline:0px !important;
+        -webkit-appearance:none;
+        box-shadow: none !important;
+        border-radius: 20px; 
+        min-height:70px;
+    }
+
+    #position-form-cont .form-control {
+        outline:0px !important;
+        -webkit-appearance:none;
+        box-shadow: none !important;
+        border-radius: 20px; 
+        min-height:70px;
+    }
+
+    /* BOOTSTRAP EXTRA SMALL BREAKPOINT */ 
+    @media (max-width: 576px) {
+        .rounded-end-xs {
+            border-radius: 20px;
+        }
+    }
+
+    /* BOOTSTRAP SMALL BREAKPOINT */ 
+    @media (min-width: 576px) {
+        .border-sm-right {
+        border-right: 1px solid #e3e7eb !important;
+        }
+        .rounded-start-sm {
+            border-radius: 20px 0 0 20px;
+            /* border-top-left-radius: 20px;
+            border-bottom-left-radius: 20px; */
+        }
+    }
+
+    /* BOOTSTRAP MEDIUM-XL BREAKPOINT */ 
+    @media (min-width: 768px) {
+    }
+    
+    @media (min-width: 992px) {
+    }
+    
+    @media (min-width: 1200px) {
+    }

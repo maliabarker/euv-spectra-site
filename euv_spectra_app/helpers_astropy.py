@@ -54,13 +54,15 @@ def search_tic(search_input, search_format):
     return(return_info)
 
 def search_nea(search_input, search_format):
-    print('AHHHHHH')
+    
     print(search_input)
     # print(search_input.ra.degree)
     # print(search_input.dec.degree)
     nea_data = []
     if search_format == 'name':
         nea_data = NasaExoplanetArchive.query_criteria(table="pscomppars", where=f"hostname like '%{search_input}%'", order="hostname")
+        print('NEA DATA')
+        print(nea_data[0])
     elif search_format == 'position':
         nea_data = NasaExoplanetArchive.query_region(table="pscomppars", coordinates=SkyCoord(ra=search_input.ra.degree * u.deg, dec=search_input.dec.degree * u.deg), radius=1.0 * u.deg)
 
