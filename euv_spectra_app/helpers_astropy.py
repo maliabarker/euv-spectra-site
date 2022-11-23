@@ -54,15 +54,11 @@ def search_tic(search_input, search_format):
     return(return_info)
 
 def search_nea(search_input, search_format):
-    
-    print(search_input)
-    # print(search_input.ra.degree)
-    # print(search_input.dec.degree)
     nea_data = []
     if search_format == 'name':
         nea_data = NasaExoplanetArchive.query_criteria(table="pscomppars", where=f"hostname like '%{search_input}%'", order="hostname")
-        print('NEA DATA')
-        print(nea_data[0])
+        # print('NEA DATA')
+        # print(nea_data[0])
     elif search_format == 'position':
         nea_data = NasaExoplanetArchive.query_region(table="pscomppars", coordinates=SkyCoord(ra=search_input.ra.degree * u.deg, dec=search_input.dec.degree * u.deg), radius=1.0 * u.deg)
 
@@ -192,7 +188,7 @@ def search_vizier_galex(ra, dec):
         # print(galex_data[0])
         # print(galex_data[1])
         galex_catalog = galex_data['II/335/galex_ais']
-        print(galex_catalog)
+        # print(galex_catalog)
         fluxes = {
             'fuv' : data['FUV'],
             'fuv_err' : data['e_FUV'],
@@ -208,7 +204,7 @@ def search_vizier_galex(ra, dec):
         
 def search_galex(ra, dec):
     galex_data = Catalogs.query_object(f'{ra} {dec}', catalog="GALEX")
-    print(galex_data)
+    # print(galex_data)
     return_info = {
         'catalog_name' : 'GALEX',
         'data' : {},
@@ -250,13 +246,13 @@ def correct_pm(data, star_name):
     try:
         # galex_time = Observations.query_criteria(objectname=star_name, obs_collection='GALEX')[0]['t_max']
         galex_time = mast_galex_times.find_one({'target': star_name})['t_min']
-        print(galex_time)
+        # print(galex_time)
     except:
         return_info['error_msg'] = 'No GALEX Observations Available'
     else:
-        print(f'TIME {galex_time}')
+        # print(f'TIME {galex_time}')
         try:
-            print('Correcting coords...')
+            # print('Correcting coords...')
             coords = data['ra'] + ' ' + data['dec']
             c = ''
 
@@ -264,24 +260,24 @@ def correct_pm(data, star_name):
             td_year = t3.sec / 60 / 60 / 24 / 365.25
             if type(data['rad_vel']) == np.float64:
                 c = SkyCoord(coords, unit=(u.hourangle, u.deg), distance=Distance(parallax=data['parallax']*u.mas, allow_negative=True), pm_ra_cosdec=data['pmra']*u.mas/u.yr, pm_dec=data['pmdec']*u.mas/u.yr, radial_velocity=data['rad_vel']*u.km/u.s)
-                print('ORIGINAL COORDS')
-                print(c)
+                # print('ORIGINAL COORDS')
+                # print(c)
             else:
                 c = SkyCoord(coords, unit=(u.hourangle, u.deg), distance=Distance(parallax=data['parallax']*u.mas, allow_negative=True), pm_ra_cosdec=data['pmra']*u.mas/u.yr, pm_dec=data['pmdec']*u.mas/u.yr)
-                print('ORIGINAL COORDS')
-                print(c)
+                # print('ORIGINAL COORDS')
+                # print(c)
 
             # c = SkyCoord(ra=data['ra']*u.degree, dec=data['dec']*u.degree, distance=Distance(parallax=data['parallax']*u.mas, allow_negative=True), pm_ra_cosdec=data['pmra']*u.mas/u.yr, pm_dec=data['pmdec']*u.mas/u.yr, radial_velocity=data['rad_vel']*u.km/u.s, obstime=Time(data['ref_epoch'], format='jyear', scale='tcb'))
-            print('CORRECTED COORDS')
+            # print('CORRECTED COORDS')
             c = c.apply_space_motion(dt=td_year * u.yr)
-            print(c)
+            # print(c)
 
             return_info['data'] = {
                 'ra' : c.ra.degree,
                 'dec' : c.dec.degree
             }
 
-            print(return_info['data'])
+            # print(return_info['data'])
         except:
             return_info['error_msg'] = 'Could not correct coordinates'
     return return_info
@@ -293,7 +289,7 @@ def convert_coords(coords):
     }
     try:
         c = SkyCoord(coords, unit=(u.hourangle, u.deg))
-        print(c)
+        # print(c)
         return_info['data'] = {
             'ra' : c.ra.degree,
             'dec' : c.dec.degree,
@@ -320,8 +316,8 @@ def search_gaia(search_input):
     data = result_table[0]
     try:
         c = SkyCoord.from_name(search_input)
-        print(c.ra.degree)
-        print(c.dec.degree)
+        # print(c.ra.degree)
+        # print(c.dec.degree)
     except:
         return_info['error_msg'] = 'No coordinates found for this target.'
     
@@ -329,7 +325,7 @@ def search_gaia(search_input):
         coord = SkyCoord(ra=c.ra.degree, dec=c.dec.degree, unit=(u.degree, u.degree), frame='icrs')
         width, height = u.Quantity(0.02, u.deg), u.Quantity(0.02, u.deg)
         gaia_data = Gaia.query_object_async(coordinate=coord, width=width, height=height)
-        gaia_data.pprint()
+        # gaia_data.pprint()
     # print('———————————')
     # print(data['RA'])
     # print(data['DEC'])
@@ -354,7 +350,7 @@ def search_gaia(search_input):
             'ref_epoch' : data['ref_epoch'],
             'parallax' : data['parallax']
         }
-        print(return_info['data'])
+        # print(return_info['data'])
     else:
         return_info['error_msg'] = 'No data found for this target, please try again'
     return return_info

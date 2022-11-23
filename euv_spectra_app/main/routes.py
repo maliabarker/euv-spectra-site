@@ -12,15 +12,7 @@ from euv_spectra_app.helper_fits import *
 from euv_spectra_app.helper_queries import *
 main = Blueprint("main", __name__)
 
-'''
-————TODO—————
 
-'''
-
-'''
-————NOTE————
-- photosphere subtract fluxes are much larger than the galex photosphere subtracted fluxes (ex: 89.15518504954082 vs 2903269277063.380)
-'''
 @main.context_processor
 def inject_form():
     form_dict = dict(contact_form=ContactForm())
@@ -49,12 +41,12 @@ def homepage():
     
 
     if request.method == 'POST':
-        print('————————POSTING...————————')
-        print('—————————FORM DATA START—————————')
-        form_data = request.form
-        for key in form_data:
-            print ('form key '+key+" "+form_data[key])
-        print('—————————FORM DATA END—————————')
+        # print('————————POSTING...————————')
+        # print('—————————FORM DATA START—————————')
+        # form_data = request.form
+        # for key in form_data:
+        #     print ('form key '+key+" "+form_data[key])
+        # print('—————————FORM DATA END—————————')
 
 
 # '''————————————————————HOME POSITION FORM————————————————————'''
@@ -73,8 +65,6 @@ def homepage():
             galex_data = search_galex(converted_coords['data']['ra'], converted_coords['data']['dec'])
             if galex_data['error_msg'] != None:
                 return redirect(url_for('main.error', msg=galex_data['error_msg']))
-
-            print(galex_data)
             
             # STEP 4: Query all catalogs and append them to the final catalogs list if there are no errors
             catalog_data = [search_tic(f"{converted_coords['data']['ra']} {converted_coords['data']['dec']}", 'position'), search_nea(converted_coords['data']['skycoord_obj'], 'position'), galex_data]
@@ -97,7 +87,7 @@ def homepage():
             # STEP 6: Append a manual option to each parameter
             for key in res:
                 res[key].append('Manual')
-            print(res)
+            # print(res)
 
             session['modal_choices'] = json.dumps(res, allow_nan=True)
 
@@ -119,19 +109,17 @@ def homepage():
 
             # STEP 2: Get coordinate and motion info from Simbad
             simbad_data = search_simbad(star_name)
-            print('simbad ran with no errors')
             if simbad_data['error_msg'] != None:
                 return redirect(url_for('main.error', msg=simbad_data['error_msg']))
 
             # STEP 3: Put PM and Coord info into correction function
             corrected_coords = correct_pm(simbad_data['data'], star_name)
-            print('coordinate correction ran with no errors')
             if corrected_coords['error_msg'] != None:
                 return redirect(url_for('main.error', msg=corrected_coords['error_msg']))
 
             # STEP 4: Search GALEX with these corrected coordinates
             galex_data = search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])
-            print(galex_data)
+            # print(galex_data)
             
             # STEP 5: Query all catalogs and append them to the final catalogs list if there are no errors
             catalog_data = [search_tic(star_name, 'name'), search_nea(star_name, 'name'), search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])]
@@ -154,7 +142,7 @@ def homepage():
             # STEP 7: Append a manual option to each parameter
             for key in res:
                 res[key].append('Manual')
-            print(res)
+            # print(res)
 
             session['modal_choices'] = json.dumps(res, allow_nan=True)
 
@@ -179,15 +167,15 @@ def submit_modal_form():
     parameter_form = StarNameParametersForm()
     
     choices = json.loads(session['modal_choices'])
-    print(choices)
+    # print(choices)
 
     for key in choices:
         radio_input = getattr(parameter_form, key)
         radio_input.choices = [(value, value) for value in choices[key]]
     
     parameter_form.populate_obj(request.form)
-    print(request.form)
-    print(parameter_form)
+    # print(request.form)
+    # print(parameter_form)
 
     if request.method == 'POST':
         if parameter_form.validate_on_submit():
@@ -195,28 +183,25 @@ def submit_modal_form():
 
             for field in parameter_form:
                 # ignoring all manual parameters, submit, csrf token, and catalog names
-                print('AHHHHHHH')
-                print(field)
-                print(field.name, field.data)
                 if field.data == 'No Detection':
                     # set flux to null if it equals --
-                    print(f'null flux detected in {field.name}')
+                    # print(f'null flux detected in {field.name}')
                     session[field.name] = 'null'
                 elif 'manual' in field.name and field.data != None:
-                    print('MANUAL INPUT DETECTED')
-                    print(field.name, field.data)
+                    # print('MANUAL INPUT DETECTED')
+                    # print(field.name, field.data)
                     unmanual_field = field.name.replace('manual_', '')
                     session[unmanual_field] = float(field.data)
                 elif 'manual' not in field.name and 'submit' not in field.name and 'csrf_token' not in field.name and 'catalog_name' not in field.name and 'Manual' not in field.data:
-                    print('form key '+field.name+" "+field.data)
+                    # print('form key '+field.name+" "+field.data)
                     session[field.name] = float(field.data)
             
-            print(session)
+            # print(session)
 
             return redirect(url_for('main.return_results'))
-        else:
-            print('NOT VALIDATED')
-            print(parameter_form.errors)
+        # else:
+        #     print('NOT VALIDATED')
+        #     print(parameter_form.errors)
     return render_template('home.html', parameter_form=parameter_form_1, name_form=name_form, position_form=position_form, star_name_parameters_form=parameter_form)
 
 
@@ -239,7 +224,7 @@ def submit_manual_form():
                     session[which_flux] = 'null'
                     session[f'{which_flux}_err'] = 'null'
             else:
-                print(f'form key: {fieldname}, value: {value}')
+                # print(f'form key: {fieldname}, value: {value}')
                 session[fieldname] = float(value)
         return redirect(url_for('main.return_results'))
     else:
@@ -266,7 +251,7 @@ def return_results():
         session['corrected_nuv_err'] = corrected_fluxes['nuv_err']
         session['corrected_fuv'] = corrected_fluxes['fuv']
         session['corrected_fuv_err'] = corrected_fluxes['fuv_err']
-        print(session)
+        # print(session)
 
         # STEP 4: Check if model subtype data exists in database
         model_collection = f'{session["model_subtype"].lower()}_grid'
@@ -284,12 +269,11 @@ def return_results():
         
         if len(list(models_in_limits)) == 0:
             # STEP 7.1: If there are no models found within limits, return model with lowest chi squared value
-            print('Nohting found within limits, MODEL W CHI SQUARED')
-            print(models_with_chi_squared[0])
+            # print('Nothing found within limits, MODEL W CHI SQUARED')
+            # print(models_with_chi_squared[0])
 
             #STEP 8.1: Read FITS file from matching model and create graph from data
             filename = models_with_chi_squared[0]['fits_filename']
-            print(filename)
             file = find_fits_file(filename)
 
             # CATCH: For testing purposes, if fits file is not available yet, flash warning and use test file
@@ -307,9 +291,9 @@ def return_results():
             return render_template('result.html', subtype=matching_subtype, graph=html_string)
         else:
             # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
-            print(f'MODELS WITHIN LIMITS: {len(list(models_in_limits))}')
-            for doc in models_in_limits:
-                print(doc)
+            # print(f'MODELS WITHIN LIMITS: {len(list(models_in_limits))}')
+            # for doc in models_in_limits:
+            #     print(doc)
 
             results = []
             for x in models_in_limits:
@@ -341,7 +325,6 @@ def return_results():
 '''————————————ABOUT PAGE————————————'''
 @main.route('/about', methods=['GET'])
 def about():
-    
     return render_template('about.html')
 
 
@@ -349,7 +332,6 @@ def about():
 '''————————————FAQ PAGE————————————'''
 @main.route('/faqs', methods=['GET'])
 def faqs():
-    
     return render_template('faqs.html')
 
 
@@ -376,7 +358,7 @@ def send_email():
         flash('Email sent!', 'success')
         return redirect(url_for('main.homepage'))
     else:
-        print(form.errors)
+        # print(form.errors)
         flash('error', 'danger')
         return redirect(url_for('main.error', msg='Contact form unavailable at this time, please email phoenixpegasusgrid@gmail.com directly.'))
 
@@ -392,20 +374,12 @@ def error(msg):
     session['modal_show'] = False
     return render_template('error.html', error_msg=msg)
 
-# @main.app_errorhandler(500)
-# def internal_error(e):
-#     print(e)
-#     session['modal_show'] = False
-#     return render_template('error.html', error_msg='Something went wrong. Please try again later or contact us. (500)', contact_form=ContactForm()), 500
-
 @main.app_errorhandler(503)
 def internal_error(e):
-    print(e)
     session['modal_show'] = False
     return render_template('error.html', error_msg='Something went wrong. Please try again later or contact us. (503)', contact_form=ContactForm()), 503
 
 @main.app_errorhandler(404)
 def page_not_found(e):
-    print(e)
     session['modal_show'] = False
     return render_template('error.html', error_msg='Page not found!', contact_form=ContactForm()), 404

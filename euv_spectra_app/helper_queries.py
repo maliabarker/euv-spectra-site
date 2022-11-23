@@ -28,7 +28,7 @@ def find_matching_subtype(session):
         #print(doc)
         subtype_doc = model_parameter_grid.find_one(doc['_id'])
 
-    print(f"SUBTYPE: {subtype_doc['model']}")
+    # print(f"SUBTYPE: {subtype_doc['model']}")
     return subtype_doc
 
 
@@ -84,7 +84,7 @@ def find_matching_photosphere(session):
 
     matching_photosphere_doc = ''
     for doc in matching_photospheric_flux:
-        print(f'MATCHING PHOTOSPHERE: {doc}')
+        # print(f'MATCHING PHOTOSPHERE: {doc}')
         matching_photosphere_doc = doc
     return matching_photosphere_doc
 
@@ -209,25 +209,25 @@ def get_models_within_limits(session, model_collection, models):
         # compute upper lim and lower lim for each flux and find within those values
 
     if session["nuv"] == 'null':
-        print('NO NUV')
-        print(f'FUV UPPER LIM {session["corrected_fuv"] + session["corrected_fuv_err"]} LOWER LIM {session["corrected_fuv"] - session["corrected_fuv_err"]}')
+        # print('NO NUV')
+        # print(f'FUV UPPER LIM {session["corrected_fuv"] + session["corrected_fuv_err"]} LOWER LIM {session["corrected_fuv"] - session["corrected_fuv_err"]}')
         fuv_lower_lim = session['corrected_fuv'] - session['corrected_fuv_err']
         fuv_upper_lim = session['corrected_fuv'] + session['corrected_fuv_err']
         models_within_limits = db.get_collection(model_collection).find({'fuv': {"$gte": fuv_lower_lim, "$lte": fuv_upper_lim}})
         return models_within_limits
 
     elif session["fuv"] == 'null':
-        print('NO FUV')
-        print(f'NUV UPPER LIM {session["corrected_nuv"] + session["corrected_nuv_err"]} LOWER LIM {session["corrected_nuv"] - session["corrected_nuv_err"]}')
+        # print('NO FUV')
+        # print(f'NUV UPPER LIM {session["corrected_nuv"] + session["corrected_nuv_err"]} LOWER LIM {session["corrected_nuv"] - session["corrected_nuv_err"]}')
         nuv_lower_lim = session['corrected_nuv'] - session['corrected_nuv_err']
         nuv_upper_lim = session['corrected_nuv'] + session['corrected_nuv_err']
         models_within_limits = db.get_collection(model_collection).find({'nuv': {"$gte": nuv_lower_lim, "$lte": nuv_upper_lim}})
         return models_within_limits
 
     else:
-        print('BOTH FLUXES AVAILABLE')
-        print(f'NUV UPPER LIM {session["corrected_nuv"] + session["corrected_nuv_err"]} LOWER LIM {session["corrected_nuv"] - session["corrected_nuv_err"]}')
-        print(f'FUV UPPER LIM {session["corrected_fuv"] + session["corrected_fuv_err"]} LOWER LIM {session["corrected_fuv"] - session["corrected_fuv_err"]}')
+        # print('BOTH FLUXES AVAILABLE')
+        # print(f'NUV UPPER LIM {session["corrected_nuv"] + session["corrected_nuv_err"]} LOWER LIM {session["corrected_nuv"] - session["corrected_nuv_err"]}')
+        # print(f'FUV UPPER LIM {session["corrected_fuv"] + session["corrected_fuv_err"]} LOWER LIM {session["corrected_fuv"] - session["corrected_fuv_err"]}')
         fuv_lower_lim = session['corrected_fuv'] - session['corrected_fuv_err']
         fuv_upper_lim = session['corrected_fuv'] + session['corrected_fuv_err']
 

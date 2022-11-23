@@ -20,14 +20,14 @@ def convert_and_scale_fluxes(session, photo_fluxes):
     #STEP 1: CONVERT & Compute scale value
     radius_cm = session['stell_rad'] * 6.9e10
     distance_cm = session['dist'] * 3.08567758e18
-    print(f'CONVERTED DIST RAD, {radius_cm} {distance_cm}')
+    # print(f'CONVERTED DIST RAD, {radius_cm} {distance_cm}')
 
     scale = (distance_cm**2) / (radius_cm**2)
-    print(f'SCALE {scale}')
+    # print(f'SCALE {scale}')
     
     #STEP 2: Check if any fluxes are null (don't continue if true)
     if session['fuv'] != 'null':
-        print(f'CONVERTING FUV')
+        # print(f'CONVERTING FUV')
         
         #STEP 3: Convert GALEX mJy to erg/s/cm2/A
         upper_lim_fuv = session['fuv'] + session['fuv_err']
@@ -37,13 +37,13 @@ def convert_and_scale_fluxes(session, photo_fluxes):
         converted_fuv = ((3e-5) * (session['fuv']* 10**-6)) / pow(fuv_arb_wv, 2)
         converted_upper_lim_fuv = ((3e-5) * (upper_lim_fuv* 10**-6)) / pow(fuv_arb_wv, 2)
         converted_lower_lim_fuv = ((3e-5) * (lower_lim_fuv* 10**-6)) / pow(fuv_arb_wv, 2)
-        print(f'Converted fluxes: FUV {converted_fuv} ERR up {converted_upper_lim_fuv} low {converted_lower_lim_fuv}')
+        # print(f'Converted fluxes: FUV {converted_fuv} ERR up {converted_upper_lim_fuv} low {converted_lower_lim_fuv}')
         
         #STEP 4: Multiply flux by scale
         scaled_fuv = converted_fuv * scale
         scaled_upper_lim_fuv = converted_upper_lim_fuv * scale
         scaled_lower_lim_fuv = converted_lower_lim_fuv * scale
-        print(f'Scaled fluxes: FUV {scaled_fuv} ERR up {scaled_upper_lim_fuv} low {scaled_lower_lim_fuv}')
+        # print(f'Scaled fluxes: FUV {scaled_fuv} ERR up {scaled_upper_lim_fuv} low {scaled_lower_lim_fuv}')
         
         #STEP 5: Subtract photospheric flux
         photospheric_subtracted_fuv = scaled_fuv - (photo_fluxes['fuv'] / (10**8))
@@ -55,14 +55,14 @@ def convert_and_scale_fluxes(session, photo_fluxes):
 
         avg_err_fuv = (up_fuv + low_fuv) / 2
 
-        print(f'Photospheric subtracted fluxes: FUV {photospheric_subtracted_fuv} ERR {avg_err_fuv}')
+        # print(f'Photospheric subtracted fluxes: FUV {photospheric_subtracted_fuv} ERR {avg_err_fuv}')
         
         #STEP 6: Add new fluxes to dict
         returned_fluxes['fuv'] = photospheric_subtracted_fuv * (10**8)
         returned_fluxes['fuv_err'] = avg_err_fuv * (10**8)
     
     if session['nuv'] != 'null':
-        print(f'CONVERTING NUV')
+        # print(f'CONVERTING NUV')
         
         #STEP 3: Convert GALEX mJy to erg/s/cm2/A
         upper_lim_nuv = session['nuv'] + session['nuv_err']
@@ -74,13 +74,13 @@ def convert_and_scale_fluxes(session, photo_fluxes):
         converted_upper_lim_nuv = ((3e-5) * (upper_lim_nuv* 10**-6)) / pow(nuv_arb_wv, 2)
         converted_lower_lim_nuv = ((3e-5) * (lower_lim_nuv* 10**-6)) / pow(nuv_arb_wv, 2)
 
-        print(f'Converted fluxes: NUV {converted_nuv} ERR up {converted_upper_lim_nuv} low {converted_lower_lim_nuv}')
+        # print(f'Converted fluxes: NUV {converted_nuv} ERR up {converted_upper_lim_nuv} low {converted_lower_lim_nuv}')
         
         #STEP 4: Multiply flux by scale
         scaled_nuv = converted_nuv * scale
         scaled_upper_lim_nuv = converted_upper_lim_nuv * scale
         scaled_lower_lim_nuv = converted_lower_lim_nuv * scale
-        print(f'Scaled fluxes: NUV {scaled_nuv} ERR up {scaled_upper_lim_nuv} low {scaled_lower_lim_nuv}')
+        # print(f'Scaled fluxes: NUV {scaled_nuv} ERR up {scaled_upper_lim_nuv} low {scaled_lower_lim_nuv}')
         
         #STEP 5: Subtract photospheric flux
         #NOTE DO WE USE SAME PHOTOSPHERIC FLUX FOR ERROR VALUES???
@@ -93,7 +93,7 @@ def convert_and_scale_fluxes(session, photo_fluxes):
 
         avg_err_nuv = (up_nuv + low_nuv) / 2
 
-        print(f'Photospheric subtracted fluxes: NUV {photospheric_subtracted_nuv} ERR {avg_err_nuv}')
+        # print(f'Photospheric subtracted fluxes: NUV {photospheric_subtracted_nuv} ERR {avg_err_nuv}')
         
         #STEP 6: Add new fluxes to dict
         returned_fluxes['nuv'] = photospheric_subtracted_nuv * (10**8)
@@ -103,7 +103,7 @@ def convert_and_scale_fluxes(session, photo_fluxes):
 
 
 def find_fits_file(filename):
-    print('finding fits')
+    # print('finding fits')
     item = fits_files.find_one({'name': filename})
     if item:
         file = io.BytesIO(item['file'])
