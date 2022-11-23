@@ -1,5 +1,5 @@
 from flask import Blueprint, request, render_template, redirect, url_for, session, flash
-from flask_mail import Message
+from flask_mail import Message, Mail
 from collections import defaultdict
 from euv_spectra_app.extensions import *
 from datetime import timedelta
@@ -219,6 +219,8 @@ def submit_modal_form():
             print(parameter_form.errors)
     return render_template('home.html', parameter_form=parameter_form_1, name_form=name_form, position_form=position_form, star_name_parameters_form=parameter_form)
 
+
+
 '''————————————SUBMIT ROUTE FOR MANUAL INPUT————————————'''
 @main.route('/manual-submit', methods=['POST'])
 def submit_manual_form():
@@ -231,7 +233,7 @@ def submit_manual_form():
             # mas_to_pc = 1/ (X mas / 1000)
             if fieldname == "dist_unit" or "flag" in fieldname or "csrf_token" in fieldname:
                 if value == 'mas':
-                    session['dist'] = 1 / (form.dist.data / 1000)
+                    session['dist'] = int(1 / (form.dist.data / 1000))
                 if value == 'null':
                     which_flux = fieldname[0:2]
                     session[which_flux] = 'null'
@@ -243,6 +245,8 @@ def submit_manual_form():
     else:
         flash('Whoops, something went wrong. Please check your inputs and try again!', 'danger')
         return redirect(url_for('main.homepage'))
+
+
 
 '''————————————SUBMIT ROUTE FOR RESULTS————————————'''
 @main.route('/results', methods=['GET', 'POST'])
@@ -264,95 +268,74 @@ def return_results():
         session['corrected_fuv_err'] = corrected_fluxes['fuv_err']
         print(session)
 
-        #STEP 5: Do chi squared test between all models within selected subgrid and corrected observation ** this is on models with subtracted photospheric flux
-        # final_models = find_models()
+        # STEP 4: Check if model subtype data exists in database
         model_collection = f'{session["model_subtype"].lower()}_grid'
-        print(f'NUV UPPER LIM {session["corrected_nuv"] + session["corrected_nuv_err"]} LOWER LIM {session["corrected_nuv"] - session["corrected_nuv_err"]}')
-        print(f'FUV UPPER LIM {session["corrected_fuv"] + session["corrected_fuv_err"]} LOWER LIM {session["corrected_fuv"] - session["corrected_fuv_err"]}')
-        
-        if model_collection in db.list_collection_names():
-            models_with_chi_squared = db.get_collection(model_collection).aggregate([
-                # { "$match" :
-                #     { "$expr":
-                #         {"$switch": { 
-                #             "branches": [
-                #             # no NUV
-                #             { "case": {"$eq": [session.get("corrected_nuv"), False] }, "then": {"fuv": {"$gte": {"$subtract": [session['corrected_fuv'], session['corrected_fuv_err']]}, "$lte":{"$add": [session['corrected_fuv'], session['corrected_fuv_err']]}}}},
-                #             # no FUV
-                #             { "case": {"$eq": [session.get("corrected_fuv"), False] }, "then": {"nuv": {"$gte": {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}, "$lte":{"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}}}}
-                #             ],
-                #             "default": 
-                #                 {"$nuv": {"$gte": {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}, "$lte":{"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}},
-                #                 "$fuv": {"$gte":{"$subtract": [session['corrected_fuv'], session['corrected_fuv_err']]}, "$lte":{"$add": [session['corrected_fuv'], session['corrected_fuv_err']]}}}
-                #         }}
-                #     }
-                # },
-                { "$match": {
-                    "nuv": { "$elemMatch": {"$gte": {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}, "$lte":{"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}}},
-                    "fuv": { "$elemMatch": {"$gte":{"$subtract": [session['corrected_fuv'], session['corrected_fuv_err']]}, "$lte":{"$add": [session['corrected_fuv'], session['corrected_fuv_err']]}}}
-                    }
-                },
-                { "$project": {  
-                        "fits_filename": 1, "mass": 1, "euv": 1, "fuv": 1, "nuv": 1, "chiSquared": { 
-                            "$switch": { 
-                                "branches": [
-                                { "case": {"$eq": [session.get("corrected_nuv"), False] }, "then": { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }},
-                                { "case": {"$eq": [session.get("corrected_fuv"), False] }, "then": { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }}
-                                ],
-                                "default": { "$add" : [
-                                    { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] },
-                                    { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }
-                                ]}
-                            }
-                        }
-                    }
-                }])
-
-            print('MODELS W CHI SQUARED')
-            for doc in models_with_chi_squared:
-                print(doc)
-        else:
+        if model_collection not in db.list_collection_names():
             return redirect(url_for('main.error', msg=f'The grid for model subtype {session["model_subtype"]} is currently unavailable. Please contact us with your stellar parameters and returned subtype.'))
-
-        # TODO create catch if there are no matched in between upper and lower lims, just return chi squared with closest match and throw flash error
-
-        #FOR NUV { "$divide": [ { "$pow": [ { "$subtract": [ "$NUV", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }
-        #FOR FUV { "$divide": [ { "$pow": [ { "$subtract": [ "$FUV", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }
         
-        # chisq2= sum((modelflux[i]- GALEX[i])**2 / GALEX[i])
-        # catch if there's no fuv/nuv detection, chi squared JUST over one flux
+        # STEP 5: Do chi squared test between all models within selected subgrid and corrected observation ** this is on models with subtracted photospheric flux
+        models_with_chi_squared = list(get_models_with_chi_squared(session, model_collection))
 
-        # return all results within upper and lower limits of fluxes (w/ chi squared values)
-            # db.get_collection(model_collection).find({'nuv': {"$gte":<lower_lim_nuv>, "$lte":<upper_lim_nuv>}, 'fuv': {$gte:<lower_lim_fuv>, $lte:<upper_lim_fuv>}})
-            
-            # lower_lim = {"$subtract": [session['corrected_nuv'], session['corrected_nuv_err']]}
-            # session['corrected_nuv'] - session['corrected_nuv_err']
-            # upper_lim = {"$add": [session['corrected_nuv'], session['corrected_nuv_err']]}
-            # session['corrected_nuv'] + session['corrected_nuv_err']
-            
-            # !!!!!!!!
-            # NOTE does this mean we return all matching documents in model grid that match between...
-                # 1. galex_fuv +- err
-                # 2. galex_nuv +- err
-            # !!!!!!!!
+        # STEP 6: Find all matches in model grid within upper and lower limits of galex fluxes
+        models_in_limits = list(get_models_within_limits(session, model_collection, models_with_chi_squared))
 
-            # compute upper lim and lower lim for each flux and find within those values
-        # return from lowest chi squared -> highest
-        # return euv flux as <euv_flux> +/- difference from model
+        # TODO return from lowest chi squared -> highest
+        # TODO return euv flux as <euv_flux> +/- difference from model
+        
+        if len(list(models_in_limits)) == 0:
+            # STEP 7.1: If there are no models found within limits, return model with lowest chi squared value
+            print('Nohting found within limits, MODEL W CHI SQUARED')
+            print(models_with_chi_squared[0])
 
-        #STEP 6: Read FITS file from matching models and create graph from data
-        #file = find_fits_file(<filename>)
-        file = find_fits_file('M0.Teff=3850.logg=4.78.TRgrad=7.5.cmtop=5.5.cmin=3.5.7.gz.fits')
-        fig = create_graph(file, session)
+            #STEP 8.1: Read FITS file from matching model and create graph from data
+            filename = models_with_chi_squared[0]['fits_filename']
+            print(filename)
+            file = find_fits_file(filename)
 
-        #STEP 7: Convert graph into html component and send to front end
-        html_string = convert_fig_to_html(fig)
+            # CATCH: For testing purposes, if fits file is not available yet, flash warning and use test file
+            test_file = find_fits_file('M0.Teff=3850.logg=4.78.TRgrad=7.5.cmtop=5.5.cmin=3.5.7.gz.fits') # TEST FILE
+            if file == None:
+                flash('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
+                file = test_file
 
-        flash('_ Results were found within your submitted parameters', 'success')
-        return render_template('result.html', subtype=matching_subtype, graph=html_string)
+            fig = create_graph([file], [models_with_chi_squared[0]['chi_squared']], session)
+
+            #STEP 9.1: Convert graph into html component and send to front end
+            html_string = convert_fig_to_html(fig)
+
+            flash('No results found within upper and lower limits of UV fluxes. Returning document with nearest chi squared value.', 'warning')
+            return render_template('result.html', subtype=matching_subtype, graph=html_string)
+        else:
+            # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
+            print(f'MODELS WITHIN LIMITS: {len(list(models_in_limits))}')
+            for doc in models_in_limits:
+                print(doc)
+
+            results = []
+            for x in models_in_limits:
+                for y in models_with_chi_squared:
+                    if x['_id'] == y['_id']:
+                        results_test.append(y)
+
+            #STEP 8.2: Read all FITS files from matching models and create graph from data
+            files = []
+            chi_squared_vals = []
+            for doc in results:
+                file = find_fits_file(doc['fits_filename'])
+                if file:
+                    files.append()
+                    chi_squared_vals.append(doc['chi_squared'])
+
+            fig = create_graph(files, chi_squared_vals, session)
+
+            #STEP 9.2: Convert graph into html component and send to front end
+            html_string = convert_fig_to_html(fig)
+            flash(len(list(models_in_limits)) + 'results found within your submitted parameters')
+            return render_template('result.html', subtype=matching_subtype, graph=html_string)
     else:
         flash('Submit the required data to view this page.', 'warning')
         return redirect(url_for('main.homepage'))
+
 
 
 '''————————————ABOUT PAGE————————————'''
@@ -362,11 +345,13 @@ def about():
     return render_template('about.html')
 
 
+
 '''————————————FAQ PAGE————————————'''
 @main.route('/faqs', methods=['GET'])
 def faqs():
     
     return render_template('faqs.html')
+
 
 
 '''————————————ALL SPECTRA PAGE————————————'''
@@ -375,23 +360,26 @@ def index_spectra():
     return render_template('index-spectra.html')
 
 
+
 '''————————————CONTACT SUBMIT————————————'''
 @main.route('/contact', methods=['POST'])
 def send_email():
     form = ContactForm(request.form)
-    print(form)
+
     if form.validate_on_submit():
         # send email
-        print(form.email.data)
-        msg = Message(form.subject.data, sender='phoenixpegasusgrid@gmail.com', recipients=[form.email.data])
-        msg.body = form.message.data
+        msg = Message(form.subject.data,
+                      sender=(form.name.data, form.email.data),
+                      recipients=['phoenixpegasusgrid@gmail.com'],
+                      body=f'FROM {form.name.data}, {form.email.data}\n MESSAGE: {form.message.data}')
         mail.send(msg)
         flash('Email sent!', 'success')
         return redirect(url_for('main.homepage'))
     else:
         print(form.errors)
         flash('error', 'danger')
-        return redirect(url_for('main.error', msg='Contact form unavailable at this time'))
+        return redirect(url_for('main.error', msg='Contact form unavailable at this time, please email phoenixpegasusgrid@gmail.com directly.'))
+
 
 @main.route('/clear-session')
 def clear_session():

@@ -9,7 +9,6 @@ import mpld3
 matplotlib.use('agg')
 
 
-
 def convert_and_scale_fluxes(session, photo_fluxes):
     returned_fluxes = {
         'fuv': session['fuv'],
@@ -106,28 +105,40 @@ def convert_and_scale_fluxes(session, photo_fluxes):
 def find_fits_file(filename):
     print('finding fits')
     item = fits_files.find_one({'name': filename})
-    file = io.BytesIO(item['file'])
-    return file
+    if item:
+        file = io.BytesIO(item['file'])
+        return file
 
 
 
-def create_graph(file, session):
-    hst = fits.open(file)
-    data = hst[1].data
-    w_obs = data['WAVELENGTH'][0]
-    f_obs = data['FLUX'][0]
-    # print(w_obs)
-    # print(f_obs)
-    
+def create_graph(files, chi_squared_vals, session):
+    # STEP 1: initialize plot
     fig = plt.figure()
     fig.set_size_inches(9, 4)
+    colors = ['#2E42FC', "#7139F1", "#9A33EA", "#C32DE3", "#EE26DB", "#FE63A0", "#FE8F77", "#FDAE5A"]
+
+    # STEP 2: open each file and append data as new line
+    i = 0
+    while i <= len(files) - 1:
+        hst = fits.open(files[i])
+        data = hst[1].data
+        w_obs = data['WAVELENGTH'][0]
+        f_obs = data['FLUX'][0]
+        # print(w_obs)
+        # print(f_obs)
+        if i == 0:
+            plt.plot(w_obs, f_obs, color=colors[i], label=f'Spectrum {i+1} (Best Match), χ2={chi_squared_vals[i]}')
+        else:
+            plt.plot(w_obs, f_obs, color=colors[i], label=f'Spectrum {i+1} (Best Match), χ2={chi_squared_vals[i]}')
+        i += 1
+    
     '''FOR FUTURE WITH MULTIPLE LINES:
-        colors=[list of colors]
         line1, = plt.plot(w_obs, f_obs, color=colors[0], label='Spectrum 1 (Best Match), χ2=<value>')
         line2, = plt.plot(w_obs, f_obs, color=colors[1], label='Spectrum 2, χ2=<value>')...
         plt.legend(handles=[line1, line2])
     '''
-    plt.plot(w_obs, f_obs, color='#5240f7', label='Spectrum 1 (Best Match), χ2=?')
+    
+    # STEP 3: Add some styles—axes labels, scale, add limits, and legend
     plt.xlabel('Wavelength (Å)')
     plt.ylabel('Flux Density (erg/cm2/s/Å)')
     plt.yscale('log')
@@ -139,6 +150,8 @@ def create_graph(file, session):
     # plt.legend(loc='lower right')
     # PLOT ALL CHI SQUARED MATCHES AND ADD LEGEND
     # <!-- Add legend for lines (with intent of plotting all matching chi squared lines on single graph) -->
+
+    # STEP 4: Return the final figure
     return fig
 
 def convert_fig_to_html(fig):
