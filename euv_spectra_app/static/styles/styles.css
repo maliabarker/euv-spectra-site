@@ -126,13 +126,12 @@ body {
 
 
 /* ————————————FOR MODAL——————————— */
-    .modal-xl {
-        max-width: 65% !important;
+    td {
+        vertical-align: middle;
     }
-
-    /* for modal form display */
-    tr { display: block; float: left; }
-    th, td { display: block; }
+    th {
+        text-align: center;
+    }
 
 
 

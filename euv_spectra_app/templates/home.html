@@ -41,7 +41,8 @@
         <div class="row" id="search-bar-cont">
             <div class="col-xl-8 offset-xl-2 col-lg-10 offset-lg-1 col-md-12 mt-3">
                 <h4 class="text-start mt-4 mb-2 ms-5" style="color: white; letter-spacing: .2rem;">Enter Star Name or Coordinates to Get Started</h4>
-                <div class="row g-0" id="search-bar">
+                {% include 'partials/search_bar.html' %}
+                {#<!-- <div class="row g-0" id="search-bar">
 
                     <div class="col-lg-3 col-sm-4" id="search-dropdown-col">
                         <div class="form-floating ms-2">
@@ -49,7 +50,7 @@
                                 <option selected value="name">Star Name</option>
                                 <option value="position">J2000 Coordinates</option>
                             </select>
-                            <label for="floatingSelect">Search By <!--<i class="fa-solid fa-caret-down fa-2x" style="position: absolute; right: -95%; top: 45%; color: #9c41f2;"></i>--></label>
+                            <label for="floatingSelect">Search By</label>
                         </div>
                     </div>
                     
@@ -61,7 +62,7 @@
                         {% include 'partials/position_form.html' %}
                     </div>
                     
-                </div>
+                </div> -->#}
                 <p class="text-end mt-1 me-5"><a data-bs-toggle="collapse" href="#search" role="button" aria-expanded="false" aria-controls="collapseExample" id="manual-form-toggle-text"><b id="manual-text" style="letter-spacing: 0.1rem;" class="h6">Click Here to Enter Parameters Manually </b><i class="fa-solid fa-caret-right" id="manual-caret"></i></a></p>
             </div>
         </div>
@@ -82,18 +83,22 @@
         <!--—————————MODAL START—————————-->
         {% if session['modal_show'] or (star_name_parameters_form and star_name_parameters_form.errors) %}
             <div class="modal fade" id="myModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
                     <div class="modal-content">
-                        <div class="modal-header">
-                            <p class="mt-2 ms-4">
-                                The following catalogs returned data for your target: <b>{{ session.search_term }}</b> <br> 
-                                Select the values you wish to use below or enter manually.
+                        <div class="modal-header text-center ms-2 d-flex justify-content-around">
+                            <p class="mb-0 mt-2">
+                                The following data was returned for your target: <b>{{ session.search_term }}</b> <br> 
+                                Use preselected values from
+                                <a href="https://exoplanetarchive.ipac.caltech.edu/overview/{{ session.search_term | urlencode }}">NExScI</a> 
+                                and 
+                                <a href="http://galex.stsci.edu/gr6/?page=searchresults&type=mastform&res=NED&obj={{ session.search_term | urlencode }}&query=no">GALEX</a> <br>
+                                or enter your own manual parameters in the cooresponding text box
                             </p>
                             <a href="/">
                                 <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </a>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body py-0">
                             {% if star_name_parameters_form.errors %}
                                 <div class="alert alert-danger mt-2" role="alert">
                                     Oops! Some fields are missing, please review form and submit again.

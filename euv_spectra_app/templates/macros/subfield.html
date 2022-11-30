@@ -1,0 +1,24 @@
+{% macro render_subfield(subfield) %}
+    {% if subfield.data == 'Manual' %}
+        <td>
+            <div class="form-check my-1">
+                {{ subfield(class="form-check-input mt-2") }}
+                {{ star_name_parameters_form.manual_teff(class="form-control", onclick="checkManualRadio(this)") }}
+            </div>
+        </td>
+    {% elif subfield.data|int(-1) == -1 %}
+        <td>
+            <div class="form-check my-1">
+                {{ subfield(disabled=true, class="form-check-input") }}
+                {{ subfield.label(class="form-check-label") }}
+            </div>
+        </td>
+    {% else %}
+        <td>
+            <div class="form-check my-1">
+                {{ subfield(checked=true, class="form-check-input") }}
+                {{ subfield.label(class="form-check-label") }}
+            </div>
+        </td>
+    {% endif %}
+{% endmacro %}

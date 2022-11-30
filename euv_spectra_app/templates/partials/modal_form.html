@@ -1,297 +1,80 @@
+{% from "macros/subfield.html" import render_subfield with context %}
+
 <form id="name-parameters-form" action="/modal-submit" method="POST" onsubmit="return checkManualInputs()">
     <fieldset>
         {{ star_name_parameters_form.csrf_token }}
         <div class="table-responsive">
-            <table class="table table-borderless align-bottom" id="star_name_parameter_form_table">
-                <tr class="mx-2">
-                    <th><small>{{star_name_parameters_form.catalog_name.label}}</small></th>
-                    {% for subfield in star_name_parameters_form.catalog_name %}
-                        {% if subfield.data != 'GALEX' %}
-                            <td>
-                                <p class="my-1">{{ subfield.label }}</p>
-                                <div class="form-check">
-                                    {{ subfield(class="form-check-input", type="checkbox", onclick="selectAll(this);") }}
-                                    <p>Select All</p>
-                                </div>
-                            </td>
-                        {% endif %}
-                    {% endfor %}
-                </tr>
-
+            <table class="table table-borderless table-striped align-bottom table-sm mb-0" id="star_name_parameter_form_table">
                 <tr class="me-2">
-                    <th><small>{{star_name_parameters_form.teff.label}}</small></th>
-
+                    <th><p class="mt-3">{{star_name_parameters_form.teff.label}} = </p></th>
                     {% for subfield in star_name_parameters_form.teff %}
-                        {% if subfield.data == 'Manual' %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(class="form-check-input") }}
-                                    <!-- <input type="radio" name="teff" value="manual" class="form-check-input"> -->
-                                    {{ star_name_parameters_form.manual_teff(class="form-control", onclick="checkManualRadio(this)") }}
-                                    <!-- <input type="number" step="0.000000000001" name="manual_teff" id="manual_teff" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
-                                </div>
-                            </td>
-                        {% elif subfield.data|int(-1) == -1 %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(disabled=true, class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
-                                </div>
-                            </td>
-                        {% else %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
-                                </div>
-                            </td>
-                        {% endif %}
+                        {{ render_subfield(subfield) }}
                     {% endfor %}
-                    
                 </tr>
 
                 <tr class="me-2">
-                    <th><small>{{star_name_parameters_form.logg.label}}</small></th>
+                    <th><p class="mt-3">{{star_name_parameters_form.logg.label}} = </p></th>
                     {% for subfield in star_name_parameters_form.logg %}
-                        {% if subfield.data == 'Manual' %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ star_name_parameters_form.manual_logg(class="form-control", onclick="checkManualRadio(this)") }}
-                                    <!-- <input type="number" step="0.000000000001" name="manual_logg" id="manual_logg" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
-                                </div>
-                            </td>
-                        {% elif subfield.data|int(-1) == -1 %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(disabled=true, class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
-                                </div>
-                            </td>
-                        {% else %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
-                                </div>
-                            </td>
-                        {% endif %}
+                        {{ render_subfield(subfield) }}
                     {% endfor %}
                 </tr>
 
                 <tr class="me-2">
-                    <th><small>{{star_name_parameters_form.mass.label}}</small></th>
+                    <th><p class="mt-3">{{star_name_parameters_form.mass.label}} = </p></th>
                     {% for subfield in star_name_parameters_form.mass %}
-                        {% if subfield.data == 'Manual' %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ star_name_parameters_form.manual_mass(class="form-control", onclick="checkManualRadio(this)") }}
-                                    <!-- <input type="number" step="0.000000000001" name="manual_mass" id="manual_mass" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
-                                </div>
-                            </td>
-                        {% elif subfield.data|int(-1) == -1 %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(disabled=true, class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
-                                </div>
-                            </td>
-                        {% else %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
-                                </div>
-                            </td>
-                        {% endif %}
+                        {{ render_subfield(subfield) }}
                     {% endfor %}
                 </tr>
 
                 <tr class="me-2">
-                    <th><small>{{star_name_parameters_form.stell_rad.label}}</small></th>
+                    <th><p class="mt-3">{{star_name_parameters_form.stell_rad.label}} = </p></th>
                     {% for subfield in star_name_parameters_form.stell_rad %}
-                        {% if subfield.data == 'Manual' %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ star_name_parameters_form.manual_stell_rad(class="form-control", onclick="checkManualRadio(this)") }}
-                                    <!-- <input type="number" step="0.000000000001" name="manual_rad" id="manual_rad" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
-                                </div>
-                            </td>
-                        {% elif subfield.data|int(-1) == -1 %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(disabled=true, class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
-                                </div>
-                            </td>
-                        {% else %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
-                                </div>
-                            </td>
-                        {% endif %}
+                        {{ render_subfield(subfield) }}
                     {% endfor %}
                 </tr>
 
                 <tr class="me-2">
-                    <th><small>{{star_name_parameters_form.dist.label}}</small></th>
+                    <th><p class="mt-3">{{star_name_parameters_form.dist.label}} = </p></th>
                     {% for subfield in star_name_parameters_form.dist %}
-                        {% if subfield.data == 'Manual' %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ star_name_parameters_form.manual_dist(class="form-control", onclick="checkManualRadio(this)") }}
-                                    <!-- <input type="number" step="0.000000000001" name="manual_dist" id="manual_dist" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
-                                </div>
-                            </td>
-                        {% elif subfield.data|int(-1) == -1 %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(disabled=true, class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
-                                </div>
-                            </td>
-                        {% else %}
-                            <td>
-                                <div class="form-check my-4">
-                                    {{ subfield(class="form-check-input") }}
-                                    {{ subfield.label(class="form-check-label") }}
-                                </div>  
-                            </td>    
-                        {% endif %}
+                        {{ render_subfield(subfield) }}
+                    {% endfor %}
+                </tr>
+
+                <tr class="me-2">
+                    <th><p class="mt-3">{{star_name_parameters_form.fuv.label}} = </p></th>
+                    {% for subfield in star_name_parameters_form.fuv %}
+                        {{ render_subfield(subfield) }}
+                    {% endfor %}
+                </tr>
+
+                <tr class="me-2">
+                    <th><p class="mt-3">{{star_name_parameters_form.fuv_err.label}} = </p></th>
+                    {% for subfield in star_name_parameters_form.fuv_err %}
+                        {{ render_subfield(subfield) }}
+                    {% endfor %}
+                </tr>
+
+                <tr class="me-2">
+                    <th><p class="mt-3">{{star_name_parameters_form.nuv.label}} = </p></th>
+                    {% for subfield in star_name_parameters_form.nuv %}
+                        {{ render_subfield(subfield) }}
+                    {% endfor %}
+                </tr>
+
+                <tr class="me-2">
+                    <th><p class="mt-3">{{star_name_parameters_form.nuv_err.label}} = </p></th>
+                    {% for subfield in star_name_parameters_form.nuv_err %}
+                        {{ render_subfield(subfield) }}
                     {% endfor %}
                 </tr>
                 
             </table>
         </div>
-
-        {% for subfield in star_name_parameters_form.catalog_name %}
-            {% if subfield.data == 'GALEX' %}
-                <hr>
-                <div class="table-responsive">
-                    <table class="table table-borderless align-bottom" id="star_name_flux_form_table">
-                        <tr class="mx-2">
-                            <th><small>{{star_name_parameters_form.catalog_name.label}}</small></th>
-                            {% for subfield in star_name_parameters_form.catalog_name %}
-                                {% if subfield.data == 'GALEX' %}
-                                    <td>
-                                        <p class="my-1">{{ subfield.label }}</p>
-                                        <div class="form-check">
-                                            {{ subfield(class="form-check-input", type="checkbox", onclick="selectAllGalex(this);") }}
-                                            <p>Select All</p>
-                                        </div>
-                                    </td>
-                                {% endif %}
-                            {% endfor %}
-                            <td>
-                                <p class="my-1"><label for="galex">Manual</label></p>
-                                <div class="form-check">
-                                    <input type="checkbox" name="galex" id="galex" class="form-check-input" onclick="selectAll(this);" value="Manual">
-                                    <p>Select All</p>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr class="me-2">
-                            <th><small>{{star_name_parameters_form.fuv.label}}</small></th>
-                            {% for subfield in star_name_parameters_form.fuv %}
-                                {% if subfield.data == 'Manual' %}
-                                    <td>
-                                        <div class="form-check my-4">
-                                            {{ subfield(class="form-check-input") }}
-                                            {{ star_name_parameters_form.manual_fuv(class="form-control", onclick="checkManualRadio(this)") }}
-                                            <!-- <input type="number" step="0.000000000001" name="manual_fuv" id="manual_fuv" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
-                                        </div>
-                                    </td>
-                                {% else %}
-                                    <td>
-                                        <div class="form-check my-4">
-                                            {{ subfield(class="form-check-input") }}
-                                            {{ subfield.label(class="form-check-label") }}
-                                        </div>  
-                                    </td>    
-                                {% endif %}
-                            {% endfor %}
-                        </tr>
-
-                        <tr class="me-2">
-                            <th><small>{{star_name_parameters_form.fuv_err.label}}</small></th>
-                            {% for subfield in star_name_parameters_form.fuv_err %}
-                                {% if subfield.data == 'Manual' %}
-                                    <td>
-                                        <div class="form-check my-4">
-                                            {{ subfield(class="form-check-input") }}
-                                            {{ star_name_parameters_form.manual_fuv_err(class="form-control", onclick="checkManualRadio(this)") }}
-                                            <!-- <input type="number" step="0.000000000001" name="manual_fuv_err" id="manual_fuv_err" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
-                                        </div>
-                                    </td>
-                                {% else %}
-                                    <td>
-                                        <div class="form-check my-4">
-                                            {{ subfield(class="form-check-input") }}
-                                            {{ subfield.label(text='+/- ' + subfield.label.text|string, class="form-check-label") }}
-                                        </div>  
-                                    </td>    
-                                {% endif %}
-                            {% endfor %}
-                        </tr>
-
-                        <tr class="me-2">
-                            <th><small>{{star_name_parameters_form.nuv.label}}</small></th>
-                            {% for subfield in star_name_parameters_form.nuv %}
-                                {% if subfield.data == 'Manual' %}
-                                    <td>
-                                        <div class="form-check my-4">
-                                            {{ subfield(class="form-check-input") }}
-                                            {{ star_name_parameters_form.manual_nuv(class="form-control", onclick="checkManualRadio(this)") }}
-                                            <!-- <input type="number" step="0.000000000001" name="manual_nuv" id="manual_nuv" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
-                                        </div>
-                                    </td>
-                                {% else %}
-                                    <td>
-                                        <div class="form-check my-4">
-                                            {{ subfield(class="form-check-input") }}
-                                            {{ subfield.label(class="form-check-label") }}
-                                        </div>  
-                                    </td>    
-                                {% endif %}
-                            {% endfor %}
-                        </tr>
-
-                        <tr class="me-2">
-                            <th><small>{{star_name_parameters_form.nuv_err.label}}</small></th>
-                            {% for subfield in star_name_parameters_form.nuv_err %}
-                                {% if subfield.data == 'Manual' %}
-                                    <td>
-                                        <div class="form-check my-4">
-                                            {{ subfield(class="form-check-input") }}
-                                            {{ star_name_parameters_form.manual_nuv_err(class="form-control", onclick="checkManualRadio(this)") }}
-                                            <!-- <input type="number" step="0.000000000001" name="manual_nuv_err" id="manual_nuv_err" class="form-control" onclick="checkManualRadio(this)" oninput="populateManualValue(this);" size="5"> -->
-                                        </div>
-                                    </td>
-                                {% else %}
-                                    <td>
-                                        <div class="form-check my-4">
-                                            {{ subfield(class="form-check-input") }}
-                                            {{ subfield.label(text='+/- ' + subfield.label.text|string, class="form-check-label") }}
-                                        </div>
-                                    </td>    
-                                {% endif %}
-                            {% endfor %}
-                        </tr>
-                    </table>
-                </div>
-            {% endif %}
-        {% endfor %}
         
-        <div class="modal-footer">
-            {{ star_name_parameters_form.submit(class="btn btn-primary", form="name-parameters-form") }}
-            <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+        <div class="modal-footer border-0 py-0 me-2">
+            {{ star_name_parameters_form.submit(class="btn btn-primary px-5 mt-1", form="name-parameters-form", id="flux-continue-btn") }}
         </div>
+
     </fieldset>
 </form>
 

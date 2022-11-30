@@ -13,10 +13,58 @@ from euv_spectra_app.helper_queries import *
 main = Blueprint("main", __name__)
 
 
+def populate_modal(search_term, search_type):
+    print(search_term, search_type)
+    session["search_term"] = search_term
+    galex_coords = None
+
+    if search_type == 'position':
+        # STEP 1: Assign search term to coords
+        coords = session["search_term"]
+
+        # STEP 2: Change coordinates to ra and dec
+        converted_coords = convert_coords(coords)
+        if converted_coords['error_msg'] != None:
+            return redirect(url_for('main.error', msg=converted_coords['error_msg']))
+
+        galex_coords = converted_coords
+        search_term = converted_coords['data']['skycoord_obj']
+
+    elif search_type == 'name':
+        # STEP 1: store name data in session
+        star_name = session["search_term"]
+
+        # STEP 2: Get coordinate and motion info from Simbad
+        simbad_data = search_simbad(star_name)
+        if simbad_data['error_msg'] != None:
+            return redirect(url_for('main.error', msg=simbad_data['error_msg']))
+
+        # STEP 3: Put PM and Coord info into correction function
+        corrected_coords = correct_pm(simbad_data['data'], star_name)
+        if corrected_coords['error_msg'] != None:
+            return redirect(url_for('main.error', msg=corrected_coords['error_msg']))
+
+        galex_coords = corrected_coords
+        
+    # STEP 4: Search GALEX with corrected or converted coords
+    galex_data = search_galex(galex_coords['data']['ra'], galex_coords['data']['dec'])
+    if galex_data['error_msg'] != None:
+        return redirect(url_for('main.error', msg=galex_data['error_msg']))
+
+    # STEP 5: Query all catalogs and append them to the final catalogs list if there are no errors
+    catalog_data = [search_nea(search_term, search_type), galex_data]
+    final_catalogs = [catalog for catalog in catalog_data if catalog['error_msg'] == None]
+
+    # STEP 6: Append each type of data into its own key value pair
+    res = {key: dict['data'][key] for dict in final_catalogs for key in dict['data']}
+    print(res)
+
+    return res
+
+
+
 @main.context_processor
 def inject_form():
-    form_dict = dict(contact_form=ContactForm())
-    #print(form_dict)
     return dict(contact_form=ContactForm())
 
 
@@ -31,126 +79,52 @@ def make_session_permanent():
 @main.route('/', methods=['GET', 'POST'])
 def homepage():
     #session.clear()
-    #test_space_motion()
     print(session)
+
     session['modal_show'] = False
     parameter_form = ParameterForm()
     name_form = StarNameForm()
     position_form = PositionForm()
     star_name_parameters_form = StarNameParametersForm()
-    
 
     if request.method == 'POST':
-        # print('————————POSTING...————————')
-        # print('—————————FORM DATA START—————————')
-        # form_data = request.form
-        # for key in form_data:
-        #     print ('form key '+key+" "+form_data[key])
-        # print('—————————FORM DATA END—————————')
-
 
 # '''————————————————————HOME POSITION FORM————————————————————'''
         if position_form.validate_on_submit():
             print('position form validated!')
-            # STEP 1: Change coordinates to ra and dec
-            session["search_term"] = position_form.coords.data
-            coords = session["search_term"]
 
-            # STEP 2: Change coordinates to ra and dec
-            converted_coords = convert_coords(coords)
-            if converted_coords['error_msg'] != None:
-                return redirect(url_for('main.error', msg=converted_coords['error_msg']))
+            # STEP 1: Run the helper function to get a dynamic WTForm instance with your data
+            res = populate_modal(position_form.coords.data, 'position')
 
-            # STEP 3: Search GALEX with coordinates
-            galex_data = search_galex(converted_coords['data']['ra'], converted_coords['data']['dec'])
-            if galex_data['error_msg'] != None:
-                return redirect(url_for('main.error', msg=galex_data['error_msg']))
-            
-            # STEP 4: Query all catalogs and append them to the final catalogs list if there are no errors
-            catalog_data = [search_tic(f"{converted_coords['data']['ra']} {converted_coords['data']['dec']}", 'position'), search_nea(converted_coords['data']['skycoord_obj'], 'position'), galex_data]
-            final_catalogs = [catalog for catalog in catalog_data if catalog['error_msg'] == None]
-            #print(f'FINAL CATALOG TEST {final_catalogs}')
-
-            # STEP 5: Create a dictionary that holds all parameters in a list ex: {'teff' : [teff_1, teff_2, teff_3]}
-                    # Will be useful for next step, dynamically adding radio buttons to flask wtform
-            res = defaultdict(list)
-            for dict in final_catalogs:
-                for key in dict:
-                    if key == 'data':
-                        for key_2 in dict[key]:
-                            if key_2 != 'error_msg' and key_2 != 'valid_info':
-                                res[key_2].append(dict[key][key_2])
-                    else:
-                        if key != 'error_msg' and key != 'valid_info':
-                            res[key].append(dict[key])
-
-            # STEP 6: Append a manual option to each parameter
-            for key in res:
-                res[key].append('Manual')
-            # print(res)
-
+            # STEP 2: Store this data for later use (repopulating model, validation)
             session['modal_choices'] = json.dumps(res, allow_nan=True)
 
-            # STEP 8: Declare the form and add the radio choices dynamically for each radio input on the form
-            for key in res:
+            # STEP 3: Declare the form and add the radio choices dynamically for each radio input on the form
+            for key, val in res.items():
                 radio_input = getattr(star_name_parameters_form, key)
-                radio_input.choices = [(value, value) for value in res[key]]
+                radio_input.choices.insert(0, (val, val))
 
+            # STEP 3: Set modal show to true
             session['modal_show'] = True
             return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form)
             
 
 # '''————————————————————HOME NAME FORM————————————————————'''
         elif name_form.validate_on_submit():
-            # STEP 1: store name data in session
-            session["search_term"] = name_form.star_name.data
-            star_name = session["search_term"]
-            print(f'name form validated with star: {star_name}')
-
-            # STEP 2: Get coordinate and motion info from Simbad
-            simbad_data = search_simbad(star_name)
-            if simbad_data['error_msg'] != None:
-                return redirect(url_for('main.error', msg=simbad_data['error_msg']))
-
-            # STEP 3: Put PM and Coord info into correction function
-            corrected_coords = correct_pm(simbad_data['data'], star_name)
-            if corrected_coords['error_msg'] != None:
-                return redirect(url_for('main.error', msg=corrected_coords['error_msg']))
-
-            # STEP 4: Search GALEX with these corrected coordinates
-            galex_data = search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])
-            # print(galex_data)
+            print(f'name form validated!')
             
-            # STEP 5: Query all catalogs and append them to the final catalogs list if there are no errors
-            catalog_data = [search_tic(star_name, 'name'), search_nea(star_name, 'name'), search_galex(corrected_coords['data']['ra'], corrected_coords['data']['dec'])]
-            final_catalogs = [catalog for catalog in catalog_data if catalog['error_msg'] == None]
-            #print(f'FINAL CATALOG TEST {final_catalogs}')
+            # STEP 1: Run the helper function to get a dynamic WTForm instance with your data
+            res = populate_modal(name_form.star_name.data, 'name')
 
-            # STEP 6: Create a dictionary that holds all parameters in a list ex: {'teff' : [teff_1, teff_2, teff_3]}
-                    # Will be useful for next step, dynamically adding radio buttons to flask wtform
-            res = defaultdict(list)
-            for dict in final_catalogs:
-                for key in dict:
-                    if key == 'data':
-                        for key_2 in dict[key]:
-                            if key_2 != 'error_msg' and key_2 != 'valid_info':
-                                res[key_2].append(dict[key][key_2])
-                    else:
-                        if key != 'error_msg' and key != 'valid_info':
-                            res[key].append(dict[key])
-
-            # STEP 7: Append a manual option to each parameter
-            for key in res:
-                res[key].append('Manual')
-            # print(res)
-
+            # STEP 2: Store this data for later use (repopulating model, validation)
             session['modal_choices'] = json.dumps(res, allow_nan=True)
 
-            # STEP 8: Declare the form and add the radio choices dynamically for each radio input on the form
-            for key in res:
+            # STEP 3: Declare the form and add the radio choices dynamically for each radio input on the form
+            for key, val in res.items():
                 radio_input = getattr(star_name_parameters_form, key)
-                radio_input.choices = [(value, value) for value in res[key]]
+                radio_input.choices.insert(0, (val, val))
 
+            # STEP 3: Set modal show to true
             session['modal_show'] = True
             return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form)
 
@@ -167,15 +141,12 @@ def submit_modal_form():
     parameter_form = StarNameParametersForm()
     
     choices = json.loads(session['modal_choices'])
-    # print(choices)
 
-    for key in choices:
+    for key, val in choices.items():
         radio_input = getattr(parameter_form, key)
-        radio_input.choices = [(value, value) for value in choices[key]]
+        radio_input.choices.insert(0, (val, val))
     
     parameter_form.populate_obj(request.form)
-    # print(request.form)
-    # print(parameter_form)
 
     if request.method == 'POST':
         if parameter_form.validate_on_submit():
@@ -192,16 +163,14 @@ def submit_modal_form():
                     # print(field.name, field.data)
                     unmanual_field = field.name.replace('manual_', '')
                     session[unmanual_field] = float(field.data)
-                elif 'manual' not in field.name and 'submit' not in field.name and 'csrf_token' not in field.name and 'catalog_name' not in field.name and 'Manual' not in field.data:
+                elif 'manual' not in field.name and 'submit' not in field.name and 'csrf_token' not in field.name and 'Manual' not in field.data:
                     # print('form key '+field.name+" "+field.data)
                     session[field.name] = float(field.data)
-            
-            # print(session)
 
             return redirect(url_for('main.return_results'))
-        # else:
-        #     print('NOT VALIDATED')
-        #     print(parameter_form.errors)
+        else:
+            print('NOT VALIDATED')
+            print(parameter_form.errors)
     return render_template('home.html', parameter_form=parameter_form_1, name_form=name_form, position_form=position_form, star_name_parameters_form=parameter_form)
 
 
@@ -299,7 +268,7 @@ def return_results():
             for x in models_in_limits:
                 for y in models_with_chi_squared:
                     if x['_id'] == y['_id']:
-                        results_test.append(y)
+                        results.append(y)
 
             #STEP 8.2: Read all FITS files from matching models and create graph from data
             files = []

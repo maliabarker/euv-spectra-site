@@ -2,13 +2,14 @@
 {% set active_page = "none" %}
 {% block title %}Results{% endblock %}
 {% block content %}
-    <div class="container mt-2" style="height: 100vh;">
-        <h3 class="mt-3 text-center">Closest Match PHOENIX Model for Your Star's Parameters</h3>
+    <div class="container mt-2">
+        {#<!-- {% include 'partials/search_bar.html' %} -->#}
+        <h3 class="mt-3 text-center">Closest Match PHOENIX Model for <i>{{ session['search_term'] }}</i> Parameters</h3>
         <div class="text-center mb-2"><p>Chi Squared Value of Subtype {{ session['model_subtype'] }} Match : <\value> </p></div>
         <div class="text-center"><small>Model Parameters : Teff = {{ subtype.teff }}, log(g) = {{ subtype.logg }}, Mass = {{ subtype.mass }}</small></div>
         <div class="text-center"><small>Your Parameters : Teff = {{ session.teff }}, log(g) = {{ session.logg }}, Mass = {{ session.mass }}</small></div>
         
-        <div class="row mt-5">
+        <div class="row my-5">
             <div class="col-sm-8 offset-sm-1">
                 <div>{{ graph|safe }}</div>
             </div>
