@@ -8,66 +8,127 @@
                 <tr class="me-2">
                     <th><p class="mt-3">{{star_name_parameters_form.teff.label}} = </p></th>
                     {% for subfield in star_name_parameters_form.teff %}
-                        {{ render_subfield(subfield) }}
+                        {{ render_subfield(subfield, star_name_parameters_form.manual_teff) }}
                     {% endfor %}
                 </tr>
 
                 <tr class="me-2">
                     <th><p class="mt-3">{{star_name_parameters_form.logg.label}} = </p></th>
                     {% for subfield in star_name_parameters_form.logg %}
-                        {{ render_subfield(subfield) }}
+                        {{ render_subfield(subfield, star_name_parameters_form.manual_logg) }}
                     {% endfor %}
                 </tr>
 
                 <tr class="me-2">
                     <th><p class="mt-3">{{star_name_parameters_form.mass.label}} = </p></th>
                     {% for subfield in star_name_parameters_form.mass %}
-                        {{ render_subfield(subfield) }}
+                        {{ render_subfield(subfield, star_name_parameters_form.manual_mass) }}
                     {% endfor %}
                 </tr>
 
                 <tr class="me-2">
                     <th><p class="mt-3">{{star_name_parameters_form.stell_rad.label}} = </p></th>
                     {% for subfield in star_name_parameters_form.stell_rad %}
-                        {{ render_subfield(subfield) }}
+                        {{ render_subfield(subfield, star_name_parameters_form.manual_stell_rad) }}
                     {% endfor %}
                 </tr>
 
                 <tr class="me-2">
                     <th><p class="mt-3">{{star_name_parameters_form.dist.label}} = </p></th>
                     {% for subfield in star_name_parameters_form.dist %}
-                        {{ render_subfield(subfield) }}
+                        {{ render_subfield(subfield, star_name_parameters_form.manual_dist) }}
                     {% endfor %}
                 </tr>
 
                 <tr class="me-2">
                     <th><p class="mt-3">{{star_name_parameters_form.fuv.label}} = </p></th>
-                    {% for subfield in star_name_parameters_form.fuv %}
-                        {{ render_subfield(subfield) }}
-                    {% endfor %}
-                </tr>
-
-                <tr class="me-2">
-                    <th><p class="mt-3">{{star_name_parameters_form.fuv_err.label}} = </p></th>
-                    {% for subfield in star_name_parameters_form.fuv_err %}
-                        {{ render_subfield(subfield) }}
-                    {% endfor %}
+                    <div class="">
+                        {% for subfield, subfield_err in star_name_parameters_form.fuv | zip(star_name_parameters_form.fuv_err) %}
+                            {% if subfield.data == 'Manual' %}
+                                <td class="ms-0">
+                                    <div class="d-flex justify-content-start">
+                                        <div class="form-check my-1">
+                                            {{ subfield(class="form-check-input mt-2") }}
+                                            {{ star_name_parameters_form.manual_fuv(class="form-control", onclick="checkManualRadio(this); checkErrFlux(this)") }}
+                                        </div>
+                                        <span class="ms-3 my-2">+/-</span>
+                                        <div class="form-check my-1">
+                                            {{ subfield_err(class="form-check-input mt-2", style="position: fixed; opacity: 0; pointer-events: none;") }}
+                                            {{ star_name_parameters_form.manual_fuv_err(class="form-control", onclick="checkManualRadio(this)") }}
+                                        </div>
+                                    </div>
+                                </td>
+                            {% elif subfield.data|int(-1) == -1 %}
+                                <td>
+                                    <div class="form-check my-1">
+                                        {{ subfield(disabled=true, class="form-check-input") }}
+                                        {{ subfield.label(class="form-check-label") }}
+                                    </div>
+                                </td>
+                            {% else %}
+                                <td class="me-0">
+                                    <div class="d-flex justify-content-start">
+                                        <div class="form-check my-1 mx-0">
+                                            {{ subfield(checked=true, class="form-check-input") }}
+                                            {{ subfield.label(class="form-check-label") }}
+                                        </div>
+                                        <span class="ms-3 my-1"> +/- </span>
+                                        <div class="form-check my-1 mx-0">
+                                            {{ subfield_err(checked=true, class="form-check-input", style="position: fixed; opacity: 0; pointer-events: none;") }}
+                                            {{ subfield_err.label(class="form-check-label") }}
+                                        </div>
+                                    </div>
+                                    
+                                </td>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 </tr>
 
                 <tr class="me-2">
                     <th><p class="mt-3">{{star_name_parameters_form.nuv.label}} = </p></th>
-                    {% for subfield in star_name_parameters_form.nuv %}
-                        {{ render_subfield(subfield) }}
-                    {% endfor %}
-                </tr>
-
-                <tr class="me-2">
-                    <th><p class="mt-3">{{star_name_parameters_form.nuv_err.label}} = </p></th>
-                    {% for subfield in star_name_parameters_form.nuv_err %}
-                        {{ render_subfield(subfield) }}
-                    {% endfor %}
-                </tr>
-                
+                    <div class="">
+                        {% for subfield, subfield_err in star_name_parameters_form.nuv | zip(star_name_parameters_form.nuv_err) %}
+                            {% if subfield.data == 'Manual' %}
+                                <td class="ms-0">
+                                    <div class="d-flex justify-content-start">
+                                        <div class="form-check my-1">
+                                            {{ subfield(class="form-check-input mt-2") }}
+                                            {{ star_name_parameters_form.manual_nuv(class="form-control", onclick="checkManualRadio(this); checkErrFlux(this)") }}
+                                        </div>
+                                        <span class="ms-3 my-2">+/-</span>
+                                        <div class="form-check my-1">
+                                            {{ subfield_err(class="form-check-input mt-2", style="position: fixed; opacity: 0; pointer-events: none;") }}
+                                            {{ star_name_parameters_form.manual_nuv_err(class="form-control", onclick="checkManualRadio(this)") }}
+                                        </div>
+                                    </div>
+                                </td>
+                            {% elif subfield.data|int(-1) == -1 %}
+                                <td>
+                                    <div class="form-check my-1">
+                                        {{ subfield(disabled=true, class="form-check-input") }}
+                                        {{ subfield.label(class="form-check-label") }}
+                                    </div>
+                                </td>
+                            {% else %}
+                                <td class="me-0">
+                                    <div class="d-flex justify-content-start">
+                                        <div class="form-check my-1 mx-0">
+                                            {{ subfield(checked=true, class="form-check-input") }}
+                                            {{ subfield.label(class="form-check-label") }}
+                                        </div>
+                                        <span class="ms-3 my-1"> +/- </span>
+                                        <div class="form-check my-1 mx-0">
+                                            {{ subfield_err(checked=true, class="form-check-input", style="position: fixed; opacity: 0; pointer-events: none;") }}
+                                            {{ subfield_err.label(class="form-check-label") }}
+                                        </div>
+                                    </div>
+                                    
+                                </td>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </tr>  
             </table>
         </div>
         

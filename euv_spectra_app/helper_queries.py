@@ -58,6 +58,7 @@ def find_matching_photosphere(session):
     #     # reshape to retrieve documents in its original format 
     #     #{'$project': {'_id': "$doc._id", 'fits_filename': "$doc.doc.fits_filename", 'teff': "$doc.doc.teff", 'logg': "$doc.doc.logg", 'mass': "$doc.doc.mass", 'euv': "$doc.doc.euv", 'nuv': "$doc.doc.nuv", 'fuv': "$doc.doc.fuv"}}
     # ])
+
     # print('TESTING')
     # for doc in matching_photospheric_flux_test:
     #     print(doc)
@@ -94,6 +95,9 @@ def get_models_with_chi_squared(session, model_collection):
     #FOR NUV { "$divide": [ { "$pow": [ { "$subtract": [ "$NUV", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }
     #FOR FUV { "$divide": [ { "$pow": [ { "$subtract": [ "$FUV", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }
     
+    # print(f'FUV UPPER LIM {session["corrected_fuv"] + session["corrected_fuv_err"]} LOWER LIM {session["corrected_fuv"] - session["corrected_fuv_err"]}')
+    # print(f'NUV UPPER LIM {session["corrected_nuv"] + session["corrected_nuv_err"]} LOWER LIM {session["corrected_nuv"] - session["corrected_nuv_err"]}')
+
     # catch if there's no fuv/nuv detection, chi squared JUST over one flux
     models_with_chi_squared = db.get_collection(model_collection).aggregate([
         { "$addFields": 
@@ -101,13 +105,17 @@ def get_models_with_chi_squared(session, model_collection):
                 { "$switch": 
                     { "branches": 
                     # no NUV
-                    [{ "case": {"$eq": [session.get("nuv"), 'null'] }, "then": { "$divide" : [ { "$pow": [ { "$subtract": [ "$fuv", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ]}},
+                    [{ "case": {"$eq": [session.get("nuv"), 'null'] }, "then": { "$round" : [ { "$divide" : [ { "$pow": [ { "$subtract": [ "$fuv", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ]}, 2 ] } },
                     # no FUV
-                    { "case": {"$eq": [session.get("fuv"), 'null'] }, "then": { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }}],
+                    { "case": {"$eq": [session.get("fuv"), 'null'] }, "then": { "$round" : [ { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }, 2 ] } }],
+                    
                     "default": 
-                        {"$add" : 
-                            [{ "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] },
-                            { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }]}
+                        { "$round" : [ 
+                            {"$add" : 
+                                [{ "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] },
+                                { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }]
+                            }, 2 ] 
+                        }
                     }
                 }
             }
@@ -119,7 +127,6 @@ def get_models_with_chi_squared(session, model_collection):
 
     # if session["nuv"] == 'null':
     #     print('NO NUV')
-    #     print(f'FUV UPPER LIM {session["corrected_fuv"] + session["corrected_fuv_err"]} LOWER LIM {session["corrected_fuv"] - session["corrected_fuv_err"]}')
     #     models_with_chi_squared = db.get_collection(model_collection).aggregate([
     #         { "$match": {
     #             "fuv": { "$elemMatch": {"$gte":{"$subtract": [session['corrected_fuv'], session['corrected_fuv_err']]}, "$lte":{"$add": [session['corrected_fuv'], session['corrected_fuv_err']]}}}
@@ -196,6 +203,19 @@ def get_models_with_chi_squared(session, model_collection):
             #         }}
             #     }
             # },
+
+def get_models_with_lowest_fuv(session, model_collection):
+    models_with_fuv_chi_squared = db.get_collection(model_collection).aggregate([
+        { "$addFields": 
+            {"chi_squared": 
+                { "$round" : [ { "$divide" : [ { "$pow": [ { "$subtract": [ "$fuv", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ]}, 2 ] }
+            }
+        },
+        { "$sort" : { "chi_squared" : 1 } }
+    ])
+
+    return models_with_fuv_chi_squared
+    
 
 def get_models_within_limits(session, model_collection, models):
     # return all results within upper and lower limits of fluxes (w/ chi squared values)

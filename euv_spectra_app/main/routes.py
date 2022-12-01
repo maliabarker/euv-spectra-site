@@ -6,7 +6,7 @@ from datetime import timedelta
 import json
 
 from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
-from euv_spectra_app.helpers_astropy import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion, search_vizier_galex, convert_coords
+from euv_spectra_app.helpers_astropy import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion, search_vizier_galex, convert_coords, test_nea
 from euv_spectra_app.helpers_db import *
 from euv_spectra_app.helper_fits import *
 from euv_spectra_app.helper_queries import *
@@ -80,7 +80,7 @@ def make_session_permanent():
 def homepage():
     #session.clear()
     print(session)
-
+    # test_nea()
     session['modal_show'] = False
     parameter_form = ParameterForm()
     name_form = StarNameForm()
@@ -205,6 +205,16 @@ def submit_manual_form():
 '''————————————SUBMIT ROUTE FOR RESULTS————————————'''
 @main.route('/results', methods=['GET', 'POST'])
 def return_results():
+    parameter_form = StarNameParametersForm()
+    name_form = StarNameForm()
+    position_form = PositionForm()
+
+    choices = json.loads(session['modal_choices'])
+    for key, val in choices.items():
+        radio_input = getattr(parameter_form, key)
+        radio_input.choices.insert(0, (val, val))
+    
+
     #TODO find a better way to check that all data needed is here before continuing
     if session.get('teff') and session.get('logg') and session.get('mass') and session.get('stell_rad') and session.get('dist'):
         # STEP 1: Search the model_parameter_grid collection to find closest matching subtype
@@ -220,15 +230,21 @@ def return_results():
         session['corrected_nuv_err'] = corrected_fluxes['nuv_err']
         session['corrected_fuv'] = corrected_fluxes['fuv']
         session['corrected_fuv_err'] = corrected_fluxes['fuv_err']
-        # print(session)
+        print('CORRECTED FLUXES')
+        print(session)
 
         # STEP 4: Check if model subtype data exists in database
         model_collection = f'{session["model_subtype"].lower()}_grid'
         if model_collection not in db.list_collection_names():
-            return redirect(url_for('main.error', msg=f'The grid for model subtype {session["model_subtype"]} is currently unavailable. Please contact us with your stellar parameters and returned subtype.'))
+            return redirect(url_for('main.error', msg=f'The grid for model subtype {session["model_subtype"]} is currently unavailable. Currently available subtypes: M0, M4, M6. Please contact us with your stellar parameters and returned subtype if you think this is incorrect.'))
         
         # STEP 5: Do chi squared test between all models within selected subgrid and corrected observation ** this is on models with subtracted photospheric flux
         models_with_chi_squared = list(get_models_with_chi_squared(session, model_collection))
+        print(models_with_chi_squared[:5])
+
+        models_with_lowest_fuv = list(get_models_with_lowest_fuv(session, model_collection))
+        print('FUV ONLY')
+        print(models_with_lowest_fuv[:5])
 
         # STEP 6: Find all matches in model grid within upper and lower limits of galex fluxes
         models_in_limits = list(get_models_within_limits(session, model_collection, models_with_chi_squared))
@@ -251,13 +267,17 @@ def return_results():
                 flash('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
                 file = test_file
 
-            fig = create_graph([file], [models_with_chi_squared[0]['chi_squared']], session)
+            data = [{'chi_squared': models_with_chi_squared[0]['chi_squared'], 'fuv': models_with_chi_squared[0]['fuv'], 'nuv': models_with_chi_squared[0]['nuv']}]
+            
+            fig = create_graph([file], data, session)
+            # figdata_png = create_static_graph([file], data, session)
 
             #STEP 9.1: Convert graph into html component and send to front end
             html_string = convert_fig_to_html(fig)
 
             flash('No results found within upper and lower limits of UV fluxes. Returning document with nearest chi squared value.', 'warning')
-            return render_template('result.html', subtype=matching_subtype, graph=html_string)
+            return render_template('result.html', subtype=matching_subtype, graph=html_string, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form)
+            # return render_template('result.html', subtype=matching_subtype, graph=fig, graph_img=figdata_png)
         else:
             # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
             # print(f'MODELS WITHIN LIMITS: {len(list(models_in_limits))}')
@@ -272,19 +292,25 @@ def return_results():
 
             #STEP 8.2: Read all FITS files from matching models and create graph from data
             files = []
+            data = []
             chi_squared_vals = []
             for doc in results:
                 file = find_fits_file(doc['fits_filename'])
                 if file:
                     files.append()
-                    chi_squared_vals.append(doc['chi_squared'])
+                    file_data = {
+                        'chi_squared': doc['chi_squared'],
+                        'fuv': doc['fuv'],
+                        'nuv': doc['nuv']
+                    }
+                    chi_squared_vals.append(file_data)
 
             fig = create_graph(files, chi_squared_vals, session)
 
             #STEP 9.2: Convert graph into html component and send to front end
             html_string = convert_fig_to_html(fig)
             flash(len(list(models_in_limits)) + 'results found within your submitted parameters')
-            return render_template('result.html', subtype=matching_subtype, graph=html_string)
+            return render_template('result.html', subtype=matching_subtype, graph=html_string, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form)
     else:
         flash('Submit the required data to view this page.', 'warning')
         return redirect(url_for('main.homepage'))

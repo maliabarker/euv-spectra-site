@@ -3,7 +3,6 @@ body {
 }
 
 
-
 /* ———————————FOR HOMEPAGE BACKGROUND——————————— */
     #bg {
         width: 100vw;
@@ -186,10 +185,12 @@ body {
     /* Getting rid of text decoration on links (a tags) */ 
     a:link { text-decoration: none; }
     a:visited { text-decoration: none; }
-    a:hover { text-decoration: none; }
+    a:hover { text-decoration: none; cursor: pointer; }
     a:active { text-decoration: none; }
 
-
+    /* .mpld3-figure {
+        width: 800px !important;
+    } */
 
 
 /* ————————————FOR SEARCH BAR————————————— */

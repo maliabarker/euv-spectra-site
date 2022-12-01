@@ -32,6 +32,7 @@ def read_model_parameter_table(file_path):
         model_parameter_grid.insert_one(model)
     return 'Completed!'
 
+
 def read_model_table(file_path, collection, model):
     # step 1: read in csv file with pandas
     DATAPATH = file_path
@@ -88,9 +89,33 @@ def read_photosphere_table(file_path):
         print(new_model)
     return 'Completed!'
 
+def read_corrected_model_table(file_path, collection, mass):
+    DATAPATH = file_path
+    dataset = pd.read_csv(DATAPATH)
+    print(f'Adding files')
+    for index, row in dataset.iterrows():
+        model_str = row['Filename']
+        new_model = {
+            'fits_filename' : model_str,
+            'teff' : float(re.search("(?<=Teff=)[^aA-zZ=][.]{0,1}\d*", model_str).group()),
+            'logg' : float(re.search("(?<=logg=)[^aA-zZ=][.]{0,1}\d*", model_str).group()),
+            'mass' : mass,
+            'euv' : row['EUV'],
+            'fuv' : row['FUV'],
+            'nuv' : row['NUV']
+        }
+        print(new_model)
+        collection.insert_one(new_model)
+        print(new_model)
+    return 'Completed!'
 
 
-#read_photosphere_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/photosphere_fluxes.csv')
+# read_corrected_model_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/correct_M0_photospheresubtracted.csv', m0_grid, 0.53)
+# read_corrected_model_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/correct_M4_photospheresubtracted.csv', m4_grid, 0.175)
+# read_corrected_model_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/correct_M6_photospheresubtracted.csv', m6_grid, 0.11)
+
+# read_photosphere_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/photosphere_fluxes_update.csv')
+
 #read_model_parameter_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/model_parameter_grid.csv')
 # read_model_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/M0_photospheresubtractedfluxes.csv', m0_grid, 'M0')
 # read_model_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/M4_photospheresubtractedfluxes.csv', m4_grid, 'M4')

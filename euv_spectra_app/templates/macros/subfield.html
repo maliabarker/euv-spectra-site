@@ -1,9 +1,9 @@
-{% macro render_subfield(subfield) %}
+{% macro render_subfield(subfield, manual_fieldname) %}
     {% if subfield.data == 'Manual' %}
         <td>
             <div class="form-check my-1">
                 {{ subfield(class="form-check-input mt-2") }}
-                {{ star_name_parameters_form.manual_teff(class="form-control", onclick="checkManualRadio(this)") }}
+                {{ manual_fieldname(class="form-control", onclick="checkManualRadio(this)") }}
             </div>
         </td>
     {% elif subfield.data|int(-1) == -1 %}

@@ -8,31 +8,7 @@
         <div id="bg-overlay"></div>
         <img src="{{ url_for('static', filename='imgs/solar_img.png') }}" alt="" class="full-width img img-fluid" id="bg">
 
-        <div id="overlay">
-            <div class="d-flex justify-content-center">
-                <div id="loading"></div>
-                <div id="overlay-box">
-                    <div class="d-flex justify-content-center align-items-center">
-                        <h5 class="mb-4 mt-3">Querying Databases</h5>
-                        <p id="overlay-text">Hang tight! This may take up to 2 minutes...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {#<!-- <div class="col-sm-10 offset-sm-1 mt-1"> 
-            <div class="row d-flex align-items-center">
-                <div class="col-sm-2">
-                    <img src="{{url_for('static', filename='imgs/icon.png')}}" alt="" class="img img-fluid px-3 py-3">
-                </div>
-                <div class="col-sm-10">
-                    <h2>Find the Extreme Ultraviolet Spectrum for your Star</h2>
-                </div>
-            </div>
-            <p>The PHOENIX EUV Grid and Stellar UV Spectra (PEGASUS) webtool returns a generalized high resolution (Δλ < 0.01 Å) synthetic extreme ultraviolet (EUV; 100-1000 Å) spectrum for a searched target star of the M or K spectral type.</p>
-            <p>Required inputs for returning a spectrum are effective temperature, surface gravity, mass, radius, distance, and GALEX FUV and NUV fluxes.</p>
-            <p>Users have the option to use Star Name or ICRS coordinates to query the catalogs detailed on our <a href="/about">About</a> page to retrieve these parameters or they can enter the values manually.</p>
-        </div> -->#}
+        {% include 'partials/loading_screen.html' %}
 
         <div class="full-width pt-5">
             <img src="{{ url_for('static', filename='imgs/PEGASUS-Logo-B2.png')}}" alt="" class="img img-fluid mx-auto d-block pt-4" style="width: 500px;">
@@ -42,32 +18,10 @@
             <div class="col-xl-8 offset-xl-2 col-lg-10 offset-lg-1 col-md-12 mt-3">
                 <h4 class="text-start mt-4 mb-2 ms-5" style="color: white; letter-spacing: .2rem;">Enter Star Name or Coordinates to Get Started</h4>
                 {% include 'partials/search_bar.html' %}
-                {#<!-- <div class="row g-0" id="search-bar">
-
-                    <div class="col-lg-3 col-sm-4" id="search-dropdown-col">
-                        <div class="form-floating ms-2">
-                            <select class="form-select border-0 border-sm-right rounded-start-sm rounded-end-xs" id="search-select" aria-label="Floating label select example" style="min-height: 70px;">
-                                <option selected value="name">Star Name</option>
-                                <option value="position">J2000 Coordinates</option>
-                            </select>
-                            <label for="floatingSelect">Search By</label>
-                        </div>
-                    </div>
-                    
-                    <div class="col-lg-9 col-sm-8" id="name-form-cont">
-                        {% include 'partials/name_form.html' %}
-                    </div>
-
-                    <div class="col-lg-9 col-sm-8" id="position-form-cont" style="display:none;">
-                        {% include 'partials/position_form.html' %}
-                    </div>
-                    
-                </div> -->#}
                 <p class="text-end mt-1 me-5"><a data-bs-toggle="collapse" href="#search" role="button" aria-expanded="false" aria-controls="collapseExample" id="manual-form-toggle-text"><b id="manual-text" style="letter-spacing: 0.1rem;" class="h6">Click Here to Enter Parameters Manually </b><i class="fa-solid fa-caret-right" id="manual-caret"></i></a></p>
             </div>
         </div>
         
-
         
         <div class="col-sm-8 offset-sm-2">
             <div class="collapse mb-5" id="search">
@@ -80,60 +34,14 @@
             </div>
         </div>
 
-        <!--—————————MODAL START—————————-->
         {% if session['modal_show'] or (star_name_parameters_form and star_name_parameters_form.errors) %}
-            <div class="modal fade" id="myModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header text-center ms-2 d-flex justify-content-around">
-                            <p class="mb-0 mt-2">
-                                The following data was returned for your target: <b>{{ session.search_term }}</b> <br> 
-                                Use preselected values from
-                                <a href="https://exoplanetarchive.ipac.caltech.edu/overview/{{ session.search_term | urlencode }}">NExScI</a> 
-                                and 
-                                <a href="http://galex.stsci.edu/gr6/?page=searchresults&type=mastform&res=NED&obj={{ session.search_term | urlencode }}&query=no">GALEX</a> <br>
-                                or enter your own manual parameters in the cooresponding text box
-                            </p>
-                            <a href="/">
-                                <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </a>
-                        </div>
-                        <div class="modal-body py-0">
-                            {% if star_name_parameters_form.errors %}
-                                <div class="alert alert-danger mt-2" role="alert">
-                                    Oops! Some fields are missing, please review form and submit again.
-                                </div>
-                            {% endif %}
-                            
-                            <!--—————————MODAL FORM——————————-->
-                            {% include 'partials/modal_form.html' %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <script>
-                var myModalEl = document.getElementById('myModal');
-                var modal = new bootstrap.Modal(myModalEl);
-                modal.show();
-
-                form = document.getElementById('name-parameters-form')
-                '{% for field, errors in star_name_parameters_form.errors.items() %}'
-                    fields = form.querySelectorAll(`[id*="{{ field }}"]`);
-                    for (i=0; i < fields.length; i++){
-                        console.log(fields[i])
-                        fields[i].classList.add('is-invalid');
-                    }
-                '{% endfor %}'
-            </script>
+            {% include 'partials/modal.html' %}
+            <script src="{{ url_for('static', filename='js/show_modal.js') }}"></script>
         {% endif %}
-        <!--—————————MODAL END—————————-->
     </div>
 {% endblock %}
 
 {% block script %}
-    <script src="{{ url_for('static', filename='js/loader.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/modal_form.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/search_bar.js') }}"></script>
+
     <script src="{{ url_for('static', filename='js/other.js') }}"></script>
 {% endblock %}

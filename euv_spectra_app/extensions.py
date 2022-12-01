@@ -1,5 +1,3 @@
-# for database migrations
-
 from flask import Flask
 from flask_mail import Mail
 from pymongo import MongoClient
@@ -12,6 +10,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = environ.get('SECRET_KEY')
 mail = Mail(app)
+app.jinja_env.filters['zip'] = zip
 
 # ======= DB Setup ==========
 uri = environ.get('MONGODB_URI')

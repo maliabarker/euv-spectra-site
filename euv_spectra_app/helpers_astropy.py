@@ -19,12 +19,15 @@ import astropy.units as u
 from astropy.time import Time
 import numpy as np
 
+def test_nea():
+    test = NasaExoplanetArchive.query_object("K2-18 b")
+    print(test)
 
 
 def search_nea(search_input, search_format):
     nea_data = []
     if search_format == 'name':
-        nea_data = NasaExoplanetArchive.query_criteria(table="pscomppars", select="top 20 disc_refname, st_teff, st_teff_reflink, st_logg, st_logg_reflink, st_mass, st_mass_reflink, st_rad, st_rad_reflink, sy_dist, sy_dist_reflink", where=f"hostname like '%{search_input}%'", order="hostname")
+        nea_data = NasaExoplanetArchive.query_criteria(table="pscomppars", select="top 5 disc_refname, st_teff, st_teff_reflink, st_logg, st_logg_reflink, st_mass, st_mass_reflink, st_rad, st_rad_reflink, sy_dist, sy_dist_reflink", where=f"hostname like '%{search_input}%'", order="hostname")
         # print('NEA DATA PSCOMP')
         # print(nea_data[0])
 

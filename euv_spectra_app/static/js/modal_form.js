@@ -102,6 +102,12 @@ function checkManualInputs(){
     return true; // submit the form
 };
 
+function checkErrFlux(obj){
+    console.log(obj);
+    errRadioBtn = document.getElementById('fuv_err-1')
+    errRadioBtn.checked = true;
+}
+
 //—————————————————————————NOT DETECTED FLAG CHECKS————————————————————————
 function populateNullFlux(obj) {
     console.log(obj.id)
