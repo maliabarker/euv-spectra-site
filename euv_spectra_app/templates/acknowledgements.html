@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% set active_page = "acknowledgements" %}
+{% block title %}Acknowledgements{% endblock %}
+{% block content %}
+    <div id="about-hero">
+        <img src="{{ url_for('static', filename='imgs/solar_img_banner.png') }}" alt="" class="full-width img img-fluid" id="about-hero-img">
+        <h1 class="text-center" style="padding-top: 80px;">Acknowledgements</h1>
+    </div>
+    <div class="row mt-5">
+        <div class="col-lg-7 offset-lg-2">
+            <p class="mt-3">
+                We wish to thank and recognize the following for their contribution to this project <br> <br>
+        
+                <b>Affiliations:</b> <br>
+                University of Maryland, Baltimore County <br>
+                NASA Goddard Space Flight Center <br>
+                University of Arizona, Lunar and Planetary Lab <br><br>
+        
+                <b>High Performance Computing Centers:</b> <br>
+                NASA Center for Climate Simulation <br> 
+                University of Arizona HPC <br>
+                University of Arizona PACMAN  <br><br>
+        
+                <b>Archives:</b> <br>
+                NASA Exoplanet Archive <br>
+                MAST <br>
+                GALEX <br><br>
+        
+            </p>
+        </div>
+    </div>
+{% endblock %}

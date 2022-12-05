@@ -1,5 +1,29 @@
 {% extends 'base.html' %}
 {% set active_page = "all-spectra" %}
+
+{% set grid_options = [
+    ('K0', '5044', '4.45', '0.89', 'K0_PEGASUS_subgrid.tar.gz'),
+    ('K1', '4884', '4.50', '0.86', 'K1_PEGASUS_subgrid.tar.gz'),
+    ('K2', '4749', '4.52', '0.83', 'K2_PEGASUS_subgrid.tar.gz'),
+    ('K3', '4654', '4.55', '0.79', 'K3_PEGASUS_subgrid.tar.gz'),
+    ('K4', '4460', '4.59', '0.74', 'K4_PEGASUS_subgrid.tar.gz'),
+    ('K5', '4239', '4.62', '0.70', 'K5_PEGASUS_subgrid.tar.gz'),
+    ('K6', '4100', '4.65', '0.65', 'K6_PEGASUS_subgrid.tar.gz'),
+    ('K7', '3927', '4.69', '0.61', 'K7_PEGASUS_subgrid.tar.gz'),
+    ('K8', '3893', '4.70', '0.60', 'K8_PEGASUS_subgrid.tar.gz'),
+    ('K9', '3804', '4.73', '0.57', 'K9_PEGASUS_subgrid.tar.gz'),
+
+    ('M0', '3850', '4.78', '0.53', 'M0_PEGASUS_subgrid.tar.gz'),
+    ('M1', '3700', '4.81', '0.50', 'M1_PEGASUS_subgrid.tar.gz'),
+    ('M2', '3550', '4.88', '0.40', 'M2_PEGASUS_subgrid.tar.gz'),
+    ('M3', '3400', '4.96', '0.30', 'M3_PEGASUS_subgrid.tar.gz'),
+    ('M4', '3200', '5.10', '0.18', 'M4_PEGASUS_subgrid.tar.gz'),
+    ('M5', '3050', '5.17', '0.13', 'M5_PEGASUS_subgrid.tar.gz'),
+    ('M6', '2900', '5.22', '0.11', 'M6_PEGASUS_subgrid.tar.gz'),
+    ('M7', '2650', '5.30', '0.09', 'M7_PEGASUS_subgrid.tar.gz'),
+    ('M8', '2500', '5.32', '0.08', 'M8_PEGASUS_subgrid.tar.gz')
+] -%}
+
 {% block title %}View All Spectra{% endblock %}
 {% block content %}
     <div id="about-hero">
@@ -7,7 +31,7 @@
         <h1 class="text-center" style="padding-top: 80px;">View All Spectra</h1>
     </div>
 
-    <p class="mt-5 pt-4">
+    <p class="mt-5 pt-4 mx-5">
         The full PEGASUS model grid is available for download. <br><br>
 
         Each subgrid contains 72 models with different upper atmospheric structures. These models have EUV-NUV flux densities that span three orders of magnitude. <br><br>
@@ -16,11 +40,35 @@
     </p>
     
     <div class="row">
-        <div class="col-lg-6 offset-lg-3">
+        <div class="col-lg-8 offset-lg-2">
             <p class="py-3 px-3 text-center" style="background-color:tomato;">
                 <b>PLEASE NOTE:</b> <br>
-                These models are generic spectra for the specified stellar parameters (Teff, log(g), and M) and simulate various levels of UV flux which may not be physical. Please use with caution.
+                These models are generic spectra for the <u>specified stellar parameters</u> (Teff, log(g), and M) and simulate various levels of UV flux which <u>may not be physical</u>. Please use with caution.
             </p>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Subgrid</th>
+                        <th scope="col">Teff (K)</th>
+                        <th scope="col">Logg (cm/s<sup>2</sup>)</th>
+                        <th scope="col">M (M<sub>sun</sub>)</th>
+                        <th scope="col"><i class="fa-solid fa-download"></i> Download Link</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for subgrid, teff, logg, mass, download in grid_options %}
+                        <tr>
+                            <th scope="row">{{ subgrid }}</th>
+                            <td>{{ teff }}</td>
+                            <td>{{ logg }}</td>
+                            <td>{{ mass }}</td>
+                            <td>{{ download }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 {% endblock %}

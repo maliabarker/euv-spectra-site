@@ -338,6 +338,14 @@ def index_spectra():
 
 
 
+'''————————————Acknowledgements PAGE————————————'''
+@main.route('/acknowledgements', methods=['GET'])
+def acknowledgements():
+    return render_template('acknowledgements.html')
+    
+
+
+
 '''————————————CONTACT SUBMIT————————————'''
 @main.route('/contact', methods=['POST'])
 def send_email():
