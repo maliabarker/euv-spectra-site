@@ -29,6 +29,21 @@ body {
     }
 
 
+/* ————————————FOR ABOUT PAGE————————————— */  
+    #about-hero {
+        color: white;
+    }
+
+    #about-hero-img {
+        width: 100vw;
+        height: 160px;
+        display: block;
+        background-color: #262b30;
+        object-fit: cover; 
+        z-index: -2;
+        position: absolute;
+        overflow: hidden;
+    }
 
 /* ————————————FOR MANUAL FORM————————————— */
     #manual-form-toggle-text {
