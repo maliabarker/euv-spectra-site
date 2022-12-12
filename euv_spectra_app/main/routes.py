@@ -61,14 +61,18 @@ def populate_modal(search_term, search_type):
         
     # STEP 4: Search GALEX with corrected or converted coords
     galex_data = search_galex(galex_coords['data']['ra'], galex_coords['data']['dec'])
-    print(f'GAlEX DATA: {galex_data}')
     if galex_data['error_msg'] != None:
         return_data['error_msg'] = galex_data['error_msg']
         return return_data
         # return redirect(url_for('main.error', msg=galex_data['error_msg']))
 
+    nea_data = search_nea(search_term, search_type)
+    if nea_data['error_msg'] != None:
+        return_data['error_msg'] = nea_data['error_msg']
+        return return_data
+
     # STEP 5: Query all catalogs and append them to the final catalogs list if there are no errors
-    catalog_data = [search_nea(search_term, search_type), galex_data]
+    catalog_data = [nea_data, galex_data]
     final_catalogs = [catalog for catalog in catalog_data if catalog['error_msg'] == None]
     # STEP 6: Append each type of data into its own key value pair
     data = {key: dict['data'][key] for dict in final_catalogs for key in dict['data']}
