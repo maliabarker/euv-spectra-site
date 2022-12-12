@@ -1,22 +1,28 @@
 from flask import Blueprint, request, render_template, redirect, url_for, session, flash
-from flask_mail import Message, Mail
-from collections import defaultdict
+from flask_mail import Message
 from euv_spectra_app.extensions import *
 from datetime import timedelta
 import json
 
 from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
-from euv_spectra_app.helpers_astropy import search_tic, search_nea, search_vizier, search_simbad, search_gaia, search_galex, correct_pm, test_space_motion, search_vizier_galex, convert_coords, test_nea
+from euv_spectra_app.helpers_astropy import search_nea, search_simbad, search_galex, correct_pm, convert_coords
 from euv_spectra_app.helpers_db import *
 from euv_spectra_app.helper_fits import *
 from euv_spectra_app.helper_queries import *
 main = Blueprint("main", __name__)
 
 
+'''————————— HELPER FUNCTION FOR SEARCHING OBJECT/POSITION & RETURNING FOR MODAL POPULATION —————————'''
 def populate_modal(search_term, search_type):
     print(search_term, search_type)
+
     session["search_term"] = search_term
     galex_coords = None
+
+    return_data = {
+        'error_msg': None,
+        'radio_choices': None
+    }
 
     if search_type == 'position':
         # STEP 1: Assign search term to coords
@@ -25,7 +31,9 @@ def populate_modal(search_term, search_type):
         # STEP 2: Change coordinates to ra and dec
         converted_coords = convert_coords(coords)
         if converted_coords['error_msg'] != None:
-            return redirect(url_for('main.error', msg=converted_coords['error_msg']))
+            return_data['error_msg'] = converted_coords['error_msg']
+            return return_data
+            # return redirect(url_for('main.error', msg=converted_coords['error_msg']))
 
         galex_coords = converted_coords
         search_term = converted_coords['data']['skycoord_obj']
@@ -37,31 +45,40 @@ def populate_modal(search_term, search_type):
         # STEP 2: Get coordinate and motion info from Simbad
         simbad_data = search_simbad(star_name)
         if simbad_data['error_msg'] != None:
-            return redirect(url_for('main.error', msg=simbad_data['error_msg']))
+            return_data['error_msg'] = simbad_data['error_msg']
+            return return_data
+            # return redirect(url_for('main.error', msg=simbad_data['error_msg']))
 
         # STEP 3: Put PM and Coord info into correction function
         corrected_coords = correct_pm(simbad_data['data'], star_name)
+        print(f'CORRECTED COORDS {corrected_coords}')
         if corrected_coords['error_msg'] != None:
-            return redirect(url_for('main.error', msg=corrected_coords['error_msg']))
+            return_data['error_msg'] = corrected_coords['error_msg']
+            return return_data
+            # return redirect(url_for('main.error', msg=corrected_coords['error_msg']))
 
         galex_coords = corrected_coords
         
     # STEP 4: Search GALEX with corrected or converted coords
     galex_data = search_galex(galex_coords['data']['ra'], galex_coords['data']['dec'])
+    print(f'GAlEX DATA: {galex_data}')
     if galex_data['error_msg'] != None:
-        return redirect(url_for('main.error', msg=galex_data['error_msg']))
+        return_data['error_msg'] = galex_data['error_msg']
+        return return_data
+        # return redirect(url_for('main.error', msg=galex_data['error_msg']))
 
     # STEP 5: Query all catalogs and append them to the final catalogs list if there are no errors
     catalog_data = [search_nea(search_term, search_type), galex_data]
     final_catalogs = [catalog for catalog in catalog_data if catalog['error_msg'] == None]
     # STEP 6: Append each type of data into its own key value pair
-    radio_choices = {key: dict['data'][key] for dict in final_catalogs for key in dict['data']}
-    print(radio_choices)
+    data = {key: dict['data'][key] for dict in final_catalogs for key in dict['data']}
+    return_data['radio_choices'] = data
+
+    print(return_data['radio_choices'])
 
     # STEP 7: Store this data for later use (repopulating model, validation)
-    session['modal_choices'] = json.dumps(radio_choices, allow_nan=True)
-
-    return radio_choices
+    session['modal_choices'] = json.dumps(return_data['radio_choices'], allow_nan=True)
+    return return_data
 
 
 
@@ -80,27 +97,28 @@ def make_session_permanent():
 
 @main.route('/', methods=['GET', 'POST'])
 def homepage():
-    #session.clear()
+    # session.clear()
     print(session)
-    # test_nea()
     session['modal_show'] = False
+
     parameter_form = ParameterForm()
     name_form = StarNameForm()
     position_form = PositionForm()
     star_name_parameters_form = StarNameParametersForm()
 
     if request.method == 'POST':
-
 # '''————————————————————HOME POSITION FORM————————————————————'''
         if position_form.validate_on_submit():
             print('position form validated!')
 
             # STEP 1: Run the helper function to get a dynamic WTForm instance with your data
             res = populate_modal(position_form.coords.data, 'position')
-            print(res)
+
+            if res['error_msg'] != None:
+                return redirect(url_for('main.error', msg=res['error_msg']))
 
             # STEP 2: Declare the form and add the radio choices dynamically for each radio input on the form
-            for key, val in res.items():
+            for key, val in res['radio_choices'].items():
                 radio_input = getattr(star_name_parameters_form, key)
                 radio_input.choices.insert(0, (val, val))
 
@@ -114,12 +132,13 @@ def homepage():
             print(f'name form validated!')
             
             # STEP 1: Run the helper function to get a dynamic WTForm instance with your data
-            radio_choices = populate_modal(name_form.star_name.data, 'name')
-            print(radio_choices)
-            print(type(radio_choices))
+            res = populate_modal(name_form.star_name.data, 'name')
+            
+            if res['error_msg'] != None:
+                return redirect(url_for('main.error', msg=res['error_msg']))
 
             # STEP 2: Declare the form and add the radio choices dynamically for each radio input on the form
-            for key, val in radio_choices.items():
+            for key, val in res['radio_choices'].items():
                 radio_input = getattr(star_name_parameters_form, key)
                 radio_input.choices.insert(0, (val, val))
 
