@@ -5,11 +5,11 @@
     <div class="container mt-2">
         {% include 'partials/loading_screen.html' %}
         {% include 'partials/search_bar.html' %}
-        <h3 class="mt-5 text-center">Closest Match PHOENIX Model for <i>{{ session['search_term'] }}</i> Parameters</h3>
+        <h3 class="mt-5 text-center">Closest Match PHOENIX Model for <i>{{ session['search_term'] }}</i></h3>
         <a data-bs-toggle="modal" data-bs-target="#myModal" class="text-center"><p>Click Here to Edit Parameters</p></a>
         <div class="text-center"><small>Model Parameters : Teff = {{ subtype.teff }}, log(g) = {{ subtype.logg }}, Mass = {{ subtype.mass }}</small></div>
         <div class="text-center"><small>Your Parameters : Teff = {{ session.teff }}, log(g) = {{ session.logg }}, Mass = {{ session.mass }}</small></div>
-        <div class="text-center mt-2"><small>GALEX Photosphere Corrected Fluxes for your Target: FUV = {{ "%.2f"|format(session.corrected_fuv) }} +/- {{ "%.2f"|format(session.corrected_fuv_err) }}, NUV = {{ "%.2f"|format(session.corrected_nuv) }} +/- {{ "%.2f"|format(session.corrected_nuv_err) }}</small></div>
+        <div class="text-center mt-2"><small>GALEX Flux Densities<sup>*</sup> for {{ session['search_term'] }}: FUV = {{ "%.2f"|format(session.corrected_fuv) }} +/- {{ "%.2f"|format(session.corrected_fuv_err) }}, NUV = {{ "%.2f"|format(session.corrected_nuv) }} +/- {{ "%.2f"|format(session.corrected_nuv_err) }}</small></div>
         <div class="mt-2 text-center">{{ graph|safe }}</div>
         
         <div class="row mt-3">
@@ -17,6 +17,8 @@
             <div class="col-md-4 d-flex justify-content-center"><button class="btn btn-primary mb-2 small" id="flux-continue-btn"><i class="fa-solid fa-file-arrow-down"></i> <small> Download Spectrum 2</small></button></div>
             <div class="col-md-4 d-flex justify-content-center"><button class="btn btn-primary mb-2 small" id="flux-continue-btn"><i class="fa-solid fa-file-arrow-down"></i> <small> Download Spectrum 3</small></button></div>
         </div>
+
+        <small>NOTES: <br> *In units of ergs/s/cm<sup>2</sup>/Å, scaled to stellar surface and corrected for photospheric contribution.</small>
         
         {% include 'partials/modal.html' %}
     </div>

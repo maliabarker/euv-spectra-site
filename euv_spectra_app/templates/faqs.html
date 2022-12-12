@@ -19,10 +19,10 @@
                 </h2>
                 <div id="Q1" class="accordion-collapse collapse" aria-labelledby="header-Q1" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
-                        GALEX was an all sky survey that measured FUV and NUV photometry for stars of all ages and masses and therefore many M and K planet host stars have this data available. 
+                        GALEX was an all sky survey that measured FUV and NUV photometry for stars of all ages and masses and therefore many M and K stars have this data available. 
                         Further, stellar FUV and NUV flux originates in the chromosphere and transition region, overlapping heavily with the formation temperatures of the EUV. <br><br>
-                        The EUV forms in the transition region and corona, with most of the shorter EUV wavelengths (&lt;400 A) originating from the hottest coronal layers and the bulk of the EUV wavelengths (400-912 A) coming from the transition region. 
-                        To constrain the full upper atmosphere with corona requires contemporaneous X-ray and UV measurements, and since that’s not readily available for all exoplanet host stars, the models do not include coronae. <br><br>
+                        The EUV forms in the transition region and corona, with most of the shorter EUV wavelengths (&lt;400 Å) originating from the hottest coronal layers and the bulk of the EUV wavelengths (400-912 Å) coming from the transition region. 
+                        To constrain the full upper atmosphere with corona requires contemporaneous X-ray and UV measurements, and since that's not readily available for all exoplanet host stars, the models do not include coronae. <br><br>
                         That being said, the GALEX measurements are sufficient to constrain the temperature structure in the chromosphere and transition region (up to 200,000 K), and so we are able to confidently predict the majority of the EUV spectrum.
                     </div>
                 </div>
@@ -38,7 +38,7 @@
                     <div class="accordion-body">
                         If the star has a GJ name or other common name, try searching by that. <br>
                         <small><b>Note: Our queried databases have difficulty resolving 2MASS star names</b></small> <br><br>
-                        Try searching by ICRS coordinates OR enter the parameters manually through the drop-down link on the Home page.
+                        Try searching by ICRS coordinates OR enter the parameters manually through the drop-down link on the <a href="/">Home</a> page.
                     </div>
                 </div>
             </div>
@@ -52,7 +52,7 @@
                 <div id="Q3" class="accordion-collapse collapse" aria-labelledby="header-Q3" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
                         <i>If your star has no GALEX measurement:</i> A proxy can be identified from this table [INSERT TABLE] <br><br>
-                        <i>If your star only has a GALEX detection in one band:</i> We will estimate the flux density in the missing band with the following relations F_FUV = F_NUV^1.11 (citation) <br><br>
+                        <i>If your star only has a GALEX detection in one band:</i> We will estimate the flux density in the missing band with the following relations (F<sub>NUV</sub> / F<sub>J</sub>) = (F<sub>FUV</sub> / F<sub>J</sub>)<sup>1.11</sup> <a href="https://ui.adsabs.harvard.edu/abs/2014AJ....148...64S/abstract">(Shkolnik & Barman 2014)</a>. <br><br>
                         <i>If a detection is flagged as an upper or lower limit:</i> We will return all models that satisfy the condition, returning the model that most closely matches the limit as the “Best Match”
                     </div>
                 </div>
@@ -79,7 +79,7 @@
                 </h2>
                 <div id="Q5" class="accordion-collapse collapse" aria-labelledby="header-Q5" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
-                        Wavelengths are given in Angstroms and are in vacuum. Please note that the wavelength grid is not uniformly spaced. The flux densities are given in ergs/cm<sup>2</sup>/s/Angstrom and are scaled to the stellar surface. 
+                        Wavelengths are given in Angstroms and are in vacuum. Please note that the wavelength grid is not uniformly spaced. The flux densities are given in ergs/cm<sup>2</sup>/s/Å and are scaled to the stellar surface. 
                     </div>
                 </div>
             </div>
@@ -92,7 +92,7 @@
                 </h2>
                 <div id="Q6" class="accordion-collapse collapse" aria-labelledby="header-Q6" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
-                        The models are computed with high wavelength sampling (\Delta\lambda = 0.01 A) at wavelengths below 6000 A and lower wavelength sampling above 6000 A (\Delta\lamba >= 3 A). Additional wavelength points are added to each non-LTE emission line.
+                        The models are computed with high wavelength sampling (Δλ = 0.01 Å) at wavelengths below 6000 Å and lower wavelength sampling above 6000 Å (Δλ ≥ 3 Å). Additional wavelength points are added to each non-LTE emission line.
                     </div>
                 </div>
             </div>
@@ -105,7 +105,7 @@
                 </h2>
                 <div id="Q7" class="accordion-collapse collapse" aria-labelledby="header-Q7" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
-                        There is no added noise to the models. The “noisiness” is in fact thousands of emission lines that are included in our models.
+                        There is no added noise to the models. The apparent noisiness is the result of thousands of emission lines that are included in our models.
                     </div>
                 </div>
             </div>

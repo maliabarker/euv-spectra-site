@@ -54,12 +54,14 @@ def populate_modal(search_term, search_type):
     # STEP 5: Query all catalogs and append them to the final catalogs list if there are no errors
     catalog_data = [search_nea(search_term, search_type), galex_data]
     final_catalogs = [catalog for catalog in catalog_data if catalog['error_msg'] == None]
-
     # STEP 6: Append each type of data into its own key value pair
-    res = {key: dict['data'][key] for dict in final_catalogs for key in dict['data']}
-    print(res)
+    radio_choices = {key: dict['data'][key] for dict in final_catalogs for key in dict['data']}
+    print(radio_choices)
 
-    return res
+    # STEP 7: Store this data for later use (repopulating model, validation)
+    session['modal_choices'] = json.dumps(radio_choices, allow_nan=True)
+
+    return radio_choices
 
 
 
@@ -95,11 +97,9 @@ def homepage():
 
             # STEP 1: Run the helper function to get a dynamic WTForm instance with your data
             res = populate_modal(position_form.coords.data, 'position')
+            print(res)
 
-            # STEP 2: Store this data for later use (repopulating model, validation)
-            session['modal_choices'] = json.dumps(res, allow_nan=True)
-
-            # STEP 3: Declare the form and add the radio choices dynamically for each radio input on the form
+            # STEP 2: Declare the form and add the radio choices dynamically for each radio input on the form
             for key, val in res.items():
                 radio_input = getattr(star_name_parameters_form, key)
                 radio_input.choices.insert(0, (val, val))
@@ -114,20 +114,19 @@ def homepage():
             print(f'name form validated!')
             
             # STEP 1: Run the helper function to get a dynamic WTForm instance with your data
-            res = populate_modal(name_form.star_name.data, 'name')
+            radio_choices = populate_modal(name_form.star_name.data, 'name')
+            print(radio_choices)
+            print(type(radio_choices))
 
-            # STEP 2: Store this data for later use (repopulating model, validation)
-            session['modal_choices'] = json.dumps(res, allow_nan=True)
-
-            # STEP 3: Declare the form and add the radio choices dynamically for each radio input on the form
-            for key, val in res.items():
+            # STEP 2: Declare the form and add the radio choices dynamically for each radio input on the form
+            for key, val in radio_choices.items():
                 radio_input = getattr(star_name_parameters_form, key)
                 radio_input.choices.insert(0, (val, val))
 
             # STEP 3: Set modal show to true
             session['modal_show'] = True
             return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form)
-
+    flash('Website is under development. Files are not available for use yet. For testing purposes, try out object GJ 338 B.', 'warning')
     return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form)
 
 
@@ -248,6 +247,7 @@ def return_results():
 
         # STEP 6: Find all matches in model grid within upper and lower limits of galex fluxes
         models_in_limits = list(get_models_within_limits(session, model_collection, models_with_chi_squared))
+        test_file = find_fits_file('M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits') # TEST FILE
 
         # TODO return from lowest chi squared -> highest
         # TODO return euv flux as <euv_flux> +/- difference from model
@@ -262,22 +262,19 @@ def return_results():
             file = find_fits_file(filename)
 
             # CATCH: For testing purposes, if fits file is not available yet, flash warning and use test file
-            test_file = find_fits_file('M0.Teff=3850.logg=4.78.TRgrad=7.5.cmtop=5.5.cmin=3.5.7.gz.fits') # TEST FILE
             if file == None:
                 flash('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
                 file = test_file
 
             data = [{'chi_squared': models_with_chi_squared[0]['chi_squared'], 'fuv': models_with_chi_squared[0]['fuv'], 'nuv': models_with_chi_squared[0]['nuv']}]
             
-            fig = create_graph([file], data, session)
-            # figdata_png = create_static_graph([file], data, session)
+            fig = create_graph([file], data)
 
             #STEP 9.1: Convert graph into html component and send to front end
             html_string = convert_fig_to_html(fig)
 
             flash('No results found within upper and lower limits of UV fluxes. Returning document with nearest chi squared value.', 'warning')
             return render_template('result.html', subtype=matching_subtype, graph=html_string, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form)
-            # return render_template('result.html', subtype=matching_subtype, graph=fig, graph_img=figdata_png)
         else:
             # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
             # print(f'MODELS WITHIN LIMITS: {len(list(models_in_limits))}')
@@ -291,25 +288,41 @@ def return_results():
                         results.append(y)
 
             #STEP 8.2: Read all FITS files from matching models and create graph from data
+
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            # TODO make sure this matches functionality of graph function (what is data vs chi squared vals, aren't they the same thing?)
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            
+            
             files = []
             data = []
-            chi_squared_vals = []
             for doc in results:
+                print('DOC')
+                print(doc)
                 file = find_fits_file(doc['fits_filename'])
                 if file:
-                    files.append()
+                    files.append(file)
                     file_data = {
                         'chi_squared': doc['chi_squared'],
                         'fuv': doc['fuv'],
                         'nuv': doc['nuv']
                     }
-                    chi_squared_vals.append(file_data)
+                    data.append(file_data)
+                else:
+                    file_data = {
+                        'chi_squared': doc['chi_squared'],
+                        'fuv': doc['fuv'],
+                        'nuv': doc['nuv']
+                    }
+                    data.append(file_data)
+                    files.append(test_file)
+                    flash('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
 
-            fig = create_graph(files, chi_squared_vals, session)
+            fig = create_graph(files, data)
 
             #STEP 9.2: Convert graph into html component and send to front end
             html_string = convert_fig_to_html(fig)
-            flash(len(list(models_in_limits)) + 'results found within your submitted parameters')
+            flash(f'{len(list(models_in_limits))} results found within your submitted parameters', 'success')
             return render_template('result.html', subtype=matching_subtype, graph=html_string, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form)
     else:
         flash('Submit the required data to view this page.', 'warning')

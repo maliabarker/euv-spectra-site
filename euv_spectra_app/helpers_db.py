@@ -110,7 +110,8 @@ def read_corrected_model_table(file_path, collection, mass):
     return 'Completed!'
 
 
-# read_corrected_model_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/correct_M0_photospheresubtracted.csv', m0_grid, 0.53)
+# read_corrected_model_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/M0_fluxes_update.csv', m0_grid, 0.53)
+# read_corrected_model_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/M3_fluxes_update.csv', m3_grid, 0.30)
 # read_corrected_model_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/correct_M4_photospheresubtracted.csv', m4_grid, 0.175)
 # read_corrected_model_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/correct_M6_photospheresubtracted.csv', m6_grid, 0.11)
 
@@ -122,7 +123,8 @@ def read_corrected_model_table(file_path, collection, mass):
 # read_model_table('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/tables/M6_photospheresubtractedfluxes.csv', m6_grid, 'M6')
 
 
-# upload_fits_file('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/fits_files/M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=3.7.gz.fits')
+#upload_fits_file('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/fits_files/M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits')
+
 #all_fits_files = os.listdir('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/fits_files')
 #for file in all_fits_files:
     #upload_fits_file(f'/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/fits_files/{file}')

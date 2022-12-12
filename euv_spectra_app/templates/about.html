@@ -8,82 +8,77 @@
         <h1 class="text-center" style="padding-top: 80px;">About</h1>
     </div>
 
-    <nav class="mt-5">
-        <div class="nav nav-tabs justify-content-center" id="nav-tab" role="tablist">
-            <button class="nav-link active" id="nav-overview-tab" data-bs-toggle="tab" data-bs-target="#nav-overview" type="button" role="tab" aria-controls="nav-overview" aria-selected="true">Overview</button>
-            <button class="nav-link" id="nav-data-products-tab" data-bs-toggle="tab" data-bs-target="#nav-data-products" type="button" role="tab" aria-controls="nav-data-products" aria-selected="false">Data Products</button>
-            <button class="nav-link" id="nav-data-access-tab" data-bs-toggle="tab" data-bs-target="#nav-data-access" type="button" role="tab" aria-controls="nav-data-access" aria-selected="false">Data Access</button>
-        </div>
+    <nav class="nav nav-tabs justify-content-center mt-5">
+        <a class="nav-link active" aria-current="page" href="#nav-overview">Overview</a>
+        <a class="nav-link" href="#nav-data-products">Data Products</a>
+        <a class="nav-link" href="#nav-data-access">Data Access</a>
     </nav>
 
 
-    <div class="tab-content" id="nav-tabContent">
-        <div class="tab-pane fade show active" id="nav-overview" role="tabpanel" aria-labelledby="nav-overview-tab">
-            <h3 class="mt-5 pt-4 text-center">Overview</h3>
-            <p class="text-center">———</p>
-            <p>The PEGASUS webtool identifies a generalized high resolution (Δλ < 0.01 Å) synthetic extreme ultraviolet (EUV; 100-1000 Å) spectrum for a searched target star (M or K spectral type) from a grid of ~1,500 PHOENIX spectra with Teff = 2500 – 5044 K, log(g) = 4.45 – 5.32 cm/s2, and M = 0.08 – 0.89 Msun. <br> <br>
+    <div id="nav-overview">
+        <h3 class="mt-5 pt-4 text-center">Overview</h3>
+        <p class="text-center">———</p>
+        <p>The PEGASUS webtool identifies a generalized high resolution (Δλ < 0.01 Å) synthetic extreme ultraviolet (EUV; 100-1000 Å) spectrum for a searched target star (M or K spectral type) from a grid of ~1,500 PHOENIX spectra with T<sub>eff</sub> = 2500 - 5044 K, log(g) = 4.45 - 5.32 cm/s<sup>2</sup>, and M = 0.08 - 0.89 M<sub>sun</sub>. <br> <br>
 
-                Required inputs for returning a spectrum are Teff, log(g), mass, radius, distance, and GALEX FUV and NUV flux densities. <br> <br>
+            Required inputs for returning a spectrum are T<sub>eff</sub>, log(g), mass, radius, distance, and GALEX FUV and NUV flux densities. <br> <br>
+            
+            T<sub>eff</sub>, log(g), and mass are used for two purposes:
+            <ol>
+                <li>To select a PHOENIX photosphere model that is used for subtracting out the star's photospheric contribution from the GALEX flux densities
+                    The photosphere model grid is sampled as such: T<sub>eff</sub> = 2500 - 5100 K (ΔT<sub>eff</sub> = 10 K), log(g) = 4.35 - 5.35 cm/s<sup>2</sup> (Δlog(g) = 0.01), M = 0.08 - 0.9 M<sub>sun</sub> (ΔM = 0.1)) </li>
+                <li>To select a <a href="/index-spectra">subgrid</a> of closest matching spectral subtype from which to identify the best representative model for the searched star</li>
+            </ol><br>
+            
+            Radius and distance are used to scale the GALEX fluxes to the stellar surface. The PHOENIX models are similarly scaled to the stellar surface and have no photospheric contribution included. <br> <br>
+            
+            GALEX FUV and NUV flux densities are used to identify the best representative model of the star. A χ<sup>2</sup> minimization is done to identify the model with the closest matching (photospheric-flux-corrected) FUV and NUV fluxes to the target star. <br> <br>
+            
+            The downloadable data product from the main search function is a PHOENIX spectrum (EUV - IR; 100 Å to 100 μm) in FITS file format. The wavelengths (given in Å) are in vacuum and the wavelength grid has a resolution of &lt;0.1 Å. Please note that the wavelength grid is not uniformly spaced. The flux densities (given in ergs/cm<sup>2</sup>/s/Å) are that at the stellar surface and are scalable to a distance D via (R_star/D)<sup>2</sup>.<br><br>
+            <b>NOTE</b>: The data product is a <b>general representation of the star, tailored to predict the EUV wavelengths.</b> Wavelengths longer than 1000 Å may not match observed spectra of the star due to the model having slightly a different temperature, gravity, and/or mass from the searched target star.
+        </p><br>
+        <h5 class="py-3">Notes if utilizing our built-in search function</h5>
+        <p>
+            The PEGASUS webtool queries the <a href="https://exoplanetarchive.ipac.caltech.edu/">NExSci</a> catalog for T<sub>eff</sub>, log(g), mass, radius, and distance. Please confirm that the values you select are correct for your target. Clicking on the NExSci hyperlink on the modal with returned values will navigate you to that star's NASA Exoplanet Archive Summary page, which may provide additional options for stellar parameters. <br><br>
+
+            The PEGASUS webtool queries <a href="http://galex.stsci.edu/GR6/?page=mastform">GALEX catalog 6/7</a> for FUV and NUV flux densities. It queries the catalog by RA and dec, which have been corrected for proper motion via the values returned by the <a href="https://gea.esac.esa.int/archive/">GAIA EDR3 catalog</a>.<br><br>
+        </p>
+        <h5 class="py-3">Citation</h5>
+        <p>If you make use of the synthetic spectra downloaded from the PEGASUS webtool, please cite Peacock et al. (2023).</p><br>
+    </div>
+
+
+    <div id="nav-data-products">
+        <h3 class="mt-5 pt-4 text-center">Data Products</h3>
+        <p class="text-center">———</p>
+        <p class="ms-5">
+            The data file naming convention is as follows: <br><br>
+            PEGASUS.<b>&lt;SpT></b>.Teff=<b>&lt;Teff></b>.logg=<b>&lt;logg></b>.TRgrad=<b>&lt;TRgrad></b>.cmtop=<b>&lt;cmtop></b>.cmin=<b>&lt;cmin></b>.fits <br><br>
+            
+            Where <br>
+            <b>&lt;SpT></b> = Spectral subtype of the model <br>
+            <b>&lt;Teff></b> = Effective Temperature of the model in K <br>
+            <b>&lt;logg></b> = Log of the surface gravity of the model in cm s<sup>2</sup><br>
+            <b>&lt;TRgrad></b> = Log of the temperature gradient in the transition region in K dyne<sup>-1</sup> cm<sup>2</sup> <br>
+            <b>&lt;cmtop></b> = Log of the column mass at the top of the chromosphere (absolute value) in g cm<sup>-2</sup> <br>
+            <b>&lt;cmin></b> = Log of the column mass at the temperature minimum (absolute value) in g cm<sup>-2</sup> <br>
                 
-                Teff, log(g), and mass are used for two purposes:
-                <ul>
-                    <li>To select a PHOENIX photosphere model that is used for subtracting out the star's photospheric contribution from the GALEX flux densities
-                        The photosphere model grid is sampled as such: Teff = 2500 - 5100 K (ΔTeff = 10 K), log(g) = 4.35 - 5.35 cm/s2 (Δlog(g) = 0.01), M = 0.08 - 0.9 Msun (ΔM = 0.1)) </li>
-                    <li>To select a <a href="/index-spectra">subgrid</a> of closest matching spectral subtype from which to identify the best representative model for the searched star</li>
-                </ul><br>
-                
-                Radius and distance are used to scale the GALEX fluxes to the stellar surface. The PHOENIX models are similarly scaled to the stellar surface and have no photospheric contribution included. <br> <br>
-                
-                GALEX FUV and NUV flux densities are used to identify the best representative model of the star. A chi-square minimization is done to identify the model with the closest matching (photospheric-flux-corrected) FUV and NUV fluxes to the target star. <br> <br>
-                
-                The downloadable data product from the main search function is a PHOENIX spectrum (EUV – IR; 100 Angstroms to 100 microns) in FITS file format. The wavelengths (given in Angstroms) are in vacuum and the wavelength grid has a resolution of <\0.1 Angstroms. Please note that the wavelength grid is not uniformly spaced. The flux densities (given in ergs/cm<sup>2</sup>/s/Angstrom) are that at the stellar surface and are scalable to a distance D via (R_star/D)<sup>2</sup>.<br><br>
-                <b>NOTE</b>: The data product is a <b>general representation of the star, tailored to predict the EUV wavelengths.</b> Wavelengths longer than 1000 A may not match observed spectra of the star due to the model having slightly a different temperature, gravity, and/or mass from the searched target star.
-            </p><br>
-            <h5 class="py-3">Notes if utilizing our built-in search function</h5>
-            <p>
-                The PEGASUS webtool queries the <a href="https://exoplanetarchive.ipac.caltech.edu/">NExSci</a> catalog for Teff, log(g), mass, radius, and distance. Please confirm that the values you select are correct for your target. Clicking on the NExSci hyperlink on the modal with returned values will navigate you to that star's NASA Exoplanet Archive Summary page, which may provide additional options for stellar parameters. <br><br>
+        </p> <br>
+    </div>
 
-                The PEGASUS webtool queries <a href="http://galex.stsci.edu/GR6/?page=mastform">GALEX catalog 6/7</a> for FUV and NUV fluxes. It queries the catalog by RA and dec, which have been corrected for proper motion via the values returned by the <a href="https://gea.esac.esa.int/archive/">GAIA EDR3 catalog</a>.<br><br>
-            </p>
-            <h5 class="py-3">Citation</h5>
-            <p>If you make use of the synthetic spectra downloaded from the PEGASUS webtool, please cite Peacock et al. (2023) (hyperlinked to paper).</p><br>
-
-
-        </div>
-
-        <div class="tab-pane fade" id="nav-data-products" role="tabpanel" aria-labelledby="nav-data-products-tab">
-            <h3 class="mt-5 pt-4 text-center">Data Products</h3>
-            <p class="text-center">———</p>
-            <p class="ms-5">
-                The data file naming convention is as follows: <br><br>
-                PEGASUS.<b>&lt;SpT></b>.Teff=<b>&lt;Teff></b>.logg=<b>&lt;logg></b>.TRgrad=<b>&lt;TRgrad></b>.cmtop=<b>&lt;cmtop></b>.cmin=<b>&lt;cmin></b>.fits <br><br>
-                
-                Where <br>
-                <b>&lt;SpT></b> = Spectral subtype of the model <br>
-                <b>&lt;Teff></b> = Effective Temperature of the model in K <br>
-                <b>&lt;logg></b> = Log of the surface gravity of the model in cm/s^2\ <br>
-                <b>&lt;TRgrad></b> = Log of the temperature gradient in the transition region in K dyne^-1 cm^2 <br>
-                <b>&lt;cmtop></b> = Log of the column mass at the top of the chromosphere (absolute value) in g cm^-2 <br>
-                <b>&lt;cmin></b> = Log of the column mass at the temperature minimum (absolute value) in g cm^-2 <br>
-                    
-            </p> <br>
-        </div>
-
-        <div class="tab-pane fade " id="nav-data-access" role="tabpanel" aria-labelledby="nav-data-access-tab">
-            <h3 class="mt-5 pt-4 text-center">Data Products</h3>
-            <p class="text-center">———</p>
-            <p class="ms-4"><i>Python Script to Run</i></p>
-            <p class="ms-5"><code>from astropy.io import fits</code> <br>
-                <code>import matplotlib.pyplot as plt</code> <br>
-                <code>spec = fits.getdata('PEGASUS.M0.Teff=3850.logg=4.78.TRgrad=8.5.cmtop=6.5.cmin=3.5.fits',1)</code> <br>
-                <code>plt.plot(spec['WAVELENGTH'],spec['FLUX'])</code> <br>
-                <code>plt.suptitle('Synthetic EUV spectrum for &lt;STAR>')</code> <br>
-                <code>plt.xlabel('Wavelength (Angstroms)')</code> <br>
-                <code>plt.ylabel('Flux Density (erg/cm2/s/Ang)')</code> <br>
-                <code>plt.xrange(100,1000)</code> <br>
-                <code>plt.show()</code> <br>
-            </p>
-            <br>
-        </div>
+    <div id="nav-data-access">
+        <h3 class="mt-5 pt-4 text-center">Data Access</h3>
+        <p class="text-center">———</p>
+        <p class="ms-4"><i>Python Script to Run</i></p>
+        <p class="ms-5"><code>from astropy.io import fits</code> <br>
+            <code>import matplotlib.pyplot as plt</code> <br>
+            <code>spec = fits.getdata('PEGASUS.M0.Teff=3850.logg=4.78.TRgrad=8.5.cmtop=6.5.cmin=3.5.fits',1)</code> <br>
+            <code>plt.plot(spec['WAVELENGTH'],spec['FLUX'])</code> <br>
+            <code>plt.suptitle('Synthetic EUV spectrum for &lt;STAR>')</code> <br>
+            <code>plt.xlabel('Wavelength ()')</code> <br>
+            <code>plt.ylabel('Flux Density (erg/cm2/s/Ang)')</code> <br>
+            <code>plt.xrange(100,1000)</code> <br>
+            <code>plt.show()</code> <br>
+        </p>
+        <br>
     </div>
 {% endblock %}

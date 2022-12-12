@@ -169,7 +169,7 @@ def create_static_graph(files, model_data, session):
     return figdata_png
 
 
-def create_graph(files, model_data, session):
+def create_graph(files, model_data):
     # STEP 1: initialize plot
     # fig = plt.figure()
     fig, ax = plt.subplots()
@@ -209,7 +209,7 @@ def create_graph(files, model_data, session):
     ax.set_ylabel('Flux Density (erg/cm2/s/Å)')
     ax.set_yscale('log')
     ax.set_xlim(10,3000)
-    ax.set_ylim(1e+6,1e+18)
+    ax.set_ylim(1e-4,1e+7)
     # ax.margins(x=0.2)
     fig.subplots_adjust(left=0.05, right=0.75, wspace=None)
 
@@ -231,8 +231,7 @@ def convert_fig_to_html(fig):
     html_string = mpld3.fig_to_html(fig, template_type='general')
     return html_string
 
-
-#read_fits('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/fits_files/M0.Teff=3850.logg=4.78.TRgrad=7.5.cmtop=5.5.cmin=3.5.7.gz.fits')
+#read_fits('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/fits_files/M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits')
 
 #file = find_fits_file('M0.Teff=3850.logg=4.78.TRgrad=7.5.cmtop=5.5.cmin=3.5.7.gz.fits')
 #html_str = create_graph(file, 'M0')

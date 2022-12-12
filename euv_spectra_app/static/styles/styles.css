@@ -5,14 +5,14 @@ body {
 
 /* ———————————FOR HOMEPAGE BACKGROUND——————————— */
     #bg {
-        width: 100vw;
+        width: 100%;
         height: 100vh;
         background-color: #262b30;
-        /* min-height: 100%; */
         object-fit: cover;
         z-index: -2;
         position: fixed;
         overflow: hidden;
+        top: 0;
     }
 
     #bg-overlay {
@@ -46,11 +46,15 @@ body {
     }
 
 /* ————————————FOR MANUAL FORM————————————— */
+    #manual-form {
+        background-color: rgba(0, 0, 0, 0.413);
+    }
+
     #manual-form-toggle-text {
         color: white;
     }
 
-        /* FOR TURNING CARET ON HOME PAGE */
+    /* FOR TURNING CARET ON HOME PAGE */
     .fa-caret-right{
         transform: rotate(0deg);
         transition: transform 0.1s linear;
