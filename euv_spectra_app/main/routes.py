@@ -3,6 +3,7 @@ from flask_mail import Message
 from euv_spectra_app.extensions import *
 from datetime import timedelta
 import json
+import pandas as pd
 
 from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
 from euv_spectra_app.helpers_astropy import search_nea, search_simbad, search_galex, correct_pm, convert_coords
@@ -109,6 +110,12 @@ def homepage():
     name_form = StarNameForm()
     position_form = PositionForm()
     star_name_parameters_form = StarNameParametersForm()
+
+    # filename = os.path.join(app.instance_path, '/euv_spectra_app/static/tables', 'MAST_GALEX_TIMES_confirmedplanets.csv')
+    # print(filename)
+    # mast_table = pd.read_csv(filename)
+    # print(mast_table[0])
+    # autofill_names = 
 
     if request.method == 'POST':
 # '''————————————————————HOME POSITION FORM————————————————————'''
@@ -300,9 +307,9 @@ def return_results():
             return render_template('result.html', subtype=matching_subtype, graph=html_string, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form)
         else:
             # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
-            # print(f'MODELS WITHIN LIMITS: {len(list(models_in_limits))}')
-            # for doc in models_in_limits:
-            #     print(doc)
+            print(f'MODELS WITHIN LIMITS: {len(list(models_in_limits))}')
+            for doc in models_in_limits:
+                print(doc)
 
             results = []
             for x in models_in_limits:
@@ -316,7 +323,6 @@ def return_results():
             # TODO make sure this matches functionality of graph function (what is data vs chi squared vals, aren't they the same thing?)
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             
-            
             files = []
             data = []
             for doc in results:
@@ -324,6 +330,8 @@ def return_results():
                 print(doc)
                 file = find_fits_file(doc['fits_filename'])
                 if file:
+                    print('FILE FOUND')
+                    print(file)
                     files.append(file)
                     file_data = {
                         'chi_squared': doc['chi_squared'],
@@ -332,6 +340,7 @@ def return_results():
                     }
                     data.append(file_data)
                 else:
+                    print('USING TEST FILE')
                     file_data = {
                         'chi_squared': doc['chi_squared'],
                         'fuv': doc['fuv'],

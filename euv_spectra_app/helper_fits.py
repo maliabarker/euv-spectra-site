@@ -1,4 +1,3 @@
-from cProfile import label
 from astropy.io import fits
 import matplotlib.pyplot as plt
 from euv_spectra_app.extensions import *
@@ -6,7 +5,6 @@ import io
 import matplotlib
 import mpld3
 from mpld3 import plugins
-from io import StringIO
 import base64
 
 
