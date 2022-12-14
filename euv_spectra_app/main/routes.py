@@ -111,11 +111,9 @@ def homepage():
     position_form = PositionForm()
     star_name_parameters_form = StarNameParametersForm()
 
-    # filename = os.path.join(app.instance_path, '/euv_spectra_app/static/tables', 'MAST_GALEX_TIMES_confirmedplanets.csv')
-    # print(filename)
-    # mast_table = pd.read_csv(filename)
-    # print(mast_table[0])
-    # autofill_names = 
+    autofill_data = db.mast_galex_times.distinct('target')
+    # print(autofill_data)
+
 
     if request.method == 'POST':
 # '''————————————————————HOME POSITION FORM————————————————————'''
@@ -135,7 +133,7 @@ def homepage():
 
             # STEP 3: Set modal show to true
             session['modal_show'] = True
-            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form)
+            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, targets=autofill_data)
             
 
 # '''————————————————————HOME NAME FORM————————————————————'''
@@ -155,9 +153,9 @@ def homepage():
 
             # STEP 3: Set modal show to true
             session['modal_show'] = True
-            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form)
+            return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, targets=autofill_data)
     flash('Website is under development. Files are not available for use yet. For testing purposes, try out object GJ 338 B.', 'warning')
-    return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form)
+    return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data)
 
 
 
@@ -213,7 +211,6 @@ def submit_manual_form():
 
         for fieldname, value in form.data.items():
             #CHECK DISTANCE UNIT: if distance unit is mas, convert to parsecs
-            # mas_to_pc = 1/ (X mas / 1000)
             if fieldname == "dist_unit" or "flag" in fieldname or "csrf_token" in fieldname:
                 if value == 'mas':
                     session['dist'] = int(1 / (form.dist.data / 1000))
