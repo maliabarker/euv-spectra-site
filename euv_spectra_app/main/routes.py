@@ -166,6 +166,8 @@ def submit_modal_form():
     name_form = StarNameForm()
     position_form = PositionForm()
     parameter_form = StarNameParametersForm()
+
+    autofill_data = db.mast_galex_times.distinct('target')
     
     choices = json.loads(session['modal_choices'])
 
@@ -198,7 +200,7 @@ def submit_modal_form():
         else:
             print('NOT VALIDATED')
             print(parameter_form.errors)
-    return render_template('home.html', parameter_form=parameter_form_1, name_form=name_form, position_form=position_form, star_name_parameters_form=parameter_form)
+    return render_template('home.html', parameter_form=parameter_form_1, name_form=name_form, position_form=position_form, star_name_parameters_form=parameter_form, targets=autofill_data)
 
 
 
