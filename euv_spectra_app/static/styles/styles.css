@@ -262,6 +262,10 @@ body {
         .rounded-end-xs {
             border-radius: 20px;
         }
+
+        .large-top-padding {
+            padding-top: 100px;
+        }
     }
 
     /* BOOTSTRAP SMALL BREAKPOINT */ 

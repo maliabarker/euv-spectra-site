@@ -122,7 +122,6 @@
                                             {{ subfield_err.label(text='%0.2f'| format(subfield_err.label.text|float), class="form-check-label") }}
                                         </div>
                                     </div>
-                                    
                                 </td>
                             {% endif %}
                         {% endfor %}
@@ -130,20 +129,16 @@
                 </tr>  
             </table>
         </div>
-        
         <div class="modal-footer border-0 py-0 me-2">
             {{ star_name_parameters_form.submit(class="btn btn-primary px-5 mt-1", form="name-parameters-form", id="flux-continue-btn") }}
         </div>
-
     </fieldset>
 </form>
 
 {% if star_name_parameters_form.errors %}
-
     <script>
         var myModalEl = document.getElementById('myModal');
         var modal = new bootstrap.Modal(myModalEl);
         modal.show();
     </script>
-
 {% endif %}

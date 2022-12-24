@@ -1,7 +1,7 @@
 <div class="modal fade" id="myModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content">
-            <div class="modal-header text-center ms-2 d-flex justify-content-center">
+            <div class="modal-header text-center ms-2 d-flex justify-content-evenly">
                 <p class="mb-0 mt-2 ms-3">
                     The following data was returned for your target: <b>{{ session.search_term }}</b> <br> 
                     Use preselected values from
@@ -11,11 +11,14 @@
                     or enter your own manual parameters in the cooresponding text box
                 </p>
 
-                {% if active_page == 'home' %}
-                    <button class="btn-close me-3" data-bs-dismiss="modal" aria-label="Close" onclick="history.back()"></button>
-                {% else %}
+
+                <a href="/"><button class="btn-close mx-3" data-bs-dismiss="modal" aria-label="Close"></button></a>
+
+                {#<!-- {% if 'results' in request.referrer %}
                     <button class="btn-close me-3" data-bs-dismiss="modal" aria-label="Close"></button>
-                {% endif %}
+                {% else %}
+                    <button class="btn-close me-3" data-bs-dismiss="modal" aria-label="Close" onclick="history.back()"></button>
+                {% endif %} -->#}
 
             </div>
             <div class="modal-body py-0">

@@ -52,10 +52,12 @@
 {% block script %}
     <script src="{{ url_for('static', filename='js/other.js') }}"></script>
     <script src="{{ url_for('static', filename='js/autocomplete.js' )}}"></script>
-    <script>
-        console.log('autocomplete loaded in')
-        var data = JSON.parse('{{ targets | tojson }}');
-        autocomplete(document.getElementById("name-form-input-group"), data);
-    </script>
+    {% if targets %}
+        <script>
+            console.log('autocomplete loaded in')
+            var data = JSON.parse('{{ targets | tojson }}');
+            autocomplete(document.getElementById("name-form-input-group"), data);
+        </script>
+    {% endif %}
 
 {% endblock %}

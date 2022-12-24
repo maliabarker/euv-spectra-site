@@ -305,7 +305,7 @@ def return_results():
             html_string = convert_fig_to_html(fig)
 
             flash('No results found within upper and lower limits of UV fluxes. Returning document with nearest chi squared value.', 'warning')
-            return render_template('result.html', subtype=matching_subtype, graph=html_string, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form)
+            return render_template('result.html', subtype=matching_subtype, graph=html_string, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data)
         else:
             # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
             print(f'MODELS WITHIN LIMITS: {len(list(models_in_limits))}')
