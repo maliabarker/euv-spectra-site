@@ -70,15 +70,14 @@
                                     <div class="d-flex justify-content-start">
                                         <div class="form-check my-1 mx-0">
                                             {{ subfield(checked=true, class="form-check-input") }}
-                                            {{ subfield.label(class="form-check-label") }}
+                                            {{ subfield.label(text='%0.2f'| format(subfield.label.text|float), class="form-check-label") }}
                                         </div>
                                         <span class="ms-3 my-1"> +/- </span>
                                         <div class="form-check my-1 mx-0">
                                             {{ subfield_err(checked=true, class="form-check-input", style="position: fixed; opacity: 0; pointer-events: none;") }}
-                                            {{ subfield_err.label(class="form-check-label") }}
+                                            {{ subfield_err.label(text='%0.2f'| format(subfield_err.label.text|float), class="form-check-label") }}
                                         </div>
                                     </div>
-                                    
                                 </td>
                             {% endif %}
                         {% endfor %}
@@ -115,12 +114,12 @@
                                     <div class="d-flex justify-content-start">
                                         <div class="form-check my-1 mx-0">
                                             {{ subfield(checked=true, class="form-check-input") }}
-                                            {{ subfield.label(class="form-check-label") }}
+                                            {{ subfield.label(text='%0.2f'| format(subfield.label.text|float), class="form-check-label") }}
                                         </div>
                                         <span class="ms-3 my-1"> +/- </span>
                                         <div class="form-check my-1 mx-0">
                                             {{ subfield_err(checked=true, class="form-check-input", style="position: fixed; opacity: 0; pointer-events: none;") }}
-                                            {{ subfield_err.label(class="form-check-label") }}
+                                            {{ subfield_err.label(text='%0.2f'| format(subfield_err.label.text|float), class="form-check-label") }}
                                         </div>
                                     </div>
                                     

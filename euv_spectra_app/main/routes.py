@@ -237,6 +237,8 @@ def return_results():
     name_form = StarNameForm()
     position_form = PositionForm()
 
+    autofill_data = db.mast_galex_times.distinct('target')
+
     choices = json.loads(session['modal_choices'])
     for key, val in choices.items():
         radio_input = getattr(parameter_form, key)
@@ -264,7 +266,7 @@ def return_results():
         # STEP 4: Check if model subtype data exists in database
         model_collection = f'{session["model_subtype"].lower()}_grid'
         if model_collection not in db.list_collection_names():
-            return redirect(url_for('main.error', msg=f'The grid for model subtype {session["model_subtype"]} is currently unavailable. Currently available subtypes: M0, M4, M6. Please contact us with your stellar parameters and returned subtype if you think this is incorrect.'))
+            return redirect(url_for('main.error', msg=f'The grid for model subtype {session["model_subtype"]} is currently unavailable. Currently available subtypes: M0, M3, M4, M6. Please contact us with your stellar parameters and returned subtype if you think this is incorrect.'))
         
         # STEP 5: Do chi squared test between all models within selected subgrid and corrected observation ** this is on models with subtracted photospheric flux
         models_with_chi_squared = list(get_models_with_chi_squared(session, model_collection))
@@ -354,7 +356,7 @@ def return_results():
             #STEP 9.2: Convert graph into html component and send to front end
             html_string = convert_fig_to_html(fig)
             flash(f'{len(list(models_in_limits))} results found within your submitted parameters', 'success')
-            return render_template('result.html', subtype=matching_subtype, graph=html_string, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form)
+            return render_template('result.html', subtype=matching_subtype, graph=html_string, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data)
     else:
         flash('Submit the required data to view this page.', 'warning')
         return redirect(url_for('main.homepage'))

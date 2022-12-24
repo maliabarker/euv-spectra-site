@@ -1,4 +1,16 @@
-<form action='/' method='POST' id="position-form" onsubmit="displayLoading();">
+<form action='/' method='POST' id="position-form" onsubmit="displayLoading();" style="width: 100%;">
+    <fieldset>
+        {{ position_form.csrf_token }}
+        <div class="search_field">
+            {{ position_form.coords(class="input", placeholder="Coordinates") }}
+            <button type="submit" form="position-form" class="btn">
+                <i class="fas fa-search me-auto"></i>
+            </button>
+        </div>
+    </fieldset>
+</form>
+
+{#<!-- <form action='/' method='POST' id="position-form" onsubmit="displayLoading();">
     <fieldset>
         {{ position_form.csrf_token }}
         <div class="input-group">
@@ -11,4 +23,4 @@
             </button>
         </div>
     </fieldset>
-</form>
+</form> -->#}

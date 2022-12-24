@@ -16,13 +16,20 @@
             <img src="{{ url_for('static', filename='imgs/PEGASUS-Logo-B2.png')}}" alt="" class="img img-fluid mx-auto d-block pt-4" style="width: 500px;">
         </div>
 
-        <div class="row" id="search-bar-cont">
+        <h4 class="text-center mt-4 mb-4" style="color: white; letter-spacing: .1rem;">Enter Star Name or Coordinates to Get Started</h4>
+        <div class="col-md-8 offset-md-2 col-lg-8 offset-lg-2 col-xl-6 offset-xl-3 mt-4">
+            {% include 'partials/search_bar.html' %}
+            <p class="text-end mt-3"><a data-bs-toggle="collapse" href="#manual-form" role="button" aria-expanded="false" aria-controls="collapseExample" id="manual-form-toggle-text"><b id="manual-text" style="letter-spacing: 0.03rem;" class="h6">Click Here to Enter Parameters Manually </b><i class="fa-solid fa-caret-right" id="manual-caret"></i></a></p>
+        </div>
+        
+
+        {#<!-- <div class="row" id="search-bar-cont">
             <div class="col-xl-8 offset-xl-2 col-lg-10 offset-lg-1 col-md-12 mt-3">
                 <h4 class="text-start mt-4 mb-2 ms-5" style="color: white; letter-spacing: .1rem;">Enter Star Name or Coordinates to Get Started</h4>
                 {% include 'partials/search_bar.html' %}
                 <p class="text-end mt-1 me-5"><a data-bs-toggle="collapse" href="#manual-form" role="button" aria-expanded="false" aria-controls="collapseExample" id="manual-form-toggle-text"><b id="manual-text" style="letter-spacing: 0.06rem;" class="h6">Click Here to Enter Parameters Manually </b><i class="fa-solid fa-caret-right" id="manual-caret"></i></a></p>
             </div>
-        </div>       
+        </div> -->#}
         
         <div class="col-sm-8 offset-sm-2">
             <div class="collapse mb-5" id="manual-form">
@@ -43,11 +50,12 @@
 {% endblock %}
 
 {% block script %}
-
     <script src="{{ url_for('static', filename='js/other.js') }}"></script>
     <script src="{{ url_for('static', filename='js/autocomplete.js' )}}"></script>
     <script>
+        console.log('autocomplete loaded in')
         var data = JSON.parse('{{ targets | tojson }}');
         autocomplete(document.getElementById("name-form-input-group"), data);
     </script>
+
 {% endblock %}

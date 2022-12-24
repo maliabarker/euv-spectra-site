@@ -123,7 +123,7 @@ def search_galex(ra, dec):
 
             return_info['data'] = fluxes
         else:
-            return_info['error_msg'] = 'No data points with distance arcmin under 0.1'
+            return_info['error_msg'] = 'No data points with distance under 10 arcsec'
     else:
         return_info['error_msg'] = 'Nothing found for this target'
     return return_info

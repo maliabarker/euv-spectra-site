@@ -1,4 +1,4 @@
-<div class="row g-0" id="search-bar">
+{#<!-- <div class="row g-0" id="search-bar">
 
     <div class="col-lg-3 col-sm-4" id="search-dropdown-col">
         <div class="form-floating ms-2">
@@ -6,7 +6,7 @@
                 <option selected value="name">Star Name</option>
                 <option value="position">J2000 Coordinates</option>
             </select>
-            <label for="floatingSelect">Search By <!--<i class="fa-solid fa-caret-down fa-2x" style="position: absolute; right: -95%; top: 45%; color: #9c41f2;"></i>--></label>
+            <label for="floatingSelect">Search By</label>
         </div>
     </div>
     
@@ -18,7 +18,27 @@
         {% include 'partials/position_form.html' %}
     </div>
     
+</div> -->#}
+
+<div class="wrapper">
+    <div class="search_box">
+        <div class="dropdown" id="search-select">
+            <div class="default_option">star name</div>  
+            <ul>
+                <li>Star Name</li>
+                <li>Position</li>
+            </ul>
+        </div>
+
+        <div id="name-form-cont" style="width: 100%;">
+            {% include 'partials/name_form.html' %}
+        </div>
+        <div id="position-form-cont" style="display:none; width: 100%;">
+            {% include 'partials/position_form.html' %}
+        </div>
+    </div>
 </div>
 
 <script src="{{ url_for('static', filename='js/search_bar.js') }}"></script>
 <script src="{{ url_for('static', filename='js/loader.js') }}"></script>
+<script src="{{ url_for('static', filename='js/autocomplete.js' )}}"></script>

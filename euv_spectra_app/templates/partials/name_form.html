@@ -1,4 +1,16 @@
-<form action='/' method='POST' id="name-form" onsubmit="displayLoading();">
+<form action='/' method='POST' id="name-form" onsubmit="displayLoading();" style="width: 100%;">
+    <fieldset>
+        {{ name_form.csrf_token }}
+        <div class="search_field">
+            {{ name_form.star_name(class="input", placeholder="Star Name", id="name-form-input-group", autocomplete="off") }}
+            <button type="submit" form="name-form" class="btn">
+                <i class="fas fa-search me-auto"></i>
+            </button>
+        </div>
+    </fieldset>
+</form>
+
+{#<!-- <form action='/' method='POST' id="name-form" onsubmit="displayLoading();">
     <fieldset>
         {{ name_form.csrf_token }}
         <div class="input-group">
@@ -11,4 +23,4 @@
             </button>
         </div>
     </fieldset>
-</form>
+</form> -->#}

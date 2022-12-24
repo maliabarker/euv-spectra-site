@@ -1,14 +1,17 @@
-const searchSelect = document.getElementById('search-select')
+$(".default_option").click(function(){
+    $(".dropdown ul").addClass("active");
+});
+  
+$(".dropdown ul li").click(function(){
+    var text = $(this).text();
+    $(".default_option").text(text);
+    $(".dropdown ul").removeClass("active");
 
-const nameForm = document.getElementById('name-form-cont')
-const positionForm = document.getElementById('position-form-cont')
-
-searchSelect.addEventListener('change', function handleChange(e) {
-    if (e.target.value == 'name'){
-        nameForm.style.display = 'block';
-        positionForm.style.display = 'none';
-    } else if (e.target.value == 'position') {
-        nameForm.style.display = 'none';
-        positionForm.style.display = 'block';
+    if (text == 'Star Name'){
+        $("#name-form-cont").css("display", "block");
+        $("#position-form-cont").css("display", "none");
+    } else if (text == 'Position') {
+        $("#name-form-cont").css("display", "none");
+        $("#position-form-cont").css("display", "block");
     }
 });
