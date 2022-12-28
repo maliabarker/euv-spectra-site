@@ -19,13 +19,8 @@ services:
         #     - flask
         #     - run
         #     - --host=${HOST}
-        #     # - gunicorn
-        #     # - --bind ${HOST}:${FLASK_RUN_PORT}
-        #     # - app:app
-        # command: gunicorn --bind ${HOST}:${FLASK_RUN_PORT} app:app
         environment:
           PYTHONUNBUFFERED: 1
-          FLASK_DEBUG: 1
         ports:
             - ${FLASK_RUN_PORT}:${FLASK_RUN_PORT}
         depends_on:
