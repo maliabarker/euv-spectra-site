@@ -90,17 +90,17 @@ function checkManualRadio(obj) {
     obj.previousElementSibling.checked = true;
 };
 
-function checkManualInputs(){
-    // check all radio buttons and if a manual radio button is clicked assign the value from manual input to the actual input
-    const manualBtns = document.querySelectorAll(`[id*="{{ last_num }}"]`);
-    for(i = 0; i < manualBtns.length; i++){
-        if (manualBtns[i].checked) {
-            const newVal = manualBtns[i].nextElementSibling.value
-            manualBtns[i].value = newVal
-        };
-    };
-    return true; // submit the form
-};
+// function checkManualInputs(){
+//     // check all radio buttons and if a manual radio button is clicked assign the value from manual input to the actual input
+//     const manualBtns = document.querySelectorAll(`[id*="{{ last_num }}"]`);
+//     for(i = 0; i < manualBtns.length; i++){
+//         if (manualBtns[i].checked) {
+//             const newVal = manualBtns[i].nextElementSibling.value
+//             manualBtns[i].value = newVal
+//         };
+//     };
+//     return true; // submit the form
+// };
 
 function checkErrFlux(obj){
     console.log(obj);

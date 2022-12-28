@@ -15,10 +15,6 @@ services:
             context: .
             dockerfile: Dockerfile
         command: gunicorn -w 4 -b 0.0.0.0:${FLASK_RUN_PORT} app:app
-        # entrypoint:
-        #     - flask
-        #     - run
-        #     - --host=${HOST}
         environment:
           PYTHONUNBUFFERED: 1
         ports:

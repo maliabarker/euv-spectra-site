@@ -1,4 +1,4 @@
-<form action='/' method='POST' id="name-form" onsubmit="displayLoading();" style="width: 100%;">
+<form action='/' method='POST' id="name-form" onsubmit="displayLoading(event='search');" style="width: 100%;">
     <fieldset>
         {{ name_form.csrf_token }}
         <div class="search_field">
@@ -9,18 +9,3 @@
         </div>
     </fieldset>
 </form>
-
-{#<!-- <form action='/' method='POST' id="name-form" onsubmit="displayLoading();">
-    <fieldset>
-        {{ name_form.csrf_token }}
-        <div class="input-group">
-            <div class="form-floating form-floating-group flex-grow-1" style="min-height:70px;">
-                {{ name_form.star_name(class="form-control border-0", placeholder="Star Name", id="name-form-input-group", style="") }}
-                {{ name_form.star_name.label(class="mt-2 ms-2 text-muted") }}
-            </div>
-            <button type="submit" form="name-form" class="btn" style="border-radius: 20px; min-width: 60px;">
-                <i class="fa-solid fa-magnifying-glass fa-lg me-4" style="color: #9c36e8;"></i>
-            </button>
-        </div>
-    </fieldset>
-</form> -->#}

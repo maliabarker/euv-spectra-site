@@ -1,6 +1,6 @@
 {% from "macros/subfield.html" import render_subfield with context %}
 
-<form id="name-parameters-form" action="/modal-submit" method="POST" onsubmit="return checkManualInputs()">
+<form id="name-parameters-form" action="/modal-submit" method="POST" onsubmit="displayLoading(event='modal');">
     <fieldset>
         {{ star_name_parameters_form.csrf_token }}
         <div class="table-responsive">

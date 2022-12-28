@@ -90,13 +90,13 @@ body {
         right: 0;
         bottom: 0;
         background-color: rgba(0, 0, 0, 0.684); /* Black background with opacity */
-        z-index: 10; /* Specify a stack order in case you're using a different order for other elements */
-        cursor: pointer; /* Add a pointer on hover */
+        z-index: 10000; /* Specify a stack order in case you're using a different order for other elements */
+        cursor: wait; /* Add a pointer on hover */
     }
 
     #overlay-box {
         display: none;
-        z-index: 15;
+        z-index: 10010;
         background-color: #262b30;
         color: white;
         margin: auto;
@@ -125,7 +125,7 @@ body {
         animation: spin 1s infinite linear;
         position: absolute;
         top: 47%;
-        z-index: 20;
+        z-index: 10020;
     }
 
     #loading.display {
