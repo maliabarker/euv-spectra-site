@@ -2,6 +2,7 @@
 
 FROM python:3.9
 
+# set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
@@ -14,5 +15,13 @@ WORKDIR /app
 # Install App dependencies
 RUN pip3 install -r requirements.txt
 
-CMD ["python", "-u", "app.py"]
+# Make port 80 available to the world outside this container
+EXPOSE 5002
+
+
+# Run app.py when the container launches
+CMD ["gunicorn", "--bind", "0.0.0.0:5002", "app:app"]
+
+
+# CMD ["python", "-u", "app.py"]
 # CMD [ \"gunicorn\", \"--bind\", \"0.0.0.0:5555\", \"app:app\" ]
