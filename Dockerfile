@@ -15,3 +15,4 @@ WORKDIR /app
 RUN pip3 install -r requirements.txt
 
 CMD ["python", "-u", "app.py"]
+# CMD [ \"gunicorn\", \"--bind\", \"0.0.0.0:5555\", \"app:app\" ]

@@ -14,10 +14,14 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        entrypoint:
-            - flask
-            - run
-            - --host=${HOST}
+        # entrypoint:
+        #     - flask
+        #     - run
+        #     - --host=${HOST}
+        #     # - gunicorn
+        #     # - --bind ${HOST}:${FLASK_RUN_PORT}
+        #     # - app:app
+        command: gunicorn --bind ${HOST}:${FLASK_RUN_PORT} app:app
         environment:
           PYTHONUNBUFFERED: 1
           FLASK_DEBUG: 1

@@ -4,49 +4,46 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-    <div class="container" id="home-cont">
-        
-        <div id="bg-overlay"></div>
-        <!-- <div id="bg-img" class="full-width" style="background: url('https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0211.jpg') no-repeat; position: fixed; width: 100%; height: 100vh; z-index: -2; background-size: cover; top: 0;"></div> -->
-        <img src="{{ url_for('static', filename='imgs/solar_img.png') }}" alt="" class="full-width" id="bg">
+    <div id="bg-overlay"></div>
+    <!-- <div id="bg-img" class="full-width" style="background: url('https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0211.jpg') no-repeat; position: fixed; width: 100%; height: 100vh; z-index: -2; background-size: cover; top: 0;"></div> -->
+    <img src="{{ url_for('static', filename='imgs/solar_img.png') }}" alt="" class="full-width" id="bg">
 
-        {% include 'partials/loading_screen.html' %}
+    {% include 'partials/loading_screen.html' %}
 
-        <div class="full-width pt-5">
-            <img src="{{ url_for('static', filename='imgs/PEGASUS-Logo-B2.png')}}" alt="" class="img img-fluid mx-auto d-block pt-4" style="width: 500px;">
-        </div>
-
-        <h4 class="text-center mt-4 mb-4" style="color: white; letter-spacing: .1rem;">Enter Star Name or Coordinates to Get Started</h4>
-        <div class="col-md-8 offset-md-2 col-lg-8 offset-lg-2 col-xl-6 offset-xl-3 mt-4">
-            {% include 'partials/search_bar.html' %}
-            <p class="text-end mt-3"><a data-bs-toggle="collapse" href="#manual-form" role="button" aria-expanded="false" aria-controls="collapseExample" id="manual-form-toggle-text"><b id="manual-text" style="letter-spacing: 0.03rem;" class="h6">Click Here to Enter Parameters Manually </b><i class="fa-solid fa-caret-right" id="manual-caret"></i></a></p>
-        </div>
-        
-
-        {#<!-- <div class="row" id="search-bar-cont">
-            <div class="col-xl-8 offset-xl-2 col-lg-10 offset-lg-1 col-md-12 mt-3">
-                <h4 class="text-start mt-4 mb-2 ms-5" style="color: white; letter-spacing: .1rem;">Enter Star Name or Coordinates to Get Started</h4>
-                {% include 'partials/search_bar.html' %}
-                <p class="text-end mt-1 me-5"><a data-bs-toggle="collapse" href="#manual-form" role="button" aria-expanded="false" aria-controls="collapseExample" id="manual-form-toggle-text"><b id="manual-text" style="letter-spacing: 0.06rem;" class="h6">Click Here to Enter Parameters Manually </b><i class="fa-solid fa-caret-right" id="manual-caret"></i></a></p>
-            </div>
-        </div> -->#}
-        
-        <div class="col-sm-8 offset-sm-2">
-            <div class="collapse mb-5" id="manual-form">
-                {% include 'partials/parameter_form.html' %}
-                <div class="text-center mt-2">
-                    <!--—————————MANUAL PARAMETER FORM——————————-->
-                    {{ parameter_form.submit(class="btn btn-primary", for="parameter-form", id="flux-continue-btn", form="parameter-form") }}
-                </div>
-                <div><p class="text-center mt-2"><a href="/clear-session" style="color: tomato;">Clear Form</a> </p></div>
-            </div>
-        </div>
-
-        {% if session['modal_show'] or (star_name_parameters_form and star_name_parameters_form.errors) %}
-            {% include 'partials/modal.html' %}
-            <script src="{{ url_for('static', filename='js/show_modal.js') }}"></script>
-        {% endif %}
+    <div class="full-width pt-5">
+        <img src="{{ url_for('static', filename='imgs/PEGASUS-Logo-B2.png')}}" alt="" class="img img-fluid mx-auto d-block pt-4" style="width: 500px;">
     </div>
+
+    <h4 class="text-center mt-4 mb-4" style="color: white; letter-spacing: .1rem;">Enter Star Name or Coordinates to Get Started</h4>
+    <div class="col-md-8 offset-md-2 col-lg-8 offset-lg-2 col-xl-6 offset-xl-3 mt-4">
+        {% include 'partials/search_bar.html' %}
+        <p class="text-end mt-3"><a data-bs-toggle="collapse" href="#manual-form" role="button" aria-expanded="false" aria-controls="collapseExample" id="manual-form-toggle-text"><b id="manual-text" style="letter-spacing: 0.03rem;" class="h6">Click Here to Enter Parameters Manually </b><i class="fa-solid fa-caret-right" id="manual-caret"></i></a></p>
+    </div>
+    
+
+    {#<!-- <div class="row" id="search-bar-cont">
+        <div class="col-xl-8 offset-xl-2 col-lg-10 offset-lg-1 col-md-12 mt-3">
+            <h4 class="text-start mt-4 mb-2 ms-5" style="color: white; letter-spacing: .1rem;">Enter Star Name or Coordinates to Get Started</h4>
+            {% include 'partials/search_bar.html' %}
+            <p class="text-end mt-1 me-5"><a data-bs-toggle="collapse" href="#manual-form" role="button" aria-expanded="false" aria-controls="collapseExample" id="manual-form-toggle-text"><b id="manual-text" style="letter-spacing: 0.06rem;" class="h6">Click Here to Enter Parameters Manually </b><i class="fa-solid fa-caret-right" id="manual-caret"></i></a></p>
+        </div>
+    </div> -->#}
+    
+    <div class="col-sm-8 offset-sm-2">
+        <div class="collapse mb-5" id="manual-form">
+            {% include 'partials/parameter_form.html' %}
+            <div class="text-center mt-2">
+                <!--—————————MANUAL PARAMETER FORM——————————-->
+                {{ parameter_form.submit(class="btn btn-primary", for="parameter-form", id="flux-continue-btn", form="parameter-form") }}
+            </div>
+            <div><p class="text-center mt-2"><a href="/clear-session" style="color: tomato;">Clear Form</a> </p></div>
+        </div>
+    </div>
+
+    {% if session['modal_show'] or (star_name_parameters_form and star_name_parameters_form.errors) %}
+        {% include 'partials/modal.html' %}
+        <script src="{{ url_for('static', filename='js/show_modal.js') }}"></script>
+    {% endif %}
 {% endblock %}
 
 {% block script %}
