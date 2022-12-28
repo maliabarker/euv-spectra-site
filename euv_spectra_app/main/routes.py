@@ -3,7 +3,6 @@ from flask_mail import Message
 from euv_spectra_app.extensions import *
 from datetime import timedelta
 import json
-import pandas as pd
 
 from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
 from euv_spectra_app.helpers_astropy import search_nea, search_simbad, search_galex, correct_pm, convert_coords
