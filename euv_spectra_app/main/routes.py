@@ -1,20 +1,29 @@
-from flask import Blueprint, request, render_template, redirect, url_for, session, flash
+from flask import Blueprint, request, render_template, redirect, url_for, session, flash, send_file
 from flask_mail import Message
 from euv_spectra_app.extensions import *
 from datetime import timedelta
 import json
+import plotly
+import pandas as pd
+import plotly
+import numpy as np
+import plotly.graph_objects as go
+from bson.objectid import ObjectId
 
 from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
 from euv_spectra_app.helpers_astropy import search_nea, search_simbad, search_galex, correct_pm, convert_coords
-from euv_spectra_app.helpers_db import *
-from euv_spectra_app.helper_fits import *
-from euv_spectra_app.helper_queries import *
+from euv_spectra_app.helper_fits import convert_and_scale_fluxes, find_fits_file, create_plotly_graph
+from euv_spectra_app.helper_queries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_lowest_fuv
+
+# Used when importing new data into mongodb atlas
+# from euv_spectra_app.helpers_db import *
+
 main = Blueprint("main", __name__)
 
 
 '''————————— HELPER FUNCTION FOR SEARCHING OBJECT/POSITION & RETURNING FOR MODAL POPULATION —————————'''
 def populate_modal(search_term, search_type):
-    print(search_term, search_type)
+    # print(search_term, search_type)
 
     session["search_term"] = search_term
     galex_coords = None
@@ -33,7 +42,6 @@ def populate_modal(search_term, search_type):
         if converted_coords['error_msg'] != None:
             return_data['error_msg'] = converted_coords['error_msg']
             return return_data
-            # return redirect(url_for('main.error', msg=converted_coords['error_msg']))
 
         galex_coords = converted_coords
         search_term = converted_coords['data']['skycoord_obj']
@@ -47,15 +55,13 @@ def populate_modal(search_term, search_type):
         if simbad_data['error_msg'] != None:
             return_data['error_msg'] = simbad_data['error_msg']
             return return_data
-            # return redirect(url_for('main.error', msg=simbad_data['error_msg']))
 
         # STEP 3: Put PM and Coord info into correction function
         corrected_coords = correct_pm(simbad_data['data'], star_name)
-        print(f'CORRECTED COORDS {corrected_coords}')
+        # print(f'CORRECTED COORDS {corrected_coords}')
         if corrected_coords['error_msg'] != None:
             return_data['error_msg'] = corrected_coords['error_msg']
             return return_data
-            # return redirect(url_for('main.error', msg=corrected_coords['error_msg']))
 
         galex_coords = corrected_coords
         
@@ -64,7 +70,6 @@ def populate_modal(search_term, search_type):
     if galex_data['error_msg'] != None:
         return_data['error_msg'] = galex_data['error_msg']
         return return_data
-        # return redirect(url_for('main.error', msg=galex_data['error_msg']))
 
     nea_data = search_nea(search_term, search_type)
     if nea_data['error_msg'] != None:
@@ -74,11 +79,12 @@ def populate_modal(search_term, search_type):
     # STEP 5: Query all catalogs and append them to the final catalogs list if there are no errors
     catalog_data = [nea_data, galex_data]
     final_catalogs = [catalog for catalog in catalog_data if catalog['error_msg'] == None]
+
     # STEP 6: Append each type of data into its own key value pair
     data = {key: dict['data'][key] for dict in final_catalogs for key in dict['data']}
     return_data['radio_choices'] = data
 
-    print(return_data['radio_choices'])
+    # print(return_data['radio_choices'])
 
     # STEP 7: Store this data for later use (repopulating model, validation)
     session['modal_choices'] = json.dumps(return_data['radio_choices'], allow_nan=True)
@@ -111,8 +117,6 @@ def homepage():
     star_name_parameters_form = StarNameParametersForm()
 
     autofill_data = db.mast_galex_times.distinct('target')
-    # print(autofill_data)
-
 
     if request.method == 'POST':
 # '''————————————————————HOME POSITION FORM————————————————————'''
@@ -178,17 +182,14 @@ def submit_modal_form():
 
     if request.method == 'POST':
         if parameter_form.validate_on_submit():
-            print('star name parameter form validated!')
+            # print('star name parameter form validated!')
 
             for field in parameter_form:
                 # ignoring all manual parameters, submit, csrf token, and catalog names
                 if field.data == 'No Detection':
                     # set flux to null if it equals --
-                    # print(f'null flux detected in {field.name}')
                     session[field.name] = 'null'
                 elif 'manual' in field.name and field.data != None:
-                    # print('MANUAL INPUT DETECTED')
-                    # print(field.name, field.data)
                     unmanual_field = field.name.replace('manual_', '')
                     session[unmanual_field] = float(field.data)
                 elif 'manual' not in field.name and 'submit' not in field.name and 'csrf_token' not in field.name and 'Manual' not in field.data:
@@ -196,9 +197,6 @@ def submit_modal_form():
                     session[field.name] = float(field.data)
 
             return redirect(url_for('main.return_results'))
-        else:
-            print('NOT VALIDATED')
-            print(parameter_form.errors)
     return render_template('home.html', parameter_form=parameter_form_1, name_form=name_form, position_form=position_form, star_name_parameters_form=parameter_form, targets=autofill_data)
 
 
@@ -208,7 +206,7 @@ def submit_modal_form():
 def submit_manual_form():
     form = ParameterForm(request.form)
     if form.validate_on_submit():
-        print('parameter form validated!')
+        # print('parameter form validated!')
 
         for fieldname, value in form.data.items():
             #CHECK DISTANCE UNIT: if distance unit is mas, convert to parsecs
@@ -259,8 +257,8 @@ def return_results():
         session['corrected_nuv_err'] = corrected_fluxes['nuv_err']
         session['corrected_fuv'] = corrected_fluxes['fuv']
         session['corrected_fuv_err'] = corrected_fluxes['fuv_err']
-        print('CORRECTED FLUXES')
-        print(session)
+        # print('CORRECTED FLUXES')
+        # print(session)
 
         # STEP 4: Check if model subtype data exists in database
         model_collection = f'{session["model_subtype"].lower()}_grid'
@@ -269,15 +267,17 @@ def return_results():
         
         # STEP 5: Do chi squared test between all models within selected subgrid and corrected observation ** this is on models with subtracted photospheric flux
         models_with_chi_squared = list(get_models_with_chi_squared(session, model_collection))
-        print(models_with_chi_squared[:5])
+        # print(models_with_chi_squared[:5])
 
         models_with_lowest_fuv = list(get_models_with_lowest_fuv(session, model_collection))
-        print('FUV ONLY')
-        print(models_with_lowest_fuv[:5])
+        # print('FUV ONLY')
+        # print(models_with_lowest_fuv[:5])
 
         # STEP 6: Find all matches in model grid within upper and lower limits of galex fluxes
         models_in_limits = list(get_models_within_limits(session, model_collection, models_with_chi_squared))
         test_file = find_fits_file('M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits') # TEST FILE
+        test_id = fits_files.find_one({"name": 'M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits'})['_id']
+        print(f'TEST ID: {test_id}')
 
         # TODO return from lowest chi squared -> highest
         # TODO return euv flux as <euv_flux> +/- difference from model
@@ -290,26 +290,28 @@ def return_results():
             #STEP 8.1: Read FITS file from matching model and create graph from data
             filename = models_with_chi_squared[0]['fits_filename']
             file = find_fits_file(filename)
+            file_id = fits_files.find_one({"name": filename})
+            if file_id:
+                file_id = fits_files.find_one({"name": filename})['_id']
 
             # CATCH: For testing purposes, if fits file is not available yet, flash warning and use test file
             if file == None:
                 flash('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
                 file = test_file
+                file_id = test_id
 
             data = [{'chi_squared': models_with_chi_squared[0]['chi_squared'], 'fuv': models_with_chi_squared[0]['fuv'], 'nuv': models_with_chi_squared[0]['nuv']}]
-            
-            fig = create_graph([file], data)
 
-            #STEP 9.1: Convert graph into html component and send to front end
-            html_string = convert_fig_to_html(fig)
+            plotly_fig = create_plotly_graph([file], data)
+            graphJSON = json.dumps(plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
 
             flash('No results found within upper and lower limits of UV fluxes. Returning document with nearest chi squared value.', 'warning')
-            return render_template('result.html', subtype=matching_subtype, graph=html_string, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data)
+            return render_template('result.html', subtype=matching_subtype, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=[file_id])
         else:
             # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
-            print(f'MODELS WITHIN LIMITS: {len(list(models_in_limits))}')
-            for doc in models_in_limits:
-                print(doc)
+            # print(f'MODELS WITHIN LIMITS: {len(list(models_in_limits))}')
+            # for doc in models_in_limits:
+            #     print(doc)
 
             results = []
             for x in models_in_limits:
@@ -322,16 +324,17 @@ def return_results():
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # TODO make sure this matches functionality of graph function (what is data vs chi squared vals, aren't they the same thing?)
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            
+            file_ids = []
             files = []
             data = []
             for doc in results:
-                print('DOC')
-                print(doc)
+                # print('DOC')
+                # print(doc)
                 file = find_fits_file(doc['fits_filename'])
                 if file:
-                    print('FILE FOUND')
-                    print(file)
+                    # print('FILE FOUND')
+                    # print(file)
+                    file_ids.append(doc['_id'])
                     files.append(file)
                     file_data = {
                         'chi_squared': doc['chi_squared'],
@@ -340,7 +343,7 @@ def return_results():
                     }
                     data.append(file_data)
                 else:
-                    print('USING TEST FILE')
+                    # print('USING TEST FILE')
                     file_data = {
                         'chi_squared': doc['chi_squared'],
                         'fuv': doc['fuv'],
@@ -348,19 +351,30 @@ def return_results():
                     }
                     data.append(file_data)
                     files.append(test_file)
+                    file_ids.append(test_id)
                     flash('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
-
-            fig = create_graph(files, data)
-
-            #STEP 9.2: Convert graph into html component and send to front end
-            html_string = convert_fig_to_html(fig)
+            
+            plotly_fig = create_plotly_graph(files, data)
+            graphJSON = json.dumps(plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
             flash(f'{len(list(models_in_limits))} results found within your submitted parameters', 'success')
-            return render_template('result.html', subtype=matching_subtype, graph=html_string, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data)
+            return render_template('result.html', subtype=matching_subtype, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=file_ids)
     else:
         flash('Submit the required data to view this page.', 'warning')
         return redirect(url_for('main.homepage'))
 
 
+
+@app.route('/download/<file_id>')
+def download_file(file_id):
+    # Retrieve the file from the database
+    objInst = ObjectId(file_id)
+    file = fits_files.find_one({'_id': objInst})
+    # Send the file to the client
+    return send_file(
+        file,
+        as_attachment=True,
+        download_name=file['name']
+    )
 
 '''————————————ABOUT PAGE————————————'''
 @main.route('/about', methods=['GET'])
