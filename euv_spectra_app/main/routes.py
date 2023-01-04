@@ -153,7 +153,7 @@ def homepage():
             # STEP 3: Set modal show to true
             session['modal_show'] = True
             return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, targets=autofill_data)
-    # flash('Website is under development. Files are not available for use yet. For testing purposes, try out object GJ 338 B.', 'warning')
+    flash('Website is under development. Files are not available for use yet. For testing purposes, try out object GJ 338 B.', 'warning')
     return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data)
 
 
