@@ -4,13 +4,7 @@ from euv_spectra_app.extensions import *
 from datetime import timedelta
 import json
 import plotly
-import pandas as pd
-import plotly
-import numpy as np
-import plotly.graph_objects as go
-from bson.objectid import ObjectId
 import os
-import pathlib
 
 from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
 from euv_spectra_app.helpers_astropy import search_nea, search_simbad, search_galex, correct_pm, convert_coords
@@ -159,7 +153,7 @@ def homepage():
             # STEP 3: Set modal show to true
             session['modal_show'] = True
             return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, targets=autofill_data)
-    flash('Website is under development. Files are not available for use yet. For testing purposes, try out object GJ 338 B.', 'warning')
+    # flash('Website is under development. Files are not available for use yet. For testing purposes, try out object GJ 338 B.', 'warning')
     return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data)
 
 
