@@ -145,4 +145,6 @@ dmypy.json
 
 .DS_STORE
 
-fits_files
+config.cfg
+flask_monitoringdashboard.db
+flask_session

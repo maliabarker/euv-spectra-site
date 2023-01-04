@@ -35,9 +35,13 @@
             </div>
         </div>
         <div class="col-lg-2 col-md-12 mt-5">
-            {% for file_id in files %}
-                <a href="/download/{{ file_id }}"><button class="btn btn-primary mb-2 small mt-5" id="flux-continue-btn"><i class="fa-solid fa-file-arrow-down"></i><small>Download Spectrum {{ loop.index }}</small></button></a>
+            {% for filename in files %}
+                <button class="btn btn-primary mb-2 small mt-5" id="flux-continue-btn" onclick="checkDirectory('{{ filename }}')"><i class="fa-solid fa-file-arrow-down"></i><small>Download Spectrum {{ loop.index }}</small></button>
+                <div id="{{filename}}-errorbox" style="color: tomato;"></div>
             {% endfor %}
+            {#<!-- {% for file_id in files %}
+                <a href="/download/{{ file_id }}"><button class="btn btn-primary mb-2 small mt-5" id="flux-continue-btn"><i class="fa-solid fa-file-arrow-down"></i><small>Download Spectrum {{ loop.index }}</small></button></a>
+            {% endfor %} -->#}
             <button class="btn btn-primary mb-2 small mt-5" id="flux-continue-btn"><i class="fa-solid fa-file-arrow-down"></i><small>Download Spectrum 1</small></button>
             <button class="btn btn-primary mb-2 small" id="flux-continue-btn"><i class="fa-solid fa-file-arrow-down"></i><small>Download Spectrum 2</small></button>
             <button class="btn btn-primary mb-2 small" id="flux-continue-btn"><i class="fa-solid fa-file-arrow-down"></i><small>Download Spectrum 3</small></button>
@@ -64,8 +68,26 @@
     </script>
     <script src="{{ url_for('static', filename='js/autocomplete.js' )}}"></script>
     <script>
-        console.log('autocomplete loaded in')
         var data = JSON.parse('{{ targets | tojson }}');
         autocomplete(document.getElementById("name-form-input-group"), data);
+    </script>
+    <script>
+        function checkDirectory(filename){
+            fetch(`/check-directory/${filename}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        // Do something if the directory exists
+                        console.log('file exists')
+                        window.location = `/download/${filename}`
+                    } else {
+                        // Do something if the directory does not exist
+                        console.log('file does not exist')
+                        errorBox = document.getElementById(`${filename}-errorbox`)
+                        errorBox.innerHTML = 'File does not exist yet, unable to download'
+                        setTimeout(function() { errorBox.style.display = 'none'; }, 5000);
+                    }
+                });
+        }
     </script>
 {% endblock %}

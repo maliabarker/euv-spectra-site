@@ -4,18 +4,18 @@ import re
 import os
 
 '''———————MONGO DATABASE STUFF———————'''
-def upload_fits_file(filepath):
-    with open(filepath, "rb") as fits_file:
-        filename = os.path.basename(filepath)
-        print(filename)
-        new_file = {
-            'name' : filename,
-            'file' : fits_file.read()
-        }
-        print(new_file)
-        fits_files.insert_one(new_file)
-        print('DONE!')
-        return 'Completed'
+# def upload_fits_file(filepath):
+#     with open(filepath, "rb") as fits_file:
+#         filename = os.path.basename(filepath)
+#         print(filename)
+#         new_file = {
+#             'name' : filename,
+#             'file' : fits_file.read()
+#         }
+#         print(new_file)
+#         fits_files.insert_one(new_file)
+#         print('DONE!')
+#         return 'Completed'
 
 
 def read_model_parameter_table(file_path):
@@ -88,6 +88,7 @@ def read_photosphere_table(file_path):
         photosphere_models.insert_one(new_model)
         print(new_model)
     return 'Completed!'
+
 
 def read_corrected_model_table(file_path, collection, mass):
     DATAPATH = file_path

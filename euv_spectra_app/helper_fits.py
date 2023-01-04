@@ -1,16 +1,7 @@
 from astropy.io import fits
-import matplotlib.pyplot as plt
 from euv_spectra_app.extensions import *
 import io
-import matplotlib
-import mpld3
-from mpld3 import plugins
-import base64
 import plotly.graph_objects as go
-
-
-matplotlib.use('agg')
-
 
 def convert_and_scale_fluxes(session, photo_fluxes):
     returned_fluxes = {
@@ -106,11 +97,19 @@ def convert_and_scale_fluxes(session, photo_fluxes):
         returned_fluxes['nuv_err'] = avg_err_nuv
     return returned_fluxes
 
+
+
 def find_fits_file(filename):
+    # Get file from file structure
+    # EXAMPLE: file = full_filepath/fits_files/{subtype}/{filename}
+    # filepath = f'/fits_files/{subtype}/{filename}'
+
     item = fits_files.find_one({'name': filename})
     if item:
         file = io.BytesIO(item['file'])
         return file
+
+
 
 def create_plotly_graph(files, model_data):
     # STEP 1: initialize figure
@@ -120,10 +119,15 @@ def create_plotly_graph(files, model_data):
     # STEP 2: for each file, add new trace with data
     i = 0
     while i <= len(files) - 1:
+        print(f'FILE {files[i]}')
         hst = fits.open(files[i])
         data = hst[1].data
         w_obs = data['WAVELENGTH'][0]
         f_obs = data['FLUX'][0]
+
+        print('FILE DATA')
+        print(w_obs[:5])
+        print(f_obs[:5])
 
         if i == 0:
             fig.add_trace(go.Scatter(x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1} (Best Match)</b> <br> FUV={round(model_data[i]['fuv'], 2)} NUV={round(model_data[i]['nuv'], 2)}", line=dict(color=colors[i], width=1)))
@@ -136,63 +140,3 @@ def create_plotly_graph(files, model_data):
                       yaxis=dict(title='Flux Density (erg/cm2/s/Å)', type='log', range=[-4, 7], tickformat='e'),
                       showlegend=True)
     return fig
-
-
-
-
-# def create_graph(files, model_data):
-#     # STEP 1: initialize plot
-#     # fig = plt.figure()
-#     fig, ax = plt.subplots()
-#     fig.set_size_inches(12, 4)
-#     colors = ['#2E42FC', "#7139F1", "#9A33EA", "#C32DE3", "#EE26DB", "#FE63A0", "#FE8F77", "#FDAE5A"]
-
-#     # STEP 2: open each file and append data as new line
-#     collections = []
-#     i = 0
-#     while i <= len(files) - 1:
-#         hst = fits.open(files[i])
-#         data = hst[1].data
-#         w_obs = data['WAVELENGTH'][0]
-#         f_obs = data['FLUX'][0]
-#         if i == 0:
-#             line = ax.plot(w_obs, f_obs, color=colors[i], label=f"Spectrum {i+1} (Best Match), FUV={round(model_data[i]['fuv'], 2)}, NUV={round(model_data[i]['nuv'], 2)}", linewidth=1.0)
-#             collections.append(line)
-#         else:
-#             line = ax.plot(w_obs, f_obs, color=colors[i], label=f"Spectrum {i+1}, FUV={round(model_data[i]['fuv'], 2)}, NUV={round(model_data[i]['nuv'], 2)}", linewidth=1.0)
-#             collections.append(line)
-#         i += 1
-
-#     # define interactive legend
-#     handles, labels = ax.get_legend_handles_labels() # return lines and labels
-#     # print(handles, labels)
-
-#     plugins.connect(fig, plugins.InteractiveLegendPlugin(collections,
-#                                                          labels,
-#                                                          alpha_unsel=0.5,
-#                                                          alpha_over=0.5, 
-#                                                          start_visible=True,
-#                                                         #  legend_offset=(-1200, -50)
-#                                                          ))
-    
-#     # STEP 3: Add some styles—axes labels, scale, add limits, and legend
-#     ax.set_xlabel('Wavelength (Å)')
-#     ax.set_ylabel('Flux Density (erg/cm2/s/Å)')
-#     ax.set_yscale('log')
-#     ax.set_xlim(10,3000)
-#     ax.set_ylim(1e-4,1e+7)
-#     fig.subplots_adjust(left=0.05, right=0.75, wspace=None)
-
-#     # <!-- Add legend for lines (with intent of plotting all matching chi squared lines on single graph) -->
-
-#     # STEP 4: Return the final figure
-#     return fig
-
-# def convert_fig_to_html(fig):
-#     html_string = mpld3.fig_to_html(fig, template_type='general')
-#     return html_string
-
-#read_fits('/Users/maliabarker/Desktop/NASA/EUV_Spectra_Site/euv_spectra_app/static/fits_files/M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits')
-
-#file = find_fits_file('M0.Teff=3850.logg=4.78.TRgrad=7.5.cmtop=5.5.cmin=3.5.7.gz.fits')
-#html_str = create_graph(file, 'M0')

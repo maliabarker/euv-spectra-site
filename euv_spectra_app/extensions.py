@@ -3,8 +3,7 @@ from flask_mail import Mail
 from pymongo import MongoClient
 from os import environ
 from euv_spectra_app.config import Config
-import gridfs
-
+import flask_monitoringdashboard as dashboard
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -12,12 +11,14 @@ app.secret_key = environ.get('SECRET_KEY')
 mail = Mail(app)
 app.jinja_env.filters['zip'] = zip
 
+dashboard.config.init_from(file='/config.py')
+dashboard.bind(app)
+
 # ======= DB Setup ==========
 uri = environ.get('MONGODB_URI')
 client = MongoClient(uri)
 my_db = environ.get('MONGODB_DATABASE')
 db = client.get_database(my_db)
-grid_fs = gridfs.GridFS(db)
 # ===========================
 
 # ======= Collections ==========

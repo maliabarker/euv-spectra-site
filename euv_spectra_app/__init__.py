@@ -1,5 +1,4 @@
 # initializing main and database
-
 from flask import Flask
 from euv_spectra_app.config import Config
 from flask_session import Session

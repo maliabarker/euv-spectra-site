@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, redirect, url_for, session, flash, send_file
+from flask import Blueprint, request, render_template, redirect, url_for, session, flash, current_app, send_from_directory, jsonify
 from flask_mail import Message
 from euv_spectra_app.extensions import *
 from datetime import timedelta
@@ -9,6 +9,8 @@ import plotly
 import numpy as np
 import plotly.graph_objects as go
 from bson.objectid import ObjectId
+import os
+import pathlib
 
 from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
 from euv_spectra_app.helpers_astropy import search_nea, search_simbad, search_galex, correct_pm, convert_coords
@@ -275,9 +277,10 @@ def return_results():
 
         # STEP 6: Find all matches in model grid within upper and lower limits of galex fluxes
         models_in_limits = list(get_models_within_limits(session, model_collection, models_with_chi_squared))
-        test_file = find_fits_file('M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits') # TEST FILE
-        test_id = fits_files.find_one({"name": 'M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits'})['_id']
-        print(f'TEST ID: {test_id}')
+
+
+        test_filepath = os.path.abspath(f"euv_spectra_app/fits_files/M0/M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits")
+        test_filename = "M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits"
 
         # TODO return from lowest chi squared -> highest
         # TODO return euv flux as <euv_flux> +/- difference from model
@@ -289,24 +292,20 @@ def return_results():
 
             #STEP 8.1: Read FITS file from matching model and create graph from data
             filename = models_with_chi_squared[0]['fits_filename']
-            file = find_fits_file(filename)
-            file_id = fits_files.find_one({"name": filename})
-            if file_id:
-                file_id = fits_files.find_one({"name": filename})['_id']
+            filepath = os.path.abspath(f"euv_spectra_app/fits_files/{session['model_subtype']}/{filename}")
 
-            # CATCH: For testing purposes, if fits file is not available yet, flash warning and use test file
-            if file == None:
+            if os.path.exists(filepath) == False:
                 flash('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
-                file = test_file
-                file_id = test_id
+                filepath = test_filepath
+                filename = test_filename
 
             data = [{'chi_squared': models_with_chi_squared[0]['chi_squared'], 'fuv': models_with_chi_squared[0]['fuv'], 'nuv': models_with_chi_squared[0]['nuv']}]
 
-            plotly_fig = create_plotly_graph([file], data)
+            plotly_fig = create_plotly_graph([filepath], data)
             graphJSON = json.dumps(plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
 
             flash('No results found within upper and lower limits of UV fluxes. Returning document with nearest chi squared value.', 'warning')
-            return render_template('result.html', subtype=matching_subtype, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=[file_id])
+            return render_template('result.html', subtype=matching_subtype, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=[filename])
         else:
             # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
             # print(f'MODELS WITHIN LIMITS: {len(list(models_in_limits))}')
@@ -320,22 +319,16 @@ def return_results():
                         results.append(y)
 
             #STEP 8.2: Read all FITS files from matching models and create graph from data
-
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            # TODO make sure this matches functionality of graph function (what is data vs chi squared vals, aren't they the same thing?)
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            file_ids = []
-            files = []
+            filenames = []
+            filepaths = []
             data = []
             for doc in results:
                 # print('DOC')
                 # print(doc)
-                file = find_fits_file(doc['fits_filename'])
-                if file:
-                    # print('FILE FOUND')
-                    # print(file)
-                    file_ids.append(doc['_id'])
-                    files.append(file)
+                filepath = os.path.abspath(f"euv_spectra_app/fits_files/{session['model_subtype']}/{doc['fits_filename']}")
+                if os.path.exists(filepath):
+                    filenames.append(doc['fits_filename'])
+                    filepaths.append(filepath)
                     file_data = {
                         'chi_squared': doc['chi_squared'],
                         'fuv': doc['fuv'],
@@ -343,59 +336,58 @@ def return_results():
                     }
                     data.append(file_data)
                 else:
-                    # print('USING TEST FILE')
                     file_data = {
                         'chi_squared': doc['chi_squared'],
                         'fuv': doc['fuv'],
                         'nuv': doc['nuv']
                     }
                     data.append(file_data)
-                    files.append(test_file)
-                    file_ids.append(test_id)
+                    filepaths.append(test_filepath)
+                    filenames.append(test_filename)
                     flash('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
             
-            plotly_fig = create_plotly_graph(files, data)
+            plotly_fig = create_plotly_graph(filepaths, data)
             graphJSON = json.dumps(plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
             flash(f'{len(list(models_in_limits))} results found within your submitted parameters', 'success')
-            return render_template('result.html', subtype=matching_subtype, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=file_ids)
+            return render_template('result.html', subtype=matching_subtype, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=filenames)
     else:
         flash('Submit the required data to view this page.', 'warning')
         return redirect(url_for('main.homepage'))
 
 
+@app.route('/check-directory/<filename>')
+def check_directory(filename):
+    downloads = os.path.join(current_app.root_path, app.config['FITS_FOLDER'], session['model_subtype'])
+    if os.path.exists(os.path.join(downloads, filename)):
+        return jsonify({'exists': True})
+    else:
+        return jsonify({'exists': False})
 
-@app.route('/download/<file_id>')
-def download_file(file_id):
-    # Retrieve the file from the database
-    objInst = ObjectId(file_id)
-    file = fits_files.find_one({'_id': objInst})
-    # Send the file to the client
-    return send_file(
-        file,
-        as_attachment=True,
-        download_name=file['name']
-    )
+
+@app.route('/download/<filename>', methods=['GET', 'POST'])
+def download(filename):
+    downloads = os.path.join(current_app.root_path, app.config['FITS_FOLDER'], session['model_subtype'])
+    if not os.path.exists(os.path.join(downloads, filename)):
+        flash('File is not available to download because it does not exist yet!')
+    return send_from_directory(downloads, filename, as_attachment=True, download_name=filename)
+
+
+
 
 '''————————————ABOUT PAGE————————————'''
 @main.route('/about', methods=['GET'])
 def about():
     return render_template('about.html')
 
-
-
 '''————————————FAQ PAGE————————————'''
 @main.route('/faqs', methods=['GET'])
 def faqs():
     return render_template('faqs.html')
 
-
-
 '''————————————ALL SPECTRA PAGE————————————'''
 @main.route('/all-spectra', methods=['GET'])
 def index_spectra():
     return render_template('index-spectra.html')
-
-
 
 '''————————————Acknowledgements PAGE————————————'''
 @main.route('/acknowledgements', methods=['GET'])
