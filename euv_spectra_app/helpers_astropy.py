@@ -101,9 +101,9 @@ def search_galex(ra, dec):
                     fluxes[key] = 'No Detection'
             return_info['data'] = fluxes
         else:
-            return_info['error_msg'] = 'No data points with distance under 10 arcsec'
+            return_info['error_msg'] = 'No detection in GALEX FUV and NUV. Look under question 3 on the FAQ page for more information.'
     else:
-        return_info['error_msg'] = 'Nothing found for this target'
+        return_info['error_msg'] = 'No detection in GALEX FUV and NUV. Look under question 3 on the FAQ page for more information.'
     return return_info
 '''—————————GALEX END—————————'''
 
@@ -119,7 +119,7 @@ def correct_pm(data, star_name):
     try:
         galex_time = mast_galex_times.find_one({'target': star_name})['t_min']
     except:
-        return_info['error_msg'] = 'No GALEX Observations Available'
+        return_info['error_msg'] = 'No detection in GALEX FUV and NUV. Look under question 3 on the FAQ page for more information.'
     else:
         try:
             # print('Correcting coords...')

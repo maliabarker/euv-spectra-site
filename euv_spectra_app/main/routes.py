@@ -8,7 +8,7 @@ import os
 
 from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
 from euv_spectra_app.helpers_astropy import search_nea, search_simbad, search_galex, correct_pm, convert_coords
-from euv_spectra_app.helper_fits import convert_and_scale_fluxes, find_fits_file, create_plotly_graph
+from euv_spectra_app.helper_fits import convert_and_scale_fluxes, create_plotly_graph
 from euv_spectra_app.helper_queries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_lowest_fuv
 
 # Used when importing new data into mongodb atlas
@@ -269,9 +269,15 @@ def return_results():
         # print('FUV ONLY')
         # print(models_with_lowest_fuv[:5])
 
+        '''————————————————————'''
+        # TODO 
+        # if no models within limits, check for FUV and NUV chi squared values
+        # if chi squared FUV < chi squared NUV, return minimum chi squared of both added
+        # ONLY looking at models that have FUV x^2 < NUV x^2
+        '''————————————————————'''
+
         # STEP 6: Find all matches in model grid within upper and lower limits of galex fluxes
         models_in_limits = list(get_models_within_limits(session, model_collection, models_with_chi_squared))
-
 
         test_filepath = os.path.abspath(f"euv_spectra_app/fits_files/M0/M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits")
         test_filename = "M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits"

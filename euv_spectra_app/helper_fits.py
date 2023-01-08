@@ -99,15 +99,15 @@ def convert_and_scale_fluxes(session, photo_fluxes):
 
 
 
-def find_fits_file(filename):
-    # Get file from file structure
-    # EXAMPLE: file = full_filepath/fits_files/{subtype}/{filename}
-    # filepath = f'/fits_files/{subtype}/{filename}'
+# def find_fits_file(filename):
+#     # Get file from file structure
+#     # EXAMPLE: file = full_filepath/fits_files/{subtype}/{filename}
+#     # filepath = f'/fits_files/{subtype}/{filename}'
 
-    item = fits_files.find_one({'name': filename})
-    if item:
-        file = io.BytesIO(item['file'])
-        return file
+#     item = fits_files.find_one({'name': filename})
+#     if item:
+#         file = io.BytesIO(item['file'])
+#         return file
 
 
 
