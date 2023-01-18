@@ -13,7 +13,7 @@ We face an issue today in which we are unable to observe and measure EUV wavelen
 
 _**The Solution**_ </br>
 We can build synthetic models with atmospheric code—in this case, the PHOENIX code—to predict the EUV radiation coming from a star. Instead of building a painstakingly long list of simulated atmospheres for specific target stars, we built a generalized grid of stellar subtypes. Each subtype has a unique combination of stellar effective temperature, surface gravity, and mass, shown in the image below. </br>
-![The PEGASUS Grid Stellar Parameters](https://github.com/maliabarker/euv-spectra-site/blob/main/euv_spectra_app/static/imgs/model_grid.png) </br>
+<img src="https://github.com/maliabarker/euv-spectra-site/blob/main/euv_spectra_app/static/imgs/model_grid.png" width="300"> </br>
 Each subtype has its own subgrid of 72 data points, each with unique values of FUV, NUV, and EUV flux densities in ergs/cm2/s/Å. 
 
 ### The Webtool
