@@ -10,7 +10,7 @@ from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm
 from euv_spectra_app.helpers_astroquery import populate_modal
 from euv_spectra_app.helpers_flux import convert_and_scale_fluxes
 from euv_spectra_app.helpers_graph import create_plotly_graph
-from euv_spectra_app.helper_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_lowest_fuv
+from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_lowest_fuv
 
 # Used when importing new data into mongodb atlas
 # from euv_spectra_app.helpers_db import *
@@ -34,6 +34,7 @@ def homepage():
     # session.clear()
     print(session)
     session['modal_show'] = False
+    res = None
 
     parameter_form = ParameterForm()
     name_form = StarNameForm()
@@ -53,16 +54,16 @@ def homepage():
             if res['error_msg'] != None:
                 return redirect(url_for('main.error', msg=res['error_msg']))
 
-            # STEP 8: Store this data for later use (repopulating model, validation) and return the return_data object
+            # STEP 2: Store this data for later use (repopulating model, validation) and return the return_data object
             session['modal_choices'] = json.dumps(res['radio_choices'], allow_nan=True)
             session['search_term'] = res['search_term']
 
-            # STEP 2: Declare the form and add the radio choices dynamically for each radio input on the form
+            # STEP 3: Declare the form and add the radio choices dynamically for each radio input on the form
             for key, val in res['radio_choices'].items():
                 radio_input = getattr(star_name_parameters_form, key)
                 radio_input.choices.insert(0, (val, val))
 
-            # STEP 3: Set modal show to true
+            # STEP 4: Set modal show to true
             session['modal_show'] = True
             return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, targets=autofill_data)
             
@@ -77,16 +78,16 @@ def homepage():
             if res['error_msg'] != None:
                 return redirect(url_for('main.error', msg=res['error_msg']))
 
-            # STEP 8: Store this data for later use (repopulating model, validation) and return the return_data object
+            # STEP 2: Store this data for later use (repopulating model, validation) and return the return_data object
             session['modal_choices'] = json.dumps(res['radio_choices'], allow_nan=True)
             session['search_term'] = res['search_term']
 
-            # STEP 2: Declare the form and add the radio choices dynamically for each radio input on the form
+            # STEP 3: Declare the form and add the radio choices dynamically for each radio input on the form
             for key, val in res['radio_choices'].items():
                 radio_input = getattr(star_name_parameters_form, key)
                 radio_input.choices.insert(0, (val, val))
 
-            # STEP 3: Set modal show to true
+            # STEP 4: Set modal show to true
             session['modal_show'] = True
             return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, targets=autofill_data)
     flash('Website is under development. Files are not available for use yet. For testing purposes, try out object GJ 338 B.', 'warning')

@@ -127,9 +127,9 @@ def search_nea(search_input, search_format):
             # print(data)
             # print(star_info)
         else:
-            return_info['error_msg'] = 'Target is not an M or K type star. Data is currently only available for these spectral sybtypes. Please contact us with your target and parameters if you think this is a mistake.'
+            return_info['error_msg'] = 'Target is not an M or K type star. Data is currently only available for these spectral sybtypes. \nPlease contact us with your target and parameters if you think this is a mistake.'
     else:
-        return_info['error_msg'] = 'Nothing found for this target in the NASA exoplanet archive. Please check spelling or coordinate format.'
+        return_info['error_msg'] = f'Nothing found for {search_input} in the NASA exoplanet archive. \nPlease check spelling or coordinate format.'
     return(return_info)
 
 
@@ -159,7 +159,7 @@ def search_simbad(search_input):
             'rad_vel': data['RV_VALUE']
         }
     else:
-        return_info['error_msg'] = 'No target found for that star name in Simbad. Please check spelling or coordinate format.'
+        return_info['error_msg'] = f'No target found for {search_input} in Simbad. \nPlease check spelling or coordinate format.'
     return return_info
 
 
@@ -195,9 +195,9 @@ def search_galex(ra, dec):
                     fluxes[key] = 'No Detection'
             return_info['data'] = fluxes
         else:
-            return_info['error_msg'] = 'No detection in GALEX FUV and NUV. Look under question 3 on the FAQ page for more information.'
+            return_info['error_msg'] = 'No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
     else:
-        return_info['error_msg'] = 'No detection in GALEX FUV and NUV. Look under question 3 on the FAQ page for more information.'
+        return_info['error_msg'] = 'No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
     return return_info
 
 
@@ -220,7 +220,7 @@ def correct_pm(data, star_name):
     try:
         galex_time = mast_galex_times.find_one({'target': star_name})['t_min']
     except:
-        return_info['error_msg'] = 'No detection in GALEX FUV and NUV. Look under question 3 on the FAQ page for more information.'
+        return_info['error_msg'] = 'No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
     else:
         try:
             # STEP 3: If observation time is found, start coordinate correction by initializing variables
@@ -245,7 +245,7 @@ def correct_pm(data, star_name):
                 'dec' : c.dec.degree
             }
         except:
-            return_info['error_msg'] = 'Could not correct coordinates'
+            return_info['error_msg'] = 'Could not correct coordinates.'
     return return_info
 
 
@@ -270,7 +270,7 @@ def convert_coords(coords):
             'skycoord_obj' : c
         }
     except:
-        return_info['error_msg'] = 'Error converting coordinates, please check your format and try again.'
+        return_info['error_msg'] = f'Error converting your coordinates {coords}. \nPlease check your format and try again.'
     return return_info
 
 
