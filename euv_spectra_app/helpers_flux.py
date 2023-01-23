@@ -1,9 +1,10 @@
-from astropy.io import fits
-from euv_spectra_app.extensions import *
-import io
-import plotly.graph_objects as go
-
 def convert_and_scale_fluxes(session, photo_fluxes):
+    '''
+    Helper function for processing flux values before matching on the model database
+    STEP 1: CONVERT & Compute scale value
+    STEP 2: Check if any fluxes are null (don't continue if true)
+    STEP 3: Convert GALEX mJy to erg/s/cm2/A
+    '''
     returned_fluxes = {
         'fuv': session['fuv'],
         'fuv_err': session['fuv_err'],
@@ -96,47 +97,3 @@ def convert_and_scale_fluxes(session, photo_fluxes):
         returned_fluxes['nuv'] = photospheric_subtracted_nuv
         returned_fluxes['nuv_err'] = avg_err_nuv
     return returned_fluxes
-
-
-
-# def find_fits_file(filename):
-#     # Get file from file structure
-#     # EXAMPLE: file = full_filepath/fits_files/{subtype}/{filename}
-#     # filepath = f'/fits_files/{subtype}/{filename}'
-
-#     item = fits_files.find_one({'name': filename})
-#     if item:
-#         file = io.BytesIO(item['file'])
-#         return file
-
-
-
-def create_plotly_graph(files, model_data):
-    # STEP 1: initialize figure
-    fig = go.Figure()
-    colors = ['#2E42FC', "#7139F1", "#9A33EA", "#C32DE3", "#EE26DB", "#FE63A0", "#FE8F77", "#FDAE5A"]
-    
-    # STEP 2: for each file, add new trace with data
-    i = 0
-    while i <= len(files) - 1:
-        print(f'FILE {files[i]}')
-        hst = fits.open(files[i])
-        data = hst[1].data
-        w_obs = data['WAVELENGTH'][0]
-        f_obs = data['FLUX'][0]
-
-        print('FILE DATA')
-        print(w_obs[:5])
-        print(f_obs[:5])
-
-        if i == 0:
-            fig.add_trace(go.Scatter(x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1} (Best Match)</b> <br> FUV={round(model_data[i]['fuv'], 2)} NUV={round(model_data[i]['nuv'], 2)}", line=dict(color=colors[i], width=1)))
-        else:
-            fig.add_trace(go.Scatter(x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1}</b> <br> FUV={round(model_data[i]['fuv'], 2)} NUV={round(model_data[i]['nuv'], 2)}", line=dict(color=colors[i], width=1)))
-        i += 1
-
-    # STEP 3: Add additional styling
-    fig.update_layout(xaxis=dict(title='Wavelength (Å)', range=[10, 3000]),
-                      yaxis=dict(title='Flux Density (erg/cm2/s/Å)', type='log', range=[-4, 7], tickformat='e'),
-                      showlegend=True)
-    return fig

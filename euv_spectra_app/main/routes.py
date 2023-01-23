@@ -7,91 +7,19 @@ import plotly
 import os
 
 from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
-from euv_spectra_app.helpers_astropy import search_nea, search_simbad, search_galex, correct_pm, convert_coords
-from euv_spectra_app.helper_fits import convert_and_scale_fluxes, create_plotly_graph
-from euv_spectra_app.helper_queries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_lowest_fuv
+from euv_spectra_app.helpers_astroquery import populate_modal
+from euv_spectra_app.helpers_flux import convert_and_scale_fluxes
+from euv_spectra_app.helpers_graph import create_plotly_graph
+from euv_spectra_app.helper_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_lowest_fuv
 
 # Used when importing new data into mongodb atlas
 # from euv_spectra_app.helpers_db import *
 
 main = Blueprint("main", __name__)
 
-
-'''————————— HELPER FUNCTION FOR SEARCHING OBJECT/POSITION & RETURNING FOR MODAL POPULATION —————————'''
-def populate_modal(search_term, search_type):
-    # print(search_term, search_type)
-
-    session["search_term"] = search_term
-    galex_coords = None
-
-    return_data = {
-        'error_msg': None,
-        'radio_choices': None
-    }
-
-    if search_type == 'position':
-        # STEP 1: Assign search term to coords
-        coords = session["search_term"]
-
-        # STEP 2: Change coordinates to ra and dec
-        converted_coords = convert_coords(coords)
-        if converted_coords['error_msg'] != None:
-            return_data['error_msg'] = converted_coords['error_msg']
-            return return_data
-
-        galex_coords = converted_coords
-        search_term = converted_coords['data']['skycoord_obj']
-
-    elif search_type == 'name':
-        # STEP 1: store name data in session
-        star_name = session["search_term"]
-
-        # STEP 2: Get coordinate and motion info from Simbad
-        simbad_data = search_simbad(star_name)
-        if simbad_data['error_msg'] != None:
-            return_data['error_msg'] = simbad_data['error_msg']
-            return return_data
-
-        # STEP 3: Put PM and Coord info into correction function
-        corrected_coords = correct_pm(simbad_data['data'], star_name)
-        # print(f'CORRECTED COORDS {corrected_coords}')
-        if corrected_coords['error_msg'] != None:
-            return_data['error_msg'] = corrected_coords['error_msg']
-            return return_data
-
-        galex_coords = corrected_coords
-        
-    # STEP 4: Search GALEX with corrected or converted coords
-    galex_data = search_galex(galex_coords['data']['ra'], galex_coords['data']['dec'])
-    if galex_data['error_msg'] != None:
-        return_data['error_msg'] = galex_data['error_msg']
-        return return_data
-
-    nea_data = search_nea(search_term, search_type)
-    if nea_data['error_msg'] != None:
-        return_data['error_msg'] = nea_data['error_msg']
-        return return_data
-
-    # STEP 5: Query all catalogs and append them to the final catalogs list if there are no errors
-    catalog_data = [nea_data, galex_data]
-    final_catalogs = [catalog for catalog in catalog_data if catalog['error_msg'] == None]
-
-    # STEP 6: Append each type of data into its own key value pair
-    data = {key: dict['data'][key] for dict in final_catalogs for key in dict['data']}
-    return_data['radio_choices'] = data
-
-    # print(return_data['radio_choices'])
-
-    # STEP 7: Store this data for later use (repopulating model, validation)
-    session['modal_choices'] = json.dumps(return_data['radio_choices'], allow_nan=True)
-    return return_data
-
-
-
 @main.context_processor
 def inject_form():
     return dict(contact_form=ContactForm())
-
 
 @main.before_request
 def make_session_permanent():
@@ -125,6 +53,10 @@ def homepage():
             if res['error_msg'] != None:
                 return redirect(url_for('main.error', msg=res['error_msg']))
 
+            # STEP 8: Store this data for later use (repopulating model, validation) and return the return_data object
+            session['modal_choices'] = json.dumps(res['radio_choices'], allow_nan=True)
+            session['search_term'] = res['search_term']
+
             # STEP 2: Declare the form and add the radio choices dynamically for each radio input on the form
             for key, val in res['radio_choices'].items():
                 radio_input = getattr(star_name_parameters_form, key)
@@ -144,6 +76,10 @@ def homepage():
             
             if res['error_msg'] != None:
                 return redirect(url_for('main.error', msg=res['error_msg']))
+
+            # STEP 8: Store this data for later use (repopulating model, validation) and return the return_data object
+            session['modal_choices'] = json.dumps(res['radio_choices'], allow_nan=True)
+            session['search_term'] = res['search_term']
 
             # STEP 2: Declare the form and add the radio choices dynamically for each radio input on the form
             for key, val in res['radio_choices'].items():
