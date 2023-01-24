@@ -31,9 +31,11 @@
                     </div>
                 {% endif %}
                 {% for category, message in get_flashed_messages(with_categories=true) %}
-                    <div class="alert alert-{{category}} mt-2" role="alert">
-                        {{ message }}
-                    </div>
+                    {% if 'substitution' in message %}
+                        <div class="alert alert-{{category}} mt-2" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endif %}
                 {% endfor %}
                 
                 <!--—————————MODAL FORM——————————-->

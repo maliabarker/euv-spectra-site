@@ -10,7 +10,7 @@ from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm
 from euv_spectra_app.helpers_astroquery import populate_modal
 from euv_spectra_app.helpers_flux import convert_and_scale_fluxes
 from euv_spectra_app.helpers_graph import create_plotly_graph
-from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_lowest_fuv
+from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv
 
 # Used when importing new data into mongodb atlas
 # from euv_spectra_app.helpers_db import *
@@ -174,67 +174,54 @@ def return_results():
 
     #TODO find a better way to check that all data needed is here before continuing
     if session.get('teff') and session.get('logg') and session.get('mass') and session.get('stell_rad') and session.get('dist'):
+        '''———————————FOR TESTING PURPOSES (Test file)——————————'''
+        test_filepath = os.path.abspath(f"euv_spectra_app/fits_files/M0/M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits")
+        test_filename = "M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits"
+        
         # STEP 1: Search the model_parameter_grid collection to find closest matching subtype
         matching_subtype = find_matching_subtype(session)
         session['model_subtype'] = matching_subtype['model']
-
         #STEP 2: Find closest matching photosphere model and get flux values
         matching_photospheric_flux = find_matching_photosphere(session)
-
-        #STEP 3: Convert, scale, and subtract photospheric contribution from fluxes (more detail in function)
+        #STEP 3: Convert, scale, and subtract photospheric contribution from fluxes
         corrected_fluxes = convert_and_scale_fluxes(session, matching_photospheric_flux)
         session['corrected_nuv'] = corrected_fluxes['nuv']
         session['corrected_nuv_err'] = corrected_fluxes['nuv_err']
         session['corrected_fuv'] = corrected_fluxes['fuv']
         session['corrected_fuv_err'] = corrected_fluxes['fuv_err']
-        # print('CORRECTED FLUXES')
-        # print(session)
-
         # STEP 4: Check if model subtype data exists in database
         model_collection = f'{session["model_subtype"].lower()}_grid'
         if model_collection not in db.list_collection_names():
-            return redirect(url_for('main.error', msg=f'The grid for model subtype {session["model_subtype"]} is currently unavailable. Currently available subtypes: M0, M3, M4, M6. Please contact us with your stellar parameters and returned subtype if you think this is incorrect.'))
+            return redirect(url_for('main.error', msg=f'The grid for model subtype {session["model_subtype"]} is currently unavailable. Currently available subtypes: M0, M3, M4, M6. \nPlease contact us with your stellar parameters and returned subtype if you think this is incorrect.'))
         
-        # STEP 5: Do chi squared test between all models within selected subgrid and corrected observation ** this is on models with subtracted photospheric flux
+
+        # STEP 5: Do chi squared test between all models within selected subgrid and corrected observation
         models_with_chi_squared = list(get_models_with_chi_squared(session, model_collection))
-        # print(models_with_chi_squared[:5])
-
-        models_with_lowest_fuv = list(get_models_with_lowest_fuv(session, model_collection))
-        # print('FUV ONLY')
-        # print(models_with_lowest_fuv[:5])
-
-        '''————————————————————'''
-        # TODO 
-        # if no models within limits, check for FUV and NUV chi squared values
-        # if chi squared FUV < chi squared NUV, return minimum chi squared of both added
-        # ONLY looking at models that have FUV x^2 < NUV x^2
-        '''————————————————————'''
+        # print(f'MODELS w/ X2: {models_with_chi_squared[:5]}')
 
         # STEP 6: Find all matches in model grid within upper and lower limits of galex fluxes
-        models_in_limits = list(get_models_within_limits(session, model_collection, models_with_chi_squared))
-
-        test_filepath = os.path.abspath(f"euv_spectra_app/fits_files/M0/M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits")
-        test_filename = "M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits"
+        models_in_limits = list(get_models_within_limits(session, model_collection))
+        print(f'MODELS w/i LIMITS: {models_in_limits[:5]}')
 
         # TODO return from lowest chi squared -> highest
         # TODO return euv flux as <euv_flux> +/- difference from model
         
         if len(list(models_in_limits)) == 0:
-            # STEP 7.1: If there are no models found within limits, return model with lowest chi squared value
-            # print('Nothing found within limits, MODEL W CHI SQUARED')
-            # print(models_with_chi_squared[0])
+            # STEP 7.1: If there are no models found within limits, return models ONLY with FUV < NUV, return with chi squared values
+            models_weighted = get_models_with_weighted_fuv(session, model_collection)
+            print(f'WEIGHTED MODELS: {models_weighted[:5]}')
 
             #STEP 8.1: Read FITS file from matching model and create graph from data
             filename = models_with_chi_squared[0]['fits_filename']
             filepath = os.path.abspath(f"euv_spectra_app/fits_files/{session['model_subtype']}/{filename}")
-
+            
+            '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
             if os.path.exists(filepath) == False:
                 flash('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
                 filepath = test_filepath
                 filename = test_filename
 
             data = [{'chi_squared': models_with_chi_squared[0]['chi_squared'], 'fuv': models_with_chi_squared[0]['fuv'], 'nuv': models_with_chi_squared[0]['nuv']}]
-
             plotly_fig = create_plotly_graph([filepath], data)
             graphJSON = json.dumps(plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
 
@@ -242,10 +229,6 @@ def return_results():
             return render_template('result.html', subtype=matching_subtype, star_name_parameters_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=[filename])
         else:
             # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
-            # print(f'MODELS WITHIN LIMITS: {len(list(models_in_limits))}')
-            # for doc in models_in_limits:
-            #     print(doc)
-
             results = []
             for x in models_in_limits:
                 for y in models_with_chi_squared:
@@ -270,6 +253,7 @@ def return_results():
                     }
                     data.append(file_data)
                 else:
+                    '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
                     file_data = {
                         'chi_squared': doc['chi_squared'],
                         'fuv': doc['fuv'],

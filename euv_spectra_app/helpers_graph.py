@@ -11,16 +11,14 @@ def create_plotly_graph(files, model_data):
     # STEP 2: for each file, add new trace with data
     i = 0
     while i <= len(files) - 1:
-        print(f'FILE {files[i]}')
+        # print(f'FILE {files[i]}')
         hst = fits.open(files[i])
         data = hst[1].data
         w_obs = data['WAVELENGTH'][0]
         f_obs = data['FLUX'][0]
-
-        print('FILE DATA')
-        print(w_obs[:5])
-        print(f_obs[:5])
-
+        # print('FILE DATA')
+        # print(w_obs[:5])
+        # print(f_obs[:5])
         if i == 0:
             fig.add_trace(go.Scatter(x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1} (Best Match)</b> <br> FUV={round(model_data[i]['fuv'], 2)} NUV={round(model_data[i]['nuv'], 2)}", line=dict(color=colors[i], width=1)))
         else:

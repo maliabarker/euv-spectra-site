@@ -42,9 +42,11 @@
         
         <div class="container">
             {% for category, message in get_flashed_messages(with_categories=true) %}
-                <div class="alert alert-{{category}} mt-2" role="alert">
-                    {{ message }}
-                </div>
+                {% if 'substitution' not in message %}
+                    <div class="alert alert-{{category}} mt-2" role="alert">
+                        {{ message }}
+                    </div>
+                {% endif %}
             {% endfor %}
 
             {% block content %}{% endblock %}
