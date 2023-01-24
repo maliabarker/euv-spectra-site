@@ -14,7 +14,7 @@
                 {% if active_page == 'home' %}
                     <a href="/"><button class="btn-close mx-3" data-bs-dismiss="modal" aria-label="Close"></button></a>
                 {% else %}
-                    <button class="btn-close me-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button class="btn-close mx-3" data-bs-dismiss="modal" aria-label="Close"></button>
                 {% endif %}
 
                 {#<!-- {% if 'results' in request.referrer %}
@@ -30,6 +30,11 @@
                         Oops! Some fields are missing, please review form and submit again.
                     </div>
                 {% endif %}
+                {% for category, message in get_flashed_messages(with_categories=true) %}
+                    <div class="alert alert-{{category}} mt-2" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
                 
                 <!--—————————MODAL FORM——————————-->
                 {% include 'partials/modal_form.html' %}

@@ -23,7 +23,6 @@ def populate_modal(search_input, search_format):
         Keys are names of radio buttons (ex: teff, mass, logg)
         Values include corresponding data returned from Astroquery database queries
     '''
-
     # STEP 1: Assign terms used by function that will be declared in in 'if' statements
     galex_coords = None
     # STEP 2: Initialize the dictionary that will be returned to the route
@@ -32,7 +31,6 @@ def populate_modal(search_input, search_format):
         'search_term': search_input,
         'radio_choices': None
     }
-
     # STEP 3: Check for search type (position or name)
     if search_format == 'position':
         # IF POSITION
@@ -65,32 +63,27 @@ def populate_modal(search_input, search_format):
         # STEP N4: Return the coordinates that will be put into GALEX search and assign new search term
         return_data['search_term'] = search_input
         galex_coords = corrected_coords
-        
-    # STEP 4: Search GALEX with corrected/converted coords
-    galex_data = search_galex(galex_coords['data']['ra'], galex_coords['data']['dec'])
-    if galex_data['error_msg'] != None:
-        return_data['error_msg'] = galex_data['error_msg']
-        return return_data
-
-    # STEP 5: Search NASA Exoplanet Archive with the search term & type
+    # STEP 4: Search NASA Exoplanet Archive with the search term & type
     nea_data = search_nea(search_input, search_format)
     if nea_data['error_msg'] != None:
         return_data['error_msg'] = nea_data['error_msg']
         return return_data
 
+    j_band = nea_data['data'].pop('j_band')
+    # STEP 5: Search GALEX with corrected/converted coords
+    galex_data = search_galex(galex_coords['data']['ra'], galex_coords['data']['dec'], j_band)
+    if galex_data['error_msg'] != None:
+        return_data['error_msg'] = galex_data['error_msg']
     # STEP 6: Append data to the final catalogs list if there are no errors
     catalog_data = [nea_data, galex_data]
-    final_catalogs = [catalog for catalog in catalog_data if catalog['error_msg'] == None]
-
     # STEP 7: Append each type of data (this will be the temp, mass, etc.) into its own key value pair
-    data = {key: dict['data'][key] for dict in final_catalogs for key in dict['data']}
+    data = {key: dict['data'][key] for dict in catalog_data for key in dict['data']}
     return_data['radio_choices'] = data
-
     # STEP 8: Return the return_data dict object
     return return_data
-
-
-
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
 def search_nea(search_input, search_format):
     '''
     * HELPER FUNCTION FOR SEARCHING THE NASA EXOPLANET ARCHIVE BY OBJECT/POSITION FOR STELLAR PARAMETERS *
@@ -100,10 +93,9 @@ def search_nea(search_input, search_format):
         Keys are data objects (ex: teff, mass, logg)
         Values are corresponding data values
     '''
-
     nea_data = []
     if search_format == 'name':
-        nea_data = NasaExoplanetArchive.query_criteria(table="pscomppars", select="top 5 disc_refname, st_spectype, st_teff, st_logg, st_mass, st_rad, sy_dist", where=f"hostname like '%{search_input}%'", order="hostname")
+        nea_data = NasaExoplanetArchive.query_criteria(table="pscomppars", select="top 5 disc_refname, st_spectype, st_teff, st_logg, st_mass, st_rad, sy_dist, sy_jmag", where=f"hostname like '%{search_input}%'", order="hostname")
     elif search_format == 'position':
         nea_data = NasaExoplanetArchive.query_region(table="pscomppars", coordinates=SkyCoord(ra=search_input.ra.degree * u.deg, dec=search_input.dec.degree * u.deg), radius=1.0 * u.deg)
 
@@ -119,21 +111,22 @@ def search_nea(search_input, search_format):
                 'logg' : data['st_logg'],
                 'mass' : data['st_mass'].unmasked.value,
                 'stell_rad' : data['st_rad'].unmasked.value,
-                'dist' : data['sy_dist'].unmasked.value
+                'dist' : data['sy_dist'].unmasked.value,
+                'j_band': data['sy_jmag'].unmasked.value
             }
             return_info['data'] = star_info
             # print('———————————————————————————')
             # print('Exoplanet Archive')
-            # print(data)
+            # # print(data)
             # print(star_info)
         else:
             return_info['error_msg'] = 'Target is not an M or K type star. Data is currently only available for these spectral sybtypes. \nPlease contact us with your target and parameters if you think this is a mistake.'
     else:
         return_info['error_msg'] = f'Nothing found for {search_input} in the NASA exoplanet archive. \nPlease check spelling or coordinate format.'
     return(return_info)
-
-
-
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
 def search_simbad(search_input):
     '''
     * HELPER FUNCTION FOR SEARCHING SIMBAD BY OBJECT FOR COORD & PROPER MOTION DATA *
@@ -161,10 +154,10 @@ def search_simbad(search_input):
     else:
         return_info['error_msg'] = f'No target found for {search_input} in Simbad. \nPlease check spelling or coordinate format.'
     return return_info
-
-
-
-def search_galex(ra, dec):
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+def search_galex(ra, dec, j_band):
     '''
     * HELPER FUNCTION FOR SEARCHING MAST GALEX DATABASE BY COORDS FOR FLUX DENSITIES *
     Inputs: ra (float) and dec (float)
@@ -173,35 +166,60 @@ def search_galex(ra, dec):
         Keys are data objects (ex: fuv, nuv)
         Values are corresponding data values
     '''
-    galex_data = Catalogs.query_object(f'{ra} {dec}', catalog="GALEX")
+    # STEP 1: Initialize the return info dict 
+            # We will make data equal the null placeholder 'No Detection' so if there are any error catches, 
+            # the front end will still be able to load in the null values on the modal form 
+            # & give users option to input their own values
     return_info = {
-        'data' : {},
+        'data' : {
+            'fuv' : 'No Detection',
+            'fuv_err' : 'No Detection',
+            'nuv' : 'No Detection',
+            'nuv_err' : 'No Detection'
+        },
         'error_msg' : None
     }
+    # STEP 2: Query the MAST catalogs object by GALEX catalog & given ra and dec
+    galex_data = Catalogs.query_object(f'{ra} {dec}', catalog="GALEX")
+    # STEP 3: If there are results returned and results within 0.167 arcmins, then start processing the data
     if len(galex_data) > 0:
         MIN_DIST = galex_data['distance_arcmin'] < 0.167 # can try 0.5 as well
         if len(galex_data[MIN_DIST]) > 0:
             filtered_data = galex_data[MIN_DIST][0]
+            # STEP 4: Initialize the data return dict w/ flux densities and errors
             fluxes = {
                 'fuv' : filtered_data['fuv_flux'],
                 'fuv_err' : filtered_data['fuv_fluxerr'],
                 'nuv' : filtered_data['nuv_flux'],
                 'nuv_err' : filtered_data['nuv_fluxerr']
             }
-            # Check if there are any masked values (these will be null values) and change to 'no detection'
-            # This helps limit errors when converting data to json object for session storage
-            for key, value in fluxes.items():
-                if ma.is_masked(value):
-                    fluxes[key] = 'No Detection'
+            # STEP 5: Check if there are any masked values (these will be null values) and change accordingly
+            if ma.is_masked(fluxes['fuv']) and ma.is_masked(fluxes['nuv']):
+                # both are null, point to null placeholders and add error message
+                fluxes['fuv'], fluxes['nuv'], fluxes['fuv_err'], fluxes['nuv_err'] = 'No Detection', 'No Detection', 'No Detection', 'No Detection'
+                return_info['error_msg'] = 'GALEX error: No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
+            elif ma.is_masked(fluxes['fuv']):
+                # only FUV is null, predict FUV and add error message
+                predicted_fluxes = predict_fluxes('fuv', fluxes['nuv'], fluxes['nuv_err'], j_band)
+                fluxes['fuv'] = predicted_fluxes['new_flux']
+                fluxes['fuv_err'] = predicted_fluxes['new_err']
+                return_info['error_msg'] = 'GALEX error: No detection in GALEX FUV, substitution is calculated for you. \nLook under question 3 on the FAQ page for more information.'
+            elif ma.is_masked(fluxes['nuv']):
+                # only NUV is null, predict NUV and add error message
+                predicted_fluxes = predict_fluxes('nuv', fluxes['fuv'], fluxes['fuv_err'], j_band)
+                fluxes['nuv'] = predicted_fluxes['new_flux']
+                fluxes['nuv_err'] = predicted_fluxes['new_err']
+                return_info['error_msg'] = 'GALEX error: No detection in GALEX NUV, substitution is calculated for you. \nLook under question 3 on the FAQ page for more information.'
+            # STEP 6: Add the new data dict to the data object in return info
             return_info['data'] = fluxes
         else:
-            return_info['error_msg'] = 'No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
+            return_info['error_msg'] = 'GALEX error: No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
     else:
-        return_info['error_msg'] = 'No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
+        return_info['error_msg'] = 'GALEX error: No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
     return return_info
-
-
-
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
 def correct_pm(data, star_name):
     '''
     * HELPER FUNCTION TO CORRECT FOR PROPER MOTION *
@@ -247,8 +265,9 @@ def correct_pm(data, star_name):
         except:
             return_info['error_msg'] = 'Could not correct coordinates.'
     return return_info
-
-
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
 def convert_coords(coords):
     '''
     * HELPER FUNCTION TO CONVERT COORDINATES FROM WHATEVER IS INPUTTED BY USER TO RA & DEC *
@@ -272,9 +291,58 @@ def convert_coords(coords):
     except:
         return_info['error_msg'] = f'Error converting your coordinates {coords}. \nPlease check your format and try again.'
     return return_info
-
-
-
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+def predict_fluxes(flux_type, flux_value, flux_err, j_band):
+    '''
+    * HELPER FUNCTION TO CALCULATE A PREDICTED FLUX IF MISSING FROM GALEX *
+    Inputs: flux type (string), flux_value (float, the non-missing value), flux_err (float, the non-missing value), j_band (float, obtained from NEA query)
+    Outputs: Dictionary of data (newly calculated flux & error)
+    '''
+    return_data = {
+        'new_flux': None,
+        'new_err': None
+    }
+    # STEP 1: Convert J band 2MASS magnitude to microjanskies
+    zeropoint = 1594
+    j_band_ujy = 1000 * (zeropoint * pow( 10.0, -0.4 * j_band ))
+    # STEP 2: Calculate upper and lower limits of the non missing flux (will be used to find error)
+    upper_lim = flux_value + flux_err
+    lower_lim = flux_value - flux_err
+    # STEP 3: Use equation to predict missing flux & error
+    if flux_type == 'nuv':
+        # Predict NUV flux using NUV = ((FUV/J)^(1/1.1)) * J
+        # STEP N1: Use equation to find upper, lower limits and new flux values
+        new_nuv_upper_lim = (pow((upper_lim / j_band_ujy), (1 / 1.1))) * j_band_ujy
+        new_nuv = (pow((flux_value / j_band_ujy), (1 / 1.1))) * j_band_ujy
+        new_nuv_lower_lim = (pow((lower_lim / j_band_ujy), (1 / 1.1))) * j_band_ujy
+        # STEP N2: Find the differences between the upper and lower limits and flux value (these will be error)
+                #  Then calculate average of these values to get the average error
+        upper_nuv = new_nuv_upper_lim - new_nuv
+        lower_nuv = new_nuv - new_nuv_lower_lim
+        avg_nuv_err = (upper_nuv + lower_nuv) / 2
+        # STEP N3: Assign new values to return data dict using calculated flux & error
+        return_data['new_flux'] = new_nuv
+        return_data['new_err'] = avg_nuv_err
+    elif flux_type == 'fuv':
+        # Predict FUV flux using FUV = ((NUV/J)^1.11) * J
+        # STEP F1: Use equation to find upper, lower limits and new flux values
+        new_fuv_upper_lim = (pow((upper_lim / j_band_ujy), 1.1)) * j_band_ujy
+        new_fuv = (pow((flux_value / j_band_ujy), 1.1)) * j_band_ujy
+        new_fuv_lower_lim = (pow((lower_lim / j_band_ujy), 1.1)) * j_band_ujy
+        # STEP F2: Find the differences between the upper and lower limits and flux value (these will be error)
+                #  Then calculate average of these values to get the average error
+        upper_fuv = new_fuv_upper_lim - new_fuv
+        lower_fuv = new_fuv - new_fuv_lower_lim
+        avg_fuv_err = (upper_fuv + lower_fuv) / 2
+        # STEP N3: Assign new values to return data dict using calculated flux & error
+        return_data['new_flux'] = new_fuv
+        return_data['new_err'] = avg_fuv_err
+    return return_data
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
 '''——————————————————————————NO LONGER IN USE—————————————————————'''
 # def test_space_motion():
 #     print('TESTING SPACE MOTION')

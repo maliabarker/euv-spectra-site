@@ -16,19 +16,18 @@ from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matchi
 # from euv_spectra_app.helpers_db import *
 
 main = Blueprint("main", __name__)
-
 @main.context_processor
 def inject_form():
     return dict(contact_form=ContactForm())
-
 @main.before_request
 def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(minutes=20)
     if not session.get('modal_show'):
         session['modal_show'] = False
-
-
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
 @main.route('/', methods=['GET', 'POST'])
 def homepage():
     # session.clear()
@@ -44,57 +43,55 @@ def homepage():
     autofill_data = db.mast_galex_times.distinct('target')
 
     if request.method == 'POST':
-# '''————————————————————HOME POSITION FORM————————————————————'''
+        # '''———————————HOME POSITION FORM——————————————'''
         if position_form.validate_on_submit():
             print('position form validated!')
-
             # STEP 1: Run the helper function to get a dynamic WTForm instance with your data
             res = populate_modal(position_form.coords.data, 'position')
-
             if res['error_msg'] != None:
-                return redirect(url_for('main.error', msg=res['error_msg']))
-
+                print(res['error_msg'])
+                if 'GALEX error:' in res['error_msg']:
+                    print('GALEX ERROR DETECTED')
+                    flash(res['error_msg'], 'warning')
+                else:
+                    return redirect(url_for('main.error', msg=res['error_msg']))
             # STEP 2: Store this data for later use (repopulating model, validation) and return the return_data object
             session['modal_choices'] = json.dumps(res['radio_choices'], allow_nan=True)
             session['search_term'] = res['search_term']
-
             # STEP 3: Declare the form and add the radio choices dynamically for each radio input on the form
             for key, val in res['radio_choices'].items():
                 radio_input = getattr(star_name_parameters_form, key)
                 radio_input.choices.insert(0, (val, val))
-
             # STEP 4: Set modal show to true
             session['modal_show'] = True
             return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, targets=autofill_data)
-            
 
-# '''————————————————————HOME NAME FORM————————————————————'''
+        # '''—————————HOME NAME FORM———————————'''
         elif name_form.validate_on_submit():
             print(f'name form validated!')
-            
             # STEP 1: Run the helper function to get a dynamic WTForm instance with your data
             res = populate_modal(name_form.star_name.data, 'name')
-            
             if res['error_msg'] != None:
-                return redirect(url_for('main.error', msg=res['error_msg']))
-
+                print(res['error_msg'])
+                if 'GALEX error:' in res['error_msg']:
+                    flash(res['error_msg'], 'warning')
+                else:
+                    return redirect(url_for('main.error', msg=res['error_msg']))
             # STEP 2: Store this data for later use (repopulating model, validation) and return the return_data object
             session['modal_choices'] = json.dumps(res['radio_choices'], allow_nan=True)
             session['search_term'] = res['search_term']
-
             # STEP 3: Declare the form and add the radio choices dynamically for each radio input on the form
             for key, val in res['radio_choices'].items():
                 radio_input = getattr(star_name_parameters_form, key)
                 radio_input.choices.insert(0, (val, val))
-
             # STEP 4: Set modal show to true
             session['modal_show'] = True
             return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, star_name_parameters_form=star_name_parameters_form, targets=autofill_data)
     flash('Website is under development. Files are not available for use yet. For testing purposes, try out object GJ 338 B.', 'warning')
     return render_template('home.html', parameter_form=parameter_form, name_form=name_form, position_form=position_form, targets=autofill_data)
-
-
-
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
 '''————————————SUBMIT ROUTE FOR MODAL FORM————————————'''
 @main.route('/modal-submit', methods=['GET', 'POST'])
 def submit_modal_form():
@@ -131,9 +128,9 @@ def submit_modal_form():
 
             return redirect(url_for('main.return_results'))
     return render_template('home.html', parameter_form=parameter_form_1, name_form=name_form, position_form=position_form, star_name_parameters_form=parameter_form, targets=autofill_data)
-
-
-
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
 '''————————————SUBMIT ROUTE FOR MANUAL INPUT————————————'''
 @main.route('/manual-submit', methods=['POST'])
 def submit_manual_form():
@@ -157,9 +154,9 @@ def submit_manual_form():
     else:
         flash('Whoops, something went wrong. Please check your inputs and try again!', 'danger')
         return redirect(url_for('main.homepage'))
-
-
-
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
 '''————————————SUBMIT ROUTE FOR RESULTS————————————'''
 @main.route('/results', methods=['GET', 'POST'])
 def return_results():
@@ -290,55 +287,49 @@ def return_results():
     else:
         flash('Submit the required data to view this page.', 'warning')
         return redirect(url_for('main.homepage'))
-
-
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+''' ROUTES FOR FILE DOWNLOADS '''
 @app.route('/check-directory/<filename>')
 def check_directory(filename):
+    ''' Checks if a FITS file exists '''
     downloads = os.path.join(current_app.root_path, app.config['FITS_FOLDER'], session['model_subtype'])
     if os.path.exists(os.path.join(downloads, filename)):
         return jsonify({'exists': True})
     else:
         return jsonify({'exists': False})
 
-
 @app.route('/download/<filename>', methods=['GET', 'POST'])
 def download(filename):
+    ''' Downloads FITS file on button click '''
     downloads = os.path.join(current_app.root_path, app.config['FITS_FOLDER'], session['model_subtype'])
     if not os.path.exists(os.path.join(downloads, filename)):
         flash('File is not available to download because it does not exist yet!')
     return send_from_directory(downloads, filename, as_attachment=True, download_name=filename)
-
-
-
-
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
 '''————————————ABOUT PAGE————————————'''
 @main.route('/about', methods=['GET'])
 def about():
     return render_template('about.html')
-
 '''————————————FAQ PAGE————————————'''
 @main.route('/faqs', methods=['GET'])
 def faqs():
     return render_template('faqs.html')
-
 '''————————————ALL SPECTRA PAGE————————————'''
 @main.route('/all-spectra', methods=['GET'])
 def index_spectra():
     return render_template('index-spectra.html')
-
 '''————————————Acknowledgements PAGE————————————'''
 @main.route('/acknowledgements', methods=['GET'])
 def acknowledgements():
     return render_template('acknowledgements.html')
-    
-
-
-
 '''————————————CONTACT SUBMIT————————————'''
 @main.route('/contact', methods=['POST'])
 def send_email():
     form = ContactForm(request.form)
-
     if form.validate_on_submit():
         # send email
         msg = Message(form.subject.data,
@@ -349,16 +340,16 @@ def send_email():
         flash('Email sent!', 'success')
         return redirect(url_for('main.homepage'))
     else:
-        # print(form.errors)
         flash('error', 'danger')
         return redirect(url_for('main.error', msg='Contact form unavailable at this time, please email phoenixpegasusgrid@gmail.com directly.'))
 
-
-@main.route('/clear-session')
-def clear_session():
-    session.clear()
-    return redirect(url_for('main.homepage'))
-
+# @main.route('/clear-session')
+# def clear_session():
+#     session.clear()
+#     return redirect(url_for('main.homepage'))
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
+'''————————————————————————————————————————————————————————————————————————————————————————————————————————————————'''
 ''' ————————————ERROR HANDLING FOR HTML ERRORS———————————— '''
 @main.route('/error/<msg>')
 def error(msg):
