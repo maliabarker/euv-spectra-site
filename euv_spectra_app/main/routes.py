@@ -8,9 +8,9 @@ import os
 
 from euv_spectra_app.main.forms import ParameterForm, StarNameForm, PositionForm, StarNameParametersForm, ContactForm
 from euv_spectra_app.helpers_astroquery import populate_modal
-from euv_spectra_app.helpers_flux import convert_and_scale_fluxes
+from euv_spectra_app.helpers_flux import GalexFluxes
 from euv_spectra_app.helpers_graph import create_plotly_graph
-from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv
+from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios
 
 # Used when importing new data into mongodb atlas
 # from euv_spectra_app.helpers_db import *
@@ -184,37 +184,37 @@ def return_results():
         #STEP 2: Find closest matching photosphere model and get flux values
         matching_photospheric_flux = find_matching_photosphere(session)
         #STEP 3: Convert, scale, and subtract photospheric contribution from fluxes
-        corrected_fluxes = convert_and_scale_fluxes(session, matching_photospheric_flux)
-        session['corrected_nuv'] = corrected_fluxes['nuv']
-        session['corrected_nuv_err'] = corrected_fluxes['nuv_err']
-        session['corrected_fuv'] = corrected_fluxes['fuv']
-        session['corrected_fuv_err'] = corrected_fluxes['fuv_err']
+        nuv_obj = GalexFluxes(session['nuv'], session['nuv_err'], matching_photospheric_flux['nuv'], session['dist'], session['stell_rad'], wv=2274.4)
+        fuv_obj = GalexFluxes(session['fuv'], session['fuv_err'], matching_photospheric_flux['fuv'], session['dist'], session['stell_rad'], wv=1542.3)
+
+        session['corrected_nuv'] = nuv_obj.return_new_flux()
+        session['corrected_nuv_err'] = nuv_obj.return_new_err()
+        session['corrected_fuv'] = fuv_obj.return_new_flux()
+        session['corrected_fuv_err'] = fuv_obj.return_new_err()
         # STEP 4: Check if model subtype data exists in database
         model_collection = f'{session["model_subtype"].lower()}_grid'
         if model_collection not in db.list_collection_names():
             return redirect(url_for('main.error', msg=f'The grid for model subtype {session["model_subtype"]} is currently unavailable. Currently available subtypes: M0, M3, M4, M6. \nPlease contact us with your stellar parameters and returned subtype if you think this is incorrect.'))
-        
 
         # STEP 5: Do chi squared test between all models within selected subgrid and corrected observation
         models_with_chi_squared = list(get_models_with_chi_squared(session, model_collection))
-        # print(f'MODELS w/ X2: {models_with_chi_squared[:5]}')
-
         # STEP 6: Find all matches in model grid within upper and lower limits of galex fluxes
         models_in_limits = list(get_models_within_limits(session, model_collection))
-        print(f'MODELS w/i LIMITS: {models_in_limits[:5]}')
-
-        # TODO return from lowest chi squared -> highest
-        # TODO return euv flux as <euv_flux> +/- difference from model
+        # print(f'MODELS w/i LIMITS: {models_in_limits[:5]}')
         
         if len(list(models_in_limits)) == 0:
             # STEP 7.1: If there are no models found within limits, return models ONLY with FUV < NUV, return with chi squared values
             models_weighted = get_models_with_weighted_fuv(session, model_collection)
-            print(f'WEIGHTED MODELS: {models_weighted[:5]}')
 
             #STEP 8.1: Read FITS file from matching model and create graph from data
-            filename = models_with_chi_squared[0]['fits_filename']
+            filename = models_weighted[0]['fits_filename']
             filepath = os.path.abspath(f"euv_spectra_app/fits_files/{session['model_subtype']}/{filename}")
-            
+
+            # flux_ratios = list(get_flux_ratios(session, model_collection))
+            # print(flux_ratios[:5])
+            # for i in flux_ratios: 
+            #     flux_ratio_chi_sqaured = 
+
             '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
             if os.path.exists(filepath) == False:
                 flash('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
