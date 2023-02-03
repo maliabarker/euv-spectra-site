@@ -187,10 +187,10 @@ def return_results():
             stellar_target.teff, stellar_target.logg)
 
         # STEP 3: Convert, scale, and subtract photospheric contribution from fluxes
-        nuv_obj = GalexFlux(session['nuv'], session['nuv_err'],
-                            matching_photospheric_flux['nuv'], session['dist'], session['rad'], wv=2274.4)
-        fuv_obj = GalexFlux(session['fuv'], session['fuv_err'],
-                            matching_photospheric_flux['fuv'], session['dist'], session['rad'], wv=1542.3)
+        nuv_obj = GalexFlux(stellar_target.nuv, stellar_target.nuv_err,
+                            matching_photospheric_flux['nuv'], stellar_target.dist, stellar_target.rad, wv=2274.4)
+        fuv_obj = GalexFlux(stellar_target.fuv, stellar_target.fuv_err,
+                            matching_photospheric_flux['fuv'], stellar_target.dist, stellar_target.rad, wv=1542.3)
 
         stellar_target.corrected_nuv = nuv_obj.return_new_flux()
         stellar_target.corrected_nuv_err = nuv_obj.return_new_err()
