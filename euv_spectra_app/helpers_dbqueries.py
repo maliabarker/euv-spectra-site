@@ -1,6 +1,7 @@
 from euv_spectra_app.extensions import *
 
-def find_matching_subtype(session):
+
+def find_matching_subtype(teff, logg, mass):
     """Matches to a subtype in the PEGASUS grid.
 
     Searches the PEGASUS grid for stellar subtype match using stellar effective 
@@ -21,16 +22,16 @@ def find_matching_subtype(session):
             'matchedTeff': [
                 # Project a diff field that's the absolute difference along with the original doc.
                 {'$project': {'diff': {'$abs': {'$subtract': [
-                    float(session['teff']), '$teff']}}, 'doc': '$$ROOT'}},
+                    float(teff), '$teff']}}, 'doc': '$$ROOT'}},
                 # Order the docs by diff, Take the first one, Add new weighted field
                 {'$sort': {'diff': 1}}, {'$limit': 1}, {'$addFields': {'weight': 10}}],
             'matchedLogg': [
                 {'$project': {'diff': {'$abs': {'$subtract': [
-                    float(session['logg']), '$logg']}}, 'doc': '$$ROOT'}},
+                    float(logg), '$logg']}}, 'doc': '$$ROOT'}},
                 {'$sort': {'diff': 1}}, {'$limit': 1}, {'$addFields': {'weight': 5}}],
             'matchedMass': [
                 {'$project': {'diff': {'$abs': {'$subtract': [
-                    float(session['mass']), '$mass']}}, 'doc': '$$ROOT'}},
+                    float(mass), '$mass']}}, 'doc': '$$ROOT'}},
                 {'$sort': {'diff': 1}}, {'$limit': 1}, {'$addFields': {'weight': 2}}]
         }},
         # get them together. Should list all rules from above
@@ -48,7 +49,7 @@ def find_matching_subtype(session):
     return subtype_doc
 
 
-def find_matching_photosphere(session):
+def find_matching_photosphere(teff, logg):
     """Matches to a PHOENIX photosphere model.
 
     Searches a grid of custom PHOENIX calculated photosphere models for best match
@@ -68,7 +69,7 @@ def find_matching_photosphere(session):
     # TODO: iterate list and create pointer for lowest diff value ** reduce On^2 to On
     matching_temp = photosphere_models.aggregate([
         {'$project': {'diff': {'$abs': {'$subtract': [
-            session['teff'], '$teff']}}, 'doc': '$$ROOT'}},
+            teff, '$teff']}}, 'doc': '$$ROOT'}},
         {'$sort': {'diff': 1}},
         {'$limit': 1}
     ])
@@ -80,7 +81,7 @@ def find_matching_photosphere(session):
         {'$facet': {
             'matchedLogg': [
                 {'$project': {'diff': {'$abs': {'$subtract': [
-                    session['logg'], '$logg']}}, 'doc': '$$ROOT'}},
+                    logg, '$logg']}}, 'doc': '$$ROOT'}},
                 {'$sort': {'diff': 1}}, {'$limit': 1}],
         }},
         # get them together. Should list all rules from above
@@ -97,9 +98,9 @@ def find_matching_photosphere(session):
     return matching_photosphere_doc
 
 
-def get_models_with_chi_squared(session, model_collection):
+def get_models_with_chi_squared(corrected_nuv, corrected_fuv, model_collection):
     """Calculates chi square (χ2) values.
-    
+
     Calculates the chi square values of FUV and NUV flux densities of each model in
     the stellar subgrid compared to the FUV and NUV flux densities of the user's 
     inputted stellar object.
@@ -111,7 +112,7 @@ def get_models_with_chi_squared(session, model_collection):
          in the helpers_flux module.
         model_collection: The name of the MongoDB collection representing the matched 
          stellar subtype.
-    
+
     Returns:
         The matching MongoDB model collection with all documents containing an 
         additional field, 'chi_squared', that has the calculated chi sqaure value using
@@ -123,17 +124,17 @@ def get_models_with_chi_squared(session, model_collection):
     """
     models_with_chi_squared = db.get_collection(model_collection).aggregate([
         {"$addFields": {"chi_squared": {"$round": [{"$add":
-            # FOR NUV { "$divide": [ { "$pow": [ { "$subtract": [ "$NUV", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }
-            [{"$divide": [{"$pow": [{"$subtract": ["$nuv", session['corrected_nuv']]}, 2]}, session['corrected_nuv']]},
-            # FOR FUV { "$divide": [ { "$pow": [ { "$subtract": [ "$FUV", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }
-            {"$divide": [{"$pow": [{"$subtract": ["$fuv", session['corrected_fuv']]}, 2]}, session['corrected_fuv']]}]
-        }, 2]}}},
+                                                    # FOR NUV { "$divide": [ { "$pow": [ { "$subtract": [ "$NUV", session['corrected_nuv'] ]}, 2 ] }, session['corrected_nuv'] ] }
+                                                    [{"$divide": [{"$pow": [{"$subtract": ["$nuv", corrected_nuv]}, 2]}, corrected_nuv]},
+                                                     # FOR FUV { "$divide": [ { "$pow": [ { "$subtract": [ "$FUV", session['corrected_fuv'] ]}, 2 ] }, session['corrected_fuv'] ] }
+                                                     {"$divide": [{"$pow": [{"$subtract": ["$fuv", corrected_fuv]}, 2]}, corrected_fuv]}]
+                                                    }, 2]}}},
         {"$sort": {"chi_squared": 1}}
     ])
     return models_with_chi_squared
 
 
-def get_models_with_weighted_fuv(session, model_collection):
+def get_models_with_weighted_fuv(corrected_nuv, corrected_fuv, model_collection):
     """Calculates chi square value with weighted preference on FUV flux.
 
     Calculates the chi square values of FUV and NUV flux densities of each model in
@@ -162,12 +163,12 @@ def get_models_with_weighted_fuv(session, model_collection):
     """
     models_with_fuv_less_than_nuv = db.get_collection(model_collection).aggregate([
         {"$addFields": {
-            "chi_squared_fuv": {"$round": [{"$divide": [{"$pow": [{"$subtract": ["$fuv", session['corrected_fuv']]}, 2]}, session['corrected_fuv']]}, 2]},
-            "chi_squared_nuv": {"$round": [{"$divide": [{"$pow": [{"$subtract": ["$nuv", session['corrected_nuv']]}, 2]}, session['corrected_nuv']]}, 2]},
+            "chi_squared_fuv": {"$round": [{"$divide": [{"$pow": [{"$subtract": ["$fuv", corrected_fuv]}, 2]}, corrected_fuv]}, 2]},
+            "chi_squared_nuv": {"$round": [{"$divide": [{"$pow": [{"$subtract": ["$nuv", corrected_nuv]}, 2]}, corrected_nuv]}, 2]},
             "chi_squared": {"$round": [{"$add": [
                 {"$divide": [{"$pow": [{"$subtract": [
-                    "$nuv", session['corrected_nuv']]}, 2]}, session['corrected_nuv']]},
-                {"$divide": [{"$pow": [{"$subtract": ["$fuv", session['corrected_fuv']]}, 2]}, session['corrected_fuv']]}]
+                    "$nuv", corrected_nuv]}, 2]}, corrected_nuv]},
+                {"$divide": [{"$pow": [{"$subtract": ["$fuv", corrected_fuv]}, 2]}, corrected_fuv]}]
             }, 2]}
         }},
         {"$sort": {"chi_squared": 1}}
@@ -179,7 +180,7 @@ def get_models_with_weighted_fuv(session, model_collection):
     return final_models
 
 
-def get_models_within_limits(session, model_collection):
+def get_models_within_limits(corrected_nuv, corrected_fuv, corrected_nuv_err, corrected_fuv_err, model_collection):
     """Searches for models within limits of GALEX FUV and NUV flux densities.
 
     Args:
@@ -195,20 +196,20 @@ def get_models_within_limits(session, model_collection):
         the upper and lower limits of the GALEX FUV flux density and an NUV flux 
         density value within the upper and lower limits of the GALEX NUV flux density.
     """
-    fuv_lower_lim = session['corrected_fuv'] - session['corrected_fuv_err']
-    fuv_upper_lim = session['corrected_fuv'] + session['corrected_fuv_err']
-    nuv_lower_lim = session['corrected_nuv'] - session['corrected_nuv_err']
-    nuv_upper_lim = session['corrected_nuv'] + session['corrected_nuv_err']
+    fuv_lower_lim = corrected_fuv - corrected_fuv_err
+    fuv_upper_lim = corrected_fuv + corrected_fuv_err
+    nuv_lower_lim = corrected_nuv - corrected_nuv_err
+    nuv_upper_lim = corrected_nuv + corrected_nuv_err
     models_within_limits = db.get_collection(model_collection).find(
-        {'nuv': {"$gte": nuv_lower_lim, "$lte": nuv_upper_lim}, 
+        {'nuv': {"$gte": nuv_lower_lim, "$lte": nuv_upper_lim},
          'fuv': {"$gte": fuv_lower_lim, "$lte": fuv_upper_lim}}
     )
     return models_within_limits
 
 
-def get_flux_ratios(session, model_collection):
+def get_flux_ratios(corrected_nuv, corrected_fuv, model_collection):
     """TESTING: Computes the chi square value of flux ratios.
-    
+
     Computes the chi square value of the model NUV to FUV flux ratio compared to
     the GALEX NUV to FUV flux ratio.
 
@@ -230,8 +231,8 @@ def get_flux_ratios(session, model_collection):
     """
     models_with_ratio = db.get_collection(model_collection).aggregate([
         {"$addFields": {
-            "galex_flux_ratio": {"$divide": [session['corrected_nuv'], session['corrected_fuv']]},
-            "model_flux_ratio": {"$divide": [session['nuv'], session['fuv']]}
+            "galex_flux_ratio": {"$divide": [corrected_nuv, corrected_fuv]},
+            "model_flux_ratio": {"$divide": ['nuv', 'fuv']}
             # "flux_ratio_chi_squared" : { "$round" : [{ "$divide" : [{"$pow" : [{"$subtract" : ["model_flux_ratio", "galex_flux_ratio"]},2]}, "galex_flux_ratio"]},2]}
         }},
         {"$addFields": {"ratio_chi_squared": {"$round": [{"$divide": [

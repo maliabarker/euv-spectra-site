@@ -1,37 +1,37 @@
-<form action="/manual-submit" method="POST" id="parameter-form" class="p-4">
-    {{ parameter_form.csrf_token }}
+<form action="/manual-submit" method="POST" id="manual-form" class="p-4">
+    {{ manual_form.csrf_token }}
     <fieldset>
         <div class="form-floating mb-3">
-            {{ parameter_form.teff(class="form-control", placeholder="Teff — Stellar Effective Temperature (K)") }}
-            {{ parameter_form.teff.label(text='* ' + parameter_form.teff.label.text) }}
+            {{ manual_form.teff(class="form-control", placeholder="Teff — Stellar Effective Temperature (K)") }}
+            {{ manual_form.teff.label(text='* ' + manual_form.teff.label.text) }}
         </div>
 
         <div class="form-floating mb-3">
-            {{ parameter_form.logg(class="form-control", placeholder="log g — Surface Gravity (cm/s2)") }}
-            {{ parameter_form.logg.label(text='* ' + parameter_form.logg.label.text) }}
+            {{ manual_form.logg(class="form-control", placeholder="log g — Surface Gravity (cm/s2)") }}
+            {{ manual_form.logg.label(text='* ' + manual_form.logg.label.text) }}
         </div>
 
         <div class="form-floating mb-3">
-            {{ parameter_form.mass(class="form-control", placeholder="M ☉ - Mass in Solar Masses") }}
-            {{ parameter_form.mass.label(text='* ' + parameter_form.mass.label.text) }}
+            {{ manual_form.mass(class="form-control", placeholder="M ☉ - Mass in Solar Masses") }}
+            {{ manual_form.mass.label(text='* ' + manual_form.mass.label.text) }}
         </div>
 
         <div class="form-floating mb-3">
-            {{ parameter_form.stell_rad(class="form-control", placeholder="R ☉ — Stellar Radius in Solar Radian") }}
-            {{ parameter_form.stell_rad.label(text='* ' + parameter_form.stell_rad.label.text) }}
+            {{ manual_form.rad(class="form-control", placeholder="R ☉ — Stellar Radius in Solar Radian") }}
+            {{ manual_form.rad.label(text='* ' + manual_form.rad.label.text) }}
         </div>
 
         <div class="row">
             <div class="col-sm-8">
                 <div class="form-floating mb-3">
-                    {{ parameter_form.dist(class="form-control", placeholder="d — Distance") }}
-                    {{ parameter_form.dist.label(text='* ' + parameter_form.dist.label.text) }}
+                    {{ manual_form.dist(class="form-control", placeholder="d — Distance") }}
+                    {{ manual_form.dist.label(text='* ' + manual_form.dist.label.text) }}
                 </div>
             </div>
             <div class="col-sm-4">
                 <div class="form-floating mb-3">
-                    {{ parameter_form.dist_unit(class="form-select") }}
-                    {{ parameter_form.dist_unit.label(text='* ' + parameter_form.dist_unit.label.text) }}
+                    {{ manual_form.dist_unit(class="form-select") }}
+                    {{ manual_form.dist_unit.label(text='* ' + manual_form.dist_unit.label.text) }}
                 </div>
             </div>
         </div>
@@ -40,8 +40,8 @@
         <div class="row">
             <div class="col-sm-6">
                 <div class="form-floating mb-3">
-                    {{ parameter_form.fuv(class="form-control", placeholder="FUV — Far Ultraviolet Flux in Microjanskys (mjy)") }}
-                    {{ parameter_form.fuv.label(text='* ' + parameter_form.fuv.label.text) }}
+                    {{ manual_form.fuv(class="form-control", placeholder="FUV — Far Ultraviolet Flux in Microjanskys (mjy)") }}
+                    {{ manual_form.fuv.label(text='* ' + manual_form.fuv.label.text) }}
                 </div>
             </div>
             <div class="col-sm-1 d-flex align-items-center">
@@ -49,14 +49,14 @@
             </div>
             <div class="col-sm-5">
                 <div class="form-floating">
-                    {{ parameter_form.fuv_err(class="form-control", placeholder="FUV — Far Ultraviolet Flux Error in Microjanskys (mjy)") }}
-                    {{ parameter_form.fuv_err.label(text='* ' + parameter_form.fuv_err.label.text) }}
+                    {{ manual_form.fuv_err(class="form-control", placeholder="FUV — Far Ultraviolet Flux Error in Microjanskys (mjy)") }}
+                    {{ manual_form.fuv_err.label(text='* ' + manual_form.fuv_err.label.text) }}
                 </div>
             </div>
         </div>
         <div id="fuv-flags-container" class="text-center">
             <span class="me-3 text-light">FUV Flags:</span>
-            {% for subfield in parameter_form.fuv_flag %}
+            {% for subfield in manual_form.fuv_flag %}
                 {% if subfield.data == 'null' %}
                     <div class="form-check form-check-inline my-4 text-light">
                         {{ subfield(class="form-check-input", onclick="populateNullFlux(this);") }}
@@ -74,8 +74,8 @@
         <div class="row">
             <div class="col-sm-6">
                 <div class="form-floating mb-3">
-                    {{ parameter_form.nuv(class="form-control", placeholder="NUV — Near Ultraviolet Flux in Microjanskys (mjy)") }}
-                    {{ parameter_form.nuv.label(text='* ' + parameter_form.nuv.label.text) }}
+                    {{ manual_form.nuv(class="form-control", placeholder="NUV — Near Ultraviolet Flux in Microjanskys (mjy)") }}
+                    {{ manual_form.nuv.label(text='* ' + manual_form.nuv.label.text) }}
                 </div>
             </div>
             <div class="col-sm-1 d-flex align-items-center">
@@ -83,15 +83,15 @@
             </div>
             <div class="col-sm-5">
                 <div class="form-floating">
-                    {{ parameter_form.nuv_err(class="form-control", placeholder="NUV — Near Ultraviolet Flux Error in Microjanskys (mjy)") }}
-                    {{ parameter_form.nuv_err.label(text='* ' + parameter_form.nuv_err.label.text) }}
+                    {{ manual_form.nuv_err(class="form-control", placeholder="NUV — Near Ultraviolet Flux Error in Microjanskys (mjy)") }}
+                    {{ manual_form.nuv_err.label(text='* ' + manual_form.nuv_err.label.text) }}
                 </div>
             </div>
         </div>
 
         <div id="nuv-flags-container" class="text-center">
             <span class="me-3 text-light">NUV Flags:</span>
-            {% for subfield in parameter_form.nuv_flag %}
+            {% for subfield in manual_form.nuv_flag %}
                 {% if subfield.data == 'null' %}
                     <div class="form-check form-check-inline my-4 text-light">
                         {{ subfield(class="form-check-input", onclick="populateNullFlux(this);") }}

@@ -3,9 +3,9 @@
         <div class="modal-content">
             <div class="modal-header text-center ms-2 d-flex justify-content-evenly">
                 <p class="mb-0 mt-2 ms-3">
-                    The following data was returned for your target: <b>{{ session.search_term }}</b> <br> 
+                    The following data was returned for your target: <b>{{ stellar_target.search_input }}</b> <br> 
                     Use preselected values from
-                    <a href="https://exoplanetarchive.ipac.caltech.edu/overview/{{ session.search_term | urlencode }}">NExScI</a> 
+                    <a href="https://exoplanetarchive.ipac.caltech.edu/overview/{{ stellar_target.search_term | urlencode }}">NExScI</a> 
                     and 
                     <a href="http://galex.stsci.edu/gr6/?page=mastform">GALEX</a> <br>
                     or enter your own manual parameters in the corresponding text box
@@ -17,21 +17,15 @@
                     <button class="btn-close mx-3" data-bs-dismiss="modal" aria-label="Close"></button>
                 {% endif %}
 
-                {#<!-- {% if 'results' in request.referrer %}
-                    <button class="btn-close me-3" data-bs-dismiss="modal" aria-label="Close"></button>
-                {% else %}
-                    <button class="btn-close me-3" data-bs-dismiss="modal" aria-label="Close" onclick="history.back()"></button>
-                {% endif %} -->#}
-
             </div>
             <div class="modal-body py-0">
-                {% if star_name_parameters_form.errors %}
+                {% if modal_form.errors %}
                     <div class="alert alert-danger mt-2" role="alert">
                         Oops! Some fields are missing, please review form and submit again.
                     </div>
                 {% endif %}
                 {% for category, message in get_flashed_messages(with_categories=true) %}
-                    {% if 'substitution' in message %}
+                    {% if 'GALEX error' in message %}
                         <div class="alert alert-{{category}} mt-2" role="alert">
                             {{ message }}
                         </div>
@@ -44,5 +38,14 @@
         </div>
     </div>
 </div>
-<script src="{{ url_for('static', filename='js/show_modal_errors.js') }}"></script>
+
 <script src="{{ url_for('static', filename='js/modal_form.js') }}"></script>
+<script>
+    form = document.getElementById('modal-form')
+    '{% for field, errors in modal_form.errors.items() %}'
+        fields = form.querySelectorAll(`[id*="{{ field }}"]`);
+        for (i=0; i < fields.length; i++){
+            fields[i].classList.add('is-invalid');
+        }
+    '{% endfor %}'
+</script>

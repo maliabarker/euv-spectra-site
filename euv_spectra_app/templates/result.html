@@ -17,12 +17,12 @@
         </div>
     </div>
 
-    <h3 class="mt-5 pt-4 text-center">Closest Match PHOENIX Model for <i>{{ session['search_term'] }}</i></h3>
+    <h3 class="mt-5 pt-4 text-center">Closest Match PHOENIX Model for <i>{{ stellar_target.search_input }}</i></h3>
     <a data-bs-toggle="modal" data-bs-target="#myModal" class="text-center"><p>Click Here to Edit Parameters</p></a>
     <div class="text-center"><small>Model Parameters : Teff = {{ subtype.teff }}, log(g) = {{ subtype.logg }}, Mass = {{ subtype.mass }}</small></div>
-    <div class="text-center"><small>Your Parameters : Teff = {{ session.teff }}, log(g) = {{ session.logg }}, Mass = {{ session.mass }}</small></div>
-    <div class="text-center mt-2"><small>GALEX Flux Densities<sup>*</sup> for {{ session['search_term'] }}: FUV = {{ "%.2f"|format(session.corrected_fuv) }} +/- {{ "%.2f"|format(session.corrected_fuv_err) }}, NUV = {{ "%.2f"|format(session.corrected_nuv) }} +/- {{ "%.2f"|format(session.corrected_nuv_err) }}</small></div>
-    {#<!-- <div class="mt-2 text-center">{{ graph|safe }}</div> -->#}
+    <div class="text-center"><small>Your Parameters : Teff = {{ stellar_target.teff }}, log(g) = {{ stellar_target.logg }}, Mass = {{ stellar_target.mass }}</small></div>
+    <div class="text-center mt-2"><small>GALEX Flux Densities<sup>*</sup> for {{ stellar_target.search_input }}: FUV = {{ "%.2f"|format(stellar_target.corrected_fuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_fuv_err) }}, NUV = {{ "%.2f"|format(stellar_target.corrected_nuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_nuv_err) }}</small></div>
+
     <div class="row">
         <div class="col-lg-10 col-md-12">
             <div class="chart" id="linegraph">

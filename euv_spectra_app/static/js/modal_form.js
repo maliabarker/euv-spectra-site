@@ -110,10 +110,11 @@ function checkErrFlux(obj){
 
 //—————————————————————————NOT DETECTED FLAG CHECKS————————————————————————
 function populateNullFlux(obj) {
+    console.log('boop')
     console.log(obj.id)
     whichFlux = obj.id.slice(0,3)
     console.log(whichFlux)
-    const fluxInputs = document.getElementById('parameter-form').querySelectorAll(`[id*="${whichFlux}"]`);
+    const fluxInputs = document.getElementById('manual-form').querySelectorAll(`[id*="${whichFlux}"]`);
     for(i = 0; i < fluxInputs.length; i++) {
         if (fluxInputs[i].id != obj.id){
             fluxInputs[i].value = parseFloat(-999.0);
@@ -122,7 +123,7 @@ function populateNullFlux(obj) {
 }
 
 function validateView() {
-    form = document.getElementById('name-parameters-form')
+    form = document.getElementById('modal-form')
     // need all form-check-input and form-control in form
     const btns = form.querySelectorAll(`[class*="form-check-input"]`);
     const texts = form.querySelectorAll(`[class*="form-control"]`)

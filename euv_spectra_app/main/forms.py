@@ -28,11 +28,11 @@ teff_label = Markup('T<sub>eff</sub> (K)')
 mass_label = Markup('Mass (M<sub>sun</sub>)')
 rad_label = Markup('Radius (R<sub>sun</sub>)')
 
-class ParameterForm(FlaskForm):
+class ManualForm(FlaskForm):
     teff = DecimalField('T𝘦𝘧𝘧 — Stellar Effective Temperature (K)', validators=[DataRequired()])
     logg = DecimalField('log(g) — Surface Gravity (cm/s²)', validators=[DataRequired()])
     mass = DecimalField('M ☉ - Mass (Solar Masses)', validators=[DataRequired()])
-    stell_rad = DecimalField('R ☉ — Stellar Radius (Solar Radii)', validators=[DataRequired()])
+    rad = DecimalField('R ☉ — Stellar Radius (Solar Radii)', validators=[DataRequired()])
     dist = DecimalField('d — Distance', validators=[DataRequired()])
     dist_unit = SelectField('d Unit', validators=[DataRequired()], choices=[('pc', 'Parsecs (pc)'), ('mas', 'Milliarcseconds (mas)')])
     fuv = DecimalField('FUV (μJy)', validators=[DataRequired()])
@@ -52,7 +52,7 @@ class PositionForm(FlaskForm):
     coords = StringField('hh mm ss.ss +/- dd mm ss.ss', validators=[DataRequired()])
     submit = SubmitField('Search →')
 
-class StarNameParametersForm(FlaskForm):
+class ModalForm(FlaskForm):
     # IDEA: add manual text inputs for each option that are required if radio choice is Manual
     teff = RadioField(teff_label, choices=[('Manual', 'Manual')])
     manual_teff = DecimalField('T𝘦𝘧𝘧 — Stellar Effective Temperature (K)', validators=[RequiredIf(teff='Manual')])
@@ -60,8 +60,8 @@ class StarNameParametersForm(FlaskForm):
     manual_logg = DecimalField('log(g) — Surface Gravity (cm/s²)', validators=[RequiredIf(logg='Manual')])
     mass = RadioField(mass_label, choices=[('Manual', 'Manual')])
     manual_mass = DecimalField('M ☉ - Mass (Solar Masses)', validators=[RequiredIf(mass='Manual')])
-    stell_rad = RadioField(rad_label, choices=[('Manual', 'Manual')])
-    manual_stell_rad = DecimalField('R ☉ — Stellar Radius (Solar Radii)', validators=[RequiredIf(stell_rad='Manual')])
+    rad = RadioField(rad_label, choices=[('Manual', 'Manual')])
+    manual_rad = DecimalField('R ☉ — Stellar Radius (Solar Radii)', validators=[RequiredIf(rad='Manual')])
     dist = RadioField(u'Distance (pc)', choices=[('Manual', 'Manual')])
     manual_dist = DecimalField('d - Distance', validators=[RequiredIf(dist='Manual')])
     fuv = RadioField('FUV Flux Density (μJy)', choices=[('Manual', 'Manual')])

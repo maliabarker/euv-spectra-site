@@ -1,60 +1,60 @@
 {% from "macros/subfield.html" import render_subfield with context %}
 
-<form id="name-parameters-form" action="/modal-submit" method="POST" onsubmit="displayLoading(event='modal');">
+<form id="modal-form" action="/modal-submit" method="POST" onsubmit="displayLoading(event='modal');">
     <fieldset>
-        {{ star_name_parameters_form.csrf_token }}
+        {{ modal_form.csrf_token }}
         <div class="table-responsive">
-            <table class="table table-borderless table-striped align-bottom table-sm mb-0" id="star_name_parameter_form_table">
+            <table class="table table-borderless table-striped align-bottom table-sm mb-0">
                 <tr class="me-2">
-                    <th><p class="mt-3">{{star_name_parameters_form.teff.label}} = </p></th>
-                    {% for subfield in star_name_parameters_form.teff %}
-                        {{ render_subfield(subfield, star_name_parameters_form.manual_teff) }}
+                    <th><p class="mt-3">{{modal_form.teff.label}} = </p></th>
+                    {% for subfield in modal_form.teff %}
+                        {{ render_subfield(subfield, modal_form.manual_teff) }}
                     {% endfor %}
                 </tr>
 
                 <tr class="me-2">
-                    <th><p class="mt-3">{{star_name_parameters_form.logg.label}} = </p></th>
-                    {% for subfield in star_name_parameters_form.logg %}
-                        {{ render_subfield(subfield, star_name_parameters_form.manual_logg) }}
+                    <th><p class="mt-3">{{modal_form.logg.label}} = </p></th>
+                    {% for subfield in modal_form.logg %}
+                        {{ render_subfield(subfield, modal_form.manual_logg) }}
                     {% endfor %}
                 </tr>
 
                 <tr class="me-2">
-                    <th><p class="mt-3">{{star_name_parameters_form.mass.label}} = </p></th>
-                    {% for subfield in star_name_parameters_form.mass %}
-                        {{ render_subfield(subfield, star_name_parameters_form.manual_mass) }}
+                    <th><p class="mt-3">{{modal_form.mass.label}} = </p></th>
+                    {% for subfield in modal_form.mass %}
+                        {{ render_subfield(subfield, modal_form.manual_mass) }}
                     {% endfor %}
                 </tr>
 
                 <tr class="me-2">
-                    <th><p class="mt-3">{{star_name_parameters_form.stell_rad.label}} = </p></th>
-                    {% for subfield in star_name_parameters_form.stell_rad %}
-                        {{ render_subfield(subfield, star_name_parameters_form.manual_stell_rad) }}
+                    <th><p class="mt-3">{{modal_form.rad.label}} = </p></th>
+                    {% for subfield in modal_form.rad %}
+                        {{ render_subfield(subfield, modal_form.manual_rad) }}
                     {% endfor %}
                 </tr>
 
                 <tr class="me-2">
-                    <th><p class="mt-3">{{star_name_parameters_form.dist.label}} = </p></th>
-                    {% for subfield in star_name_parameters_form.dist %}
-                        {{ render_subfield(subfield, star_name_parameters_form.manual_dist) }}
+                    <th><p class="mt-3">{{modal_form.dist.label}} = </p></th>
+                    {% for subfield in modal_form.dist %}
+                        {{ render_subfield(subfield, modal_form.manual_dist) }}
                     {% endfor %}
                 </tr>
 
                 <tr class="me-2">
-                    <th><p class="mt-3">{{star_name_parameters_form.fuv.label}} = </p></th>
+                    <th><p class="mt-3">{{modal_form.fuv.label}} = </p></th>
                     <div class="">
-                        {% for subfield, subfield_err in star_name_parameters_form.fuv | zip(star_name_parameters_form.fuv_err) %}
+                        {% for subfield, subfield_err in modal_form.fuv | zip(modal_form.fuv_err) %}
                             {% if subfield.data == 'Manual' %}
                                 <td class="ms-0">
                                     <div class="d-flex justify-content-start">
                                         <div class="form-check my-1">
                                             {{ subfield(class="form-check-input mt-2") }}
-                                            {{ star_name_parameters_form.manual_fuv(class="form-control", onclick="checkManualRadio(this); checkErrFlux(this)") }}
+                                            {{ modal_form.manual_fuv(class="form-control", onclick="checkManualRadio(this); checkErrFlux(this)") }}
                                         </div>
                                         <span class="ms-3 my-2">+/-</span>
                                         <div class="form-check my-1">
                                             {{ subfield_err(class="form-check-input mt-2", style="position: fixed; opacity: 0; pointer-events: none;") }}
-                                            {{ star_name_parameters_form.manual_fuv_err(class="form-control", onclick="checkManualRadio(this)") }}
+                                            {{ modal_form.manual_fuv_err(class="form-control", onclick="checkManualRadio(this)") }}
                                         </div>
                                     </div>
                                 </td>
@@ -85,20 +85,20 @@
                 </tr>
 
                 <tr class="me-2">
-                    <th><p class="mt-3">{{star_name_parameters_form.nuv.label}} = </p></th>
+                    <th><p class="mt-3">{{modal_form.nuv.label}} = </p></th>
                     <div class="">
-                        {% for subfield, subfield_err in star_name_parameters_form.nuv | zip(star_name_parameters_form.nuv_err) %}
+                        {% for subfield, subfield_err in modal_form.nuv | zip(modal_form.nuv_err) %}
                             {% if subfield.data == 'Manual' %}
                                 <td class="ms-0">
                                     <div class="d-flex justify-content-start">
                                         <div class="form-check my-1">
                                             {{ subfield(class="form-check-input mt-2") }}
-                                            {{ star_name_parameters_form.manual_nuv(class="form-control", onclick="checkManualRadio(this); checkErrFlux(this)") }}
+                                            {{ modal_form.manual_nuv(class="form-control", onclick="checkManualRadio(this); checkErrFlux(this)") }}
                                         </div>
                                         <span class="ms-3 my-2">+/-</span>
                                         <div class="form-check my-1">
                                             {{ subfield_err(class="form-check-input mt-2", style="position: fixed; opacity: 0; pointer-events: none;") }}
-                                            {{ star_name_parameters_form.manual_nuv_err(class="form-control", onclick="checkManualRadio(this)") }}
+                                            {{ modal_form.manual_nuv_err(class="form-control", onclick="checkManualRadio(this)") }}
                                         </div>
                                     </div>
                                 </td>
@@ -130,12 +130,12 @@
             </table>
         </div>
         <div class="modal-footer border-0 py-0 me-2">
-            {{ star_name_parameters_form.submit(class="btn btn-primary px-5 mt-1", form="name-parameters-form", id="flux-continue-btn") }}
+            {{ modal_form.submit(class="btn btn-primary px-5 mt-1", form="modal-form", id="flux-continue-btn") }}
         </div>
     </fieldset>
 </form>
 
-{% if star_name_parameters_form.errors %}
+{% if modal_form.errors %}
     <script>
         var myModalEl = document.getElementById('myModal');
         var modal = new bootstrap.Modal(myModalEl);

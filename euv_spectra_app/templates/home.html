@@ -22,16 +22,16 @@
     
     <div class="col-sm-8 offset-sm-2">
         <div class="collapse mb-5" id="manual-form">
-            {% include 'partials/parameter_form.html' %}
+            {% include 'partials/manual_form.html' %}
             <div class="text-center mt-2">
                 <!--—————————MANUAL PARAMETER FORM——————————-->
-                {{ parameter_form.submit(class="btn btn-primary", for="parameter-form", id="flux-continue-btn", form="parameter-form") }}
+                {{ manual_form.submit(class="btn btn-primary", for="manual-form", id="flux-continue-btn", form="manual-form") }}
             </div>
             <div><p class="text-center mt-2"><a href="/clear-session" style="color: tomato;">Clear Form</a> </p></div>
         </div>
     </div>
 
-    {% if session['modal_show'] or (star_name_parameters_form and star_name_parameters_form.errors) %}
+    {% if session['modal_show'] or (modal_form and modal_form.errors) %}
         {% include 'partials/modal.html' %}
         <script src="{{ url_for('static', filename='js/show_modal.js') }}"></script>
     {% endif %}
