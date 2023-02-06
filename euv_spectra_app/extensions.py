@@ -19,13 +19,10 @@ uri = environ.get('MONGODB_URI')
 client = MongoClient(uri)
 my_db = environ.get('MONGODB_DATABASE')
 db = client.get_database(my_db)
-# ===========================
 
 # ======= Collections ==========
 model_parameter_grid = db.model_parameter_grid
-starter_photosphere_models = db.starter_photosphere_models
 photosphere_models = db.photosphere_models
-fits_files = db.fits_files
 mast_galex_times = db.mast_galex_times
 m0_grid = db.m0_grid
 m1_grid = db.m1_grid

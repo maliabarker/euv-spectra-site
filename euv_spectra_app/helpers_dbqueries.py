@@ -97,6 +97,29 @@ def find_matching_photosphere(teff, logg):
         matching_photosphere_doc = doc
     return matching_photosphere_doc
 
+def find_matching_photosphere_test(teff, logg):
+    matching_photosphere_model = photosphere_models.aggregate([
+        {
+            "$project": {
+                "diff_teff": { "$abs": { "$subtract": [ teff, "$teff" ] } },
+                "diff_logg": { "$abs": { "$subtract": [ logg, "$logg" ] } },
+                "doc": "$$ROOT"
+            }
+        },
+        { "$sort": { "diff_teff": 1, "diff_logg": 1 } },
+        { "$limit": 1 },
+        { "$project": {
+            "_id": "$doc._id",
+            "fits_filename": "$doc.fits_filename",
+            "teff": "$doc.teff",
+            "logg": "$doc.logg",
+            "mass": "$doc.mass",
+            "euv": "$doc.euv",
+            "nuv": "$doc.nuv",
+            "fuv": "$doc.fuv"
+        }}
+    ])
+    return matching_photosphere_model
 
 def get_models_with_chi_squared(corrected_nuv, corrected_fuv, model_collection):
     """Calculates chi square (χ2) values.

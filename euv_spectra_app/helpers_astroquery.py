@@ -15,15 +15,13 @@ customSimbad.add_votable_fields(
 
 class StellarTarget():
     """Represents a stellar object."""
-    def __init__(self, search_input, search_format):
-        self.search_input = search_input
-        self.search_format = search_format
+    def __init__(self):
         self.fuv = 'No Detection'
         self.nuv = 'No Detection'
         self.fuv_err = 'No Detection'
         self.nuv_err = 'No Detection'
 
-    def search_dbs(self):
+    def search_dbs(self, search_input, search_format):
         """Searches Astroquery databases for stellar data.
 
         Searches SIMBAD, the NASA Exoplanet Archive, and MAST GALEX databases for 
@@ -45,6 +43,8 @@ class StellarTarget():
             No errors are raised but if an error is detected, the function returns None and
             an error message is sent to the front end error page to be displayed.
         """
+        self.search_input = search_input
+        self.search_format = search_format
         # STEP 1: Check for search type (position or name)
         if self.search_format == 'position':
             # STEP P1: Change coordinates to ra and dec
@@ -238,35 +238,38 @@ class StellarTarget():
             information back.
         """
         # STEP 1: Query the MAST catalogs object by GALEX catalog & given ra and dec
-        galex_data = Catalogs.query_object(
+        try: 
+            galex_data = Catalogs.query_object(
             f'{self.coordinates[0]} {self.coordinates[1]}', catalog="GALEX")
-        # STEP 2: If there are results returned and results within 0.167 arcmins, then start processing the data.
-        if len(galex_data) > 0:
-            # Set minimum distance between target coordinates and actual coordinates of object.
-            MIN_DIST = galex_data['distance_arcmin'] < 0.167
-            if len(galex_data[MIN_DIST]) > 0:
-                filtered_data = galex_data[MIN_DIST][0]
-                self.fuv = filtered_data['fuv_flux']
-                self.nuv = filtered_data['nuv_flux']
-                self.fuv_err = filtered_data['fuv_fluxerr']
-                self.nuv_err = filtered_data['nuv_fluxerr']
-                # STEP 3: Check if there are any masked values (these will be null values) and change accordingly
-                if ma.is_masked(self.fuv) and ma.is_masked(self.nuv):
-                    # both are null, point to null placeholders and add error message
-                    # self.fuv, self.nuv, self.fuv_err, self.nuv_err = 'No Detection', 'No Detection', 'No Detection', 'No Detection'
-                    return 'GALEX error: No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
-                elif ma.is_masked(self.fuv):
-                    # only FUV is null, predict FUV and add error message
-                    self.predict_fluxes('fuv')
-                    self.modal_error_msg = 'GALEX error: No detection in GALEX FUV, substitution is calculated for you. \nLook under question 3 on the FAQ page for more information.'
-                elif ma.is_masked(self.nuv):
-                    # only NUV is null, predict NUV and add error message
-                    self.predict_fluxes('nuv')
-                    self.modal_error_msg = 'GALEX error: No detection in GALEX NUV, substitution is calculated for you. \nLook under question 3 on the FAQ page for more information.'
+            # STEP 2: If there are results returned and results within 0.167 arcmins, then start processing the data.
+            if len(galex_data) > 0:
+                # Set minimum distance between target coordinates and actual coordinates of object.
+                MIN_DIST = galex_data['distance_arcmin'] < 0.167
+                if len(galex_data[MIN_DIST]) > 0:
+                    filtered_data = galex_data[MIN_DIST][0]
+                    self.fuv = filtered_data['fuv_flux']
+                    self.nuv = filtered_data['nuv_flux']
+                    self.fuv_err = filtered_data['fuv_fluxerr']
+                    self.nuv_err = filtered_data['nuv_fluxerr']
+                    # STEP 3: Check if there are any masked values (these will be null values) and change accordingly
+                    if ma.is_masked(self.fuv) and ma.is_masked(self.nuv):
+                        # both are null, point to null placeholders and add error message
+                        # self.fuv, self.nuv, self.fuv_err, self.nuv_err = 'No Detection', 'No Detection', 'No Detection', 'No Detection'
+                        return 'GALEX error: No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
+                    elif ma.is_masked(self.fuv):
+                        # only FUV is null, predict FUV and add error message
+                        self.predict_fluxes('fuv')
+                        self.modal_error_msg = 'GALEX error: No detection in GALEX FUV, substitution is calculated for you. \nLook under question 3 on the FAQ page for more information.'
+                    elif ma.is_masked(self.nuv):
+                        # only NUV is null, predict NUV and add error message
+                        self.predict_fluxes('nuv')
+                        self.modal_error_msg = 'GALEX error: No detection in GALEX NUV, substitution is calculated for you. \nLook under question 3 on the FAQ page for more information.'
+                else:
+                    self.modal_error_msg = 'GALEX error: No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
             else:
                 self.modal_error_msg = 'GALEX error: No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
-        else:
-            self.modal_error_msg = 'GALEX error: No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
+        except:
+            self.modal_error_msg = 'Unable to query MAST, the server may be down. Please try again later.'
 
     def predict_fluxes(self, flux_type):
         """Calculates a predicted flux if the value is missing from GALEX.

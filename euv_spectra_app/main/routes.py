@@ -9,7 +9,7 @@ from euv_spectra_app.main.forms import ManualForm, StarNameForm, PositionForm, M
 from euv_spectra_app.helpers_astroquery import StellarTarget
 from euv_spectra_app.helpers_flux import GalexFlux
 from euv_spectra_app.helpers_graph import create_plotly_graph
-from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios
+from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios, find_matching_photosphere_test
 
 main = Blueprint("main", __name__)
 
@@ -22,7 +22,7 @@ def to_json(obj):
 def from_json(json_str):
     # Deserialize the JSON formatted string back into an object
     data = json.loads(json_str)
-    target = StellarTarget(data["search_input"], data["search_format"])
+    target = StellarTarget()
     for key, value in data.items():
         setattr(target, key, value)
     return target
@@ -46,6 +46,7 @@ def make_session_permanent():
 def homepage():
     """Home and submit route for search bar forms."""
     session['modal_show'] = False
+    stellar_target = StellarTarget()
 
     manual_form = ManualForm()
     name_form = StarNameForm()
@@ -57,15 +58,12 @@ def homepage():
         if position_form.validate_on_submit():
             # Home position form
             print('position form validated!')
-            stellar_target = StellarTarget(
-                position_form.coords.data, 'position')
-            stellar_target.search_dbs()
+            stellar_target.search_dbs(position_form.coords.data, 'position')
 
         elif name_form.validate_on_submit():
             # Home name form
             print(f'name form validated!')
-            stellar_target = StellarTarget(name_form.star_name.data, 'name')
-            stellar_target.search_dbs()
+            stellar_target.search_dbs(name_form.star_name.data, 'name')
 
         if hasattr(stellar_target, 'modal_error_msg'):
             # check if there were any errors returned from searching databases
@@ -131,19 +129,16 @@ def submit_modal_form():
 def submit_manual_form():
     """Submit route for manual form."""
     form = ManualForm(request.form)
+    stellar_target = StellarTarget()
     if form.validate_on_submit():
         for fieldname, value in form.data.items():
             # CHECK DISTANCE UNIT: if distance unit is mas, convert to parsecs
             if fieldname == "dist_unit" or "flag" in fieldname or "csrf_token" in fieldname:
                 if value == 'mas':
-                    session['dist'] = int(1 / (form.dist.data / 1000))
-                if value == 'null':
-                    which_flux = fieldname[0:2]
-                    session[which_flux] = 'null'
-                    session[f'{which_flux}_err'] = 'null'
+                    stellar_target.dist = int(1 / (form.dist.data / 1000))
             else:
-                # print(f'form key: {fieldname}, value: {value}')
-                session[fieldname] = float(value)
+                setattr(stellar_target, fieldname, float(value))
+        session['stellar_target'] = to_json(stellar_target)
         return redirect(url_for('main.return_results'))
     else:
         flash('Whoops, something went wrong. Please check your inputs and try again!', 'danger')
@@ -185,6 +180,10 @@ def return_results():
         # STEP 2: Find closest matching photosphere model and get flux values
         matching_photospheric_flux = find_matching_photosphere(
             stellar_target.teff, stellar_target.logg)
+
+        matching_photosphere_test = find_matching_photosphere_test(stellar_target.teff, stellar_target.logg)
+        print('AHHHHHH')
+        print(list(matching_photosphere_test))
 
         # STEP 3: Convert, scale, and subtract photospheric contribution from fluxes
         nuv_obj = GalexFlux(stellar_target.nuv, stellar_target.nuv_err,
@@ -239,6 +238,7 @@ def return_results():
                 plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
 
             flash('No results found within upper and lower limits of UV fluxes. Returning document with nearest chi squared value.', 'warning')
+            session['stellar_target'] = to_json(stellar_target)
             return render_template('result.html', subtype=matching_subtype, modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=[filename], stellar_target=stellar_target)
         else:
             # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
@@ -256,7 +256,7 @@ def return_results():
                 # print('DOC')
                 # print(doc)
                 filepath = os.path.abspath(
-                    f"euv_spectra_app/fits_files/{session['model_subtype']}/{doc['fits_filename']}")
+                    f"euv_spectra_app/fits_files/{stellar_target.model_subtype}/{doc['fits_filename']}")
                 if os.path.exists(filepath):
                     filenames.append(doc['fits_filename'])
                     filepaths.append(filepath)
@@ -284,6 +284,7 @@ def return_results():
                 plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
             flash(
                 f'{len(list(models_in_limits))} results found within your submitted parameters', 'success')
+            session['stellar_target'] = to_json(stellar_target)
             return render_template('result.html', subtype=matching_subtype, modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=filenames, stellar_target=stellar_target)
     else:
         flash('Submit the required data to view this page.', 'warning')
@@ -293,8 +294,12 @@ def return_results():
 @app.route('/check-directory/<filename>')
 def check_directory(filename):
     """Checks if a FITS file exists."""
+    # Retrieve the JSON formatted string from the session
+    target_json = session.get('stellar_target')
+    # Deserialize the JSON formatted string back into an object
+    stellar_target = from_json(target_json)
     downloads = os.path.join(
-        current_app.root_path, app.config['FITS_FOLDER'], session['model_subtype'])
+        current_app.root_path, app.config['FITS_FOLDER'], stellar_target.model_subtype)
     if os.path.exists(os.path.join(downloads, filename)):
         return jsonify({'exists': True})
     else:
@@ -304,8 +309,12 @@ def check_directory(filename):
 @app.route('/download/<filename>', methods=['GET', 'POST'])
 def download(filename):
     """Downloading FITS file on button click."""
+    # Retrieve the JSON formatted string from the session
+    target_json = session.get('stellar_target')
+    # Deserialize the JSON formatted string back into an object
+    stellar_target = from_json(target_json)
     downloads = os.path.join(
-        current_app.root_path, app.config['FITS_FOLDER'], session['model_subtype'])
+        current_app.root_path, app.config['FITS_FOLDER'], stellar_target.model_subtype)
     if not os.path.exists(os.path.join(downloads, filename)):
         flash('File is not available to download because it does not exist yet!')
     return send_from_directory(downloads, filename, as_attachment=True, download_name=filename)
