@@ -250,6 +250,8 @@ class StellarTarget():
                 MIN_DIST = galex_data['distance_arcmin'] < 0.167
                 if len(galex_data[MIN_DIST]) > 0:
                     filtered_data = galex_data[MIN_DIST][0]
+                    nuv_is_saturated = filtered_data['nuv_flux_aper_7'] > 108
+                    fuv_is_saturated = filtered_data['fuv_flux_aper_7'] > 34
                     self.fuv = filtered_data['fuv_flux']
                     self.nuv = filtered_data['nuv_flux']
                     self.fuv_err = filtered_data['fuv_fluxerr']
@@ -267,6 +269,26 @@ class StellarTarget():
                         # only NUV is null, predict NUV and add error message
                         self.predict_fluxes('nuv')
                         self.modal_error_msg = 'No detection in GALEX NUV, substitution is calculated for you. \nLook under question 3 on the FAQ page for more information.'
+                    elif fuv_is_saturated:
+                        # FUV is saturated
+                        # predict flux and compare predicted flux to actual flux
+                        # return whatever is higher
+                        self.predict_fluxes('fuv')
+                        fuv_fluxes = [self.fuv, filtered_data['fuv_flux']]
+                        fuv_errors = [self.fuv_err, filtered_data['fuv_fluxerr']]
+                        self.fuv = max(fuv_fluxes)
+                        self.fuv_err = max(fuv_errors)
+                        self.modal_error_msg = 'GALEX FUV flux density is saturated. If submitted, we will treat it as a lower limit.'
+                    elif nuv_is_saturated:
+                        # NUV is saturated
+                        # predict flux and compare predicted flux to actual flux
+                        # return whatever is higher
+                        self.predict_fluxes('nuv')
+                        nuv_fluxes = [self.fuv, filtered_data['nuv_flux']]
+                        nuv_errors = [self.fuv_err, filtered_data['nuv_fluxerr']]
+                        self.nuv = max(nuv_fluxes)
+                        self.nuv_err = max(nuv_errors)
+                        self.modal_error_msg = 'GALEX NUV flux density is saturated. If submitted, we will treat it as a lower limit.'
                 else:
                     self.modal_error_msg = 'No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
             else:
