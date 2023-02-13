@@ -17,7 +17,11 @@
     <h4 class="text-center mt-4 mb-4" style="color: white; letter-spacing: .1rem;">Enter Star Name or Coordinates to Get Started</h4>
     <div class="col-md-8 offset-md-2 col-lg-8 offset-lg-2 col-xl-6 offset-xl-3 mt-4">
         {% include 'partials/search_bar.html' %}
-        <p class="text-end mt-3"><a data-bs-toggle="collapse" href="#manual-form" role="button" aria-expanded="false" aria-controls="collapseExample" id="manual-form-toggle-text"><b id="manual-text" style="letter-spacing: 0.03rem;" class="h6">Click Here to Enter Parameters Manually </b><i class="fa-solid fa-caret-right" id="manual-caret"></i></a></p>
+        <p class="text-end mt-3">
+            <a data-bs-toggle="collapse" href="#manual-form" role="button" aria-expanded="false" aria-controls="collapseExample" id="manual-form-toggle-text">
+                <b id="manual-text" style="letter-spacing: 0.03rem;" class="h6 me-2">Click Here to Enter Parameters Manually</b><i class="fa-solid fa-caret-right" id="manual-caret"></i>
+            </a>
+        </p>
     </div>
     
     <div class="col-sm-8 offset-sm-2">
@@ -25,9 +29,8 @@
             {% include 'partials/manual_form.html' %}
             <div class="text-center mt-2">
                 <!--—————————MANUAL PARAMETER FORM——————————-->
-                {{ manual_form.submit(class="btn btn-primary", for="manual-form", id="flux-continue-btn", form="manual-form") }}
+                {{ manual_form.submit(class="btn btn-primary border-0 mb-3", id="flux-continue-btn") }}
             </div>
-            <div><p class="text-center mt-2"><a href="/clear-session" style="color: tomato;">Clear Form</a> </p></div>
         </div>
     </div>
 
@@ -46,5 +49,7 @@
             autocomplete(document.getElementById("name-form-input-group"), data);
         </script>
     {% endif %}
-
+    {% if extend_form %}
+        <script src="{{ url_for('static', filename='js/extend_form.js' )}}"></script>
+    {% endif %}
 {% endblock %}

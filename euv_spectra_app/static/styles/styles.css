@@ -47,7 +47,9 @@ body {
 
 /* ————————————FOR MANUAL FORM————————————— */
     #manual-form {
-        background-color: rgba(0, 0, 0, 0.413);
+        background-color: rgba(255, 255, 255, 0.598);
+        color: black;
+        border-radius: 15px;
     }
 
     #manual-form-toggle-text {

@@ -45,6 +45,11 @@ def make_session_permanent():
 @main.route('/', methods=['GET', 'POST'])
 def homepage():
     """Home and submit route for search bar forms."""
+    if request.args.get('form') == 'extended':
+        extend_form = True
+    else:
+        extend_form = False
+
     session['modal_show'] = False
     stellar_target = StellarTarget()
 
@@ -86,7 +91,7 @@ def homepage():
         return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, modal_form=modal_form, targets=autofill_data, stellar_target=stellar_target)
 
     flash('Website is under development. Files are not available for use yet. For testing purposes, try out object GJ 338 B.', 'warning')
-    return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, targets=autofill_data)
+    return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, targets=autofill_data, extend_form=extend_form)
 
 
 @main.route('/modal-submit', methods=['GET', 'POST'])

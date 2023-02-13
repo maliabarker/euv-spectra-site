@@ -1,4 +1,4 @@
-<form action="/manual-submit" method="POST" id="manual-form" class="p-4">
+<form action="/manual-submit" method="POST" class="p-4">
     {{ manual_form.csrf_token }}
     <fieldset>
         <div class="form-floating mb-3">
@@ -36,7 +36,7 @@
             </div>
         </div>
 
-        <p class="text-center text-light"><b>GALEX Far and Near Ultraviolet (FUV, NUV) Flux Densities</b></p>
+        <p class="text-center"><b>GALEX Far and Near Ultraviolet (FUV, NUV) Flux Densities</b></p>
         <div class="row">
             <div class="col-sm-6">
                 <div class="form-floating mb-3">
@@ -45,7 +45,7 @@
                 </div>
             </div>
             <div class="col-sm-1 d-flex align-items-center">
-                <p class="justify-content-center text-light">+/-</p>
+                <p class="justify-content-center  ">+/-</p>
             </div>
             <div class="col-sm-5">
                 <div class="form-floating">
@@ -54,16 +54,17 @@
                 </div>
             </div>
         </div>
+        
         <div id="fuv-flags-container" class="text-center">
-            <span class="me-3 text-light">FUV Flags:</span>
+            <span class="me-3">FUV Flags:</span>
             {% for subfield in manual_form.fuv_flag %}
                 {% if subfield.data == 'null' %}
-                    <div class="form-check form-check-inline my-4 text-light">
+                    <div class="form-check form-check-inline my-4">
                         {{ subfield(class="form-check-input", onclick="populateNullFlux(this);") }}
                         {{ subfield.label(class="form-check-label") }}
                     </div>
                 {% else %}
-                    <div class="form-check form-check-inline my-4 text-light">
+                    <div class="form-check form-check-inline my-4">
                         {{ subfield(class="form-check-input") }}
                         {{ subfield.label(class="form-check-label") }}
                     </div>
@@ -79,7 +80,7 @@
                 </div>
             </div>
             <div class="col-sm-1 d-flex align-items-center">
-                <p class="justify-content-center text-light">+/-</p>
+                <p class="justify-content-center">+/-</p>
             </div>
             <div class="col-sm-5">
                 <div class="form-floating">
@@ -90,15 +91,15 @@
         </div>
 
         <div id="nuv-flags-container" class="text-center">
-            <span class="me-3 text-light">NUV Flags:</span>
+            <span class="me-3">NUV Flags:</span>
             {% for subfield in manual_form.nuv_flag %}
                 {% if subfield.data == 'null' %}
-                    <div class="form-check form-check-inline my-4 text-light">
+                    <div class="form-check form-check-inline mt-4">
                         {{ subfield(class="form-check-input", onclick="populateNullFlux(this);") }}
                         {{ subfield.label(class="form-check-label") }}
                     </div>
                 {% else %}
-                    <div class="form-check form-check-inline my-4 text-light">
+                    <div class="form-check form-check-inline mt-4">
                         {{ subfield(class="form-check-input") }}
                         {{ subfield.label(class="form-check-label") }}
                     </div>
