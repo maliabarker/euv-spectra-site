@@ -67,13 +67,16 @@ class StellarTarget():
             pm_corrected_coords = self.correct_pm()
             if pm_corrected_coords != None:
                 self.modal_error_msg = pm_corrected_coords
-                return
+                if 'GALEX' not in pm_corrected_coords:
+                    return
         # STEP 2: Search NASA Exoplanet Archive with the search term & type
         nea_data = self.search_nea()
         if nea_data != None:
             self.modal_error_msg = nea_data
             return
-        # STEP 3: Search GALEX with corrected/converted coords
+        # STEP 3: Check if coordinate correction happened (if it didn't there would be
+                # GALEX error model error message), then search GALEX with corrected/converted
+                # coords
         self.search_galex()
 
     def convert_coords(self):
@@ -156,7 +159,7 @@ class StellarTarget():
             galex_time = db.mast_galex_times.find_one(
                 {'target': self.search_input})['t_min']
         except:
-            return 'No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
+            return 'No GALEX observations found, unable to correct coordinates. \nLook under question 3 on the FAQ page for more information.'
         else:
             try:
                 # STEP 2: If observation time is found, start coordinate correction by initializing variables
@@ -255,19 +258,19 @@ class StellarTarget():
                     if ma.is_masked(self.fuv) and ma.is_masked(self.nuv):
                         # both are null, point to null placeholders and add error message
                         # self.fuv, self.nuv, self.fuv_err, self.nuv_err = 'No Detection', 'No Detection', 'No Detection', 'No Detection'
-                        return 'GALEX error: No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
+                        return 'No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
                     elif ma.is_masked(self.fuv):
                         # only FUV is null, predict FUV and add error message
                         self.predict_fluxes('fuv')
-                        self.modal_error_msg = 'GALEX error: No detection in GALEX FUV, substitution is calculated for you. \nLook under question 3 on the FAQ page for more information.'
+                        self.modal_error_msg = 'No detection in GALEX FUV, substitution is calculated for you. \nLook under question 3 on the FAQ page for more information.'
                     elif ma.is_masked(self.nuv):
                         # only NUV is null, predict NUV and add error message
                         self.predict_fluxes('nuv')
-                        self.modal_error_msg = 'GALEX error: No detection in GALEX NUV, substitution is calculated for you. \nLook under question 3 on the FAQ page for more information.'
+                        self.modal_error_msg = 'No detection in GALEX NUV, substitution is calculated for you. \nLook under question 3 on the FAQ page for more information.'
                 else:
-                    self.modal_error_msg = 'GALEX error: No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
+                    self.modal_error_msg = 'No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
             else:
-                self.modal_error_msg = 'GALEX error: No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
+                self.modal_error_msg = 'No GALEX observations found, unable to correct coordinates. \nLook under question 3 on the FAQ page for more information.'
         except:
             self.modal_error_msg = 'Unable to query MAST, the server may be down. Please try again later.'
 

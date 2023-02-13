@@ -17,14 +17,70 @@
         </div>
     </div>
 
-    <h3 class="mt-5 pt-4 text-center">Closest Match PHOENIX Model for <i>{{ stellar_target.search_input }}</i></h3>
-    <a data-bs-toggle="modal" data-bs-target="#myModal" class="text-center"><p>Click Here to Edit Parameters</p></a>
-    <div class="text-center"><small>Model Parameters : Teff = {{ subtype.teff }}, log(g) = {{ subtype.logg }}, Mass = {{ subtype.mass }}</small></div>
-    <div class="text-center"><small>Your Parameters : Teff = {{ stellar_target.teff }}, log(g) = {{ stellar_target.logg }}, Mass = {{ stellar_target.mass }}</small></div>
-    <div class="text-center mt-2"><small>GALEX Flux Densities<sup>*</sup> for {{ stellar_target.search_input }}: FUV = {{ "%.2f"|format(stellar_target.corrected_fuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_fuv_err) }}, NUV = {{ "%.2f"|format(stellar_target.corrected_nuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_nuv_err) }}</small></div>
+    <h4 class="mt-5 pt-4 text-center">Closest Match PHOENIX Model for <i>{{ stellar_target.search_input }}</i></h4>
+    
+    <div class="row mt-4">
+        <div class="col-md-8 offset-md-2 text-center">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col">Stellar Parameter</th>
+                        <th scope="col">Your Target's Parameters</th>
+                        <th scope="col">Model Subtype ({{ stellar_target.model_subtype }}) Parameters</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">Teff</th>
+                        <td>{{ stellar_target.teff }}</td>
+                        <td>{{ subtype.teff }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">log(g)</th>
+                        <td>{{ stellar_target.logg }}</td>
+                        <td>{{ subtype.logg }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Mass</th>
+                        <td>{{ stellar_target.mass }}</td>
+                        <td>{{ subtype.mass }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">GALEX FUV Flux Density<sup>*</sup></th>
+                        <td>{{ "%.2f"|format(stellar_target.corrected_fuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_fuv_err) }}</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">GALEX NUV Flux Density<sup>*</sup></th>
+                        <td>{{ "%.2f"|format(stellar_target.corrected_nuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_nuv_err) }}</td>
+                        <td>N/A</td>
+                    </tr>
+                </tbody>
+            </table>              
+        </div>
+    </div>
 
-    <div class="row">
-        <div class="col-lg-10 col-md-12">
+    <div class="text-center mt-3">
+        <a data-bs-toggle="modal" data-bs-target="#myModal" class="btn btn-primary py-3 px-2">Click Here to Edit Parameters</a>
+    </div>
+    <hr>
+    
+
+    {#<!-- <div class="text-center"><small>Model Parameters : Teff = {{ subtype.teff }}, log(g) = {{ subtype.logg }}, Mass = {{ subtype.mass }}</small></div>
+    <div class="text-center"><small>Your Parameters : Teff = {{ stellar_target.teff }}, log(g) = {{ stellar_target.logg }}, Mass = {{ stellar_target.mass }}</small></div>
+    <div class="text-center mt-2"><small>GALEX Flux Densities<sup>*</sup> for {{ stellar_target.search_input }}: FUV = {{ "%.2f"|format(stellar_target.corrected_fuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_fuv_err) }}, NUV = {{ "%.2f"|format(stellar_target.corrected_nuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_nuv_err) }}</small></div> -->#}
+    <h4 class="text-center">Closest Matches in PHOENIX {{ stellar_target.model_subtype }} Grid</i></h4>
+    <div class="chart" id="linegraph">
+        <script>
+            var graphs = JSON.parse('{{graphJSON | safe}}');
+            console.log(graphs)
+            var config = {responsive: true};
+            Plotly.plot('linegraph', graphs, config);
+        </script>
+    </div>
+
+    {#<!-- <div class="row">
+        <div class="col-lg-10 col-offset-lg-2 col-md-12">
             <div class="chart" id="linegraph">
                 <script>
                     var graphs = JSON.parse('{{graphJSON | safe}}');
@@ -40,9 +96,26 @@
                 <div id="{{filename}}-errorbox" style="color: tomato;"></div>
             {% endfor %}
         </div>
-    </div>
+    </div> -->#}
+    <hr>
+    <p class="text-center fw-bold">Download Spectrum FITS Files, See More Info About FITS Products <a href="/about">Here</a></p>
+    {%- for file_row in files|batch(3) %}
+        <div class="row">
+            {%- for filename in file_row %}
+            <div class="col-md-4 text-center">
+                <button class="btn btn-primary mb-2 small" id="flux-continue-btn" onclick="checkDirectory('{{ filename }}')">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                    <small>Download Spectrum {{ loop.index }}</small>
+                </button>
+                <div id="{{filename}}-errorbox" style="color: tomato;"></div>
+            </div>
+            {%- endfor %}
+        </div>
+    {%- endfor %}
 
-    <small>NOTES: <br> *In units of ergs/s/cm<sup>2</sup>/Å, scaled to stellar surface and corrected for photospheric contribution.</small>
+    <div class="my-3">
+      <small>NOTES: <br> *In units of ergs/s/cm<sup>2</sup>/Å, scaled to stellar surface and corrected for photospheric contribution.</small>
+    </div>
 
     {% include 'partials/modal.html' %}
 {% endblock %}

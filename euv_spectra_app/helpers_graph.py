@@ -26,15 +26,16 @@ def create_plotly_graph(files, model_data):
         w_obs = data['WAVELENGTH'][0]
         f_obs = data['FLUX'][0]
         if i == 0:
+            print(model_data[i])
             fig.add_trace(go.Scatter(
-                x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1} (Best Match)</b> <br> FUV={round(model_data[i]['fuv'], 2)} NUV={round(model_data[i]['nuv'], 2)}", line=dict(color=colors[i], width=1)))
+                x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1} (Best Match)</b> <br> FUV={round(model_data[i]['fuv'], 2)} NUV={round(model_data[i]['nuv'], 2)} <br> EUV={round(model_data[i]['euv'], 2)}", line=dict(color=colors[i], width=1)))
         else:
             fig.add_trace(go.Scatter(
-                x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1}</b> <br> FUV={round(model_data[i]['fuv'], 2)} NUV={round(model_data[i]['nuv'], 2)}", line=dict(color=colors[i], width=1)))
+                x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1}</b> <br> FUV={round(model_data[i]['fuv'], 2)} NUV={round(model_data[i]['nuv'], 2)} <br> EUV={round(model_data[i]['euv'], 2)}", line=dict(color=colors[i], width=1)))
         i += 1
     # STEP 3: Add additional styling
     fig.update_layout(xaxis=dict(title='Wavelength (Å)', range=[10, 3000]),
                       yaxis=dict(title='Flux Density (erg/cm2/s/Å)',
-                                 type='log', range=[-4, 7], tickformat='e'),
+                                 type='log', range=[-4, 7], tickformat='.0e'),
                       showlegend=True)
     return fig

@@ -9,7 +9,7 @@ from euv_spectra_app.main.forms import ManualForm, StarNameForm, PositionForm, M
 from euv_spectra_app.helpers_astroquery import StellarTarget
 from euv_spectra_app.helpers_flux import GalexFlux
 from euv_spectra_app.helpers_graph import create_plotly_graph
-from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios, find_matching_photosphere_test
+from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios
 
 main = Blueprint("main", __name__)
 
@@ -67,7 +67,7 @@ def homepage():
 
         if hasattr(stellar_target, 'modal_error_msg'):
             # check if there were any errors returned from searching databases
-            if 'GALEX error:' in stellar_target.modal_error_msg:
+            if 'GALEX' in stellar_target.modal_error_msg:
                 flash(stellar_target.modal_error_msg, 'warning')
             else:
                 return redirect(url_for('main.error', msg=stellar_target.modal_error_msg))
@@ -178,18 +178,13 @@ def return_results():
         stellar_target.model_subtype = matching_subtype['model']
 
         # STEP 2: Find closest matching photosphere model and get flux values
-        matching_photospheric_flux = find_matching_photosphere(
-            stellar_target.teff, stellar_target.logg)
-
-        matching_photosphere_test = find_matching_photosphere_test(stellar_target.teff, stellar_target.logg)
-        print('AHHHHHH')
-        print(list(matching_photosphere_test))
-
+        matching_photosphere_model = find_matching_photosphere(
+            stellar_target.teff, stellar_target.logg, stellar_target.mass)
         # STEP 3: Convert, scale, and subtract photospheric contribution from fluxes
         nuv_obj = GalexFlux(stellar_target.nuv, stellar_target.nuv_err,
-                            matching_photospheric_flux['nuv'], stellar_target.dist, stellar_target.rad, wv=2274.4)
+                            matching_photosphere_model['nuv'], stellar_target.dist, stellar_target.rad, wv=2274.4)
         fuv_obj = GalexFlux(stellar_target.fuv, stellar_target.fuv_err,
-                            matching_photospheric_flux['fuv'], stellar_target.dist, stellar_target.rad, wv=1542.3)
+                            matching_photosphere_model['fuv'], stellar_target.dist, stellar_target.rad, wv=1542.3)
 
         stellar_target.corrected_nuv = nuv_obj.return_new_flux()
         stellar_target.corrected_nuv_err = nuv_obj.return_new_err()
@@ -208,36 +203,46 @@ def return_results():
         models_in_limits = list(get_models_within_limits(stellar_target.corrected_nuv, stellar_target.corrected_fuv,
                                 stellar_target.corrected_nuv_err, stellar_target.corrected_fuv_err, model_collection))
 
-        if len(list(models_in_limits)) == 0:
+        if len(models_in_limits) == 0:
+            # model_ratios = list(get_flux_ratios(stellar_target.corrected_nuv, stellar_target.corrected_fuv, model_collection))
+            # print(model_ratios[:5])
+            
             # STEP 7.1: If there are no models found within limits, return models ONLY with FUV < NUV, return with chi squared values
             models_weighted = get_models_with_weighted_fuv(
                 stellar_target.corrected_nuv, stellar_target.corrected_fuv, model_collection)
 
-            print(models_weighted)
+            # STEP 8.1: Check if there are any results from weighted search
+            if len(models_weighted) == 0:
+                # if no weighted results, just use model with lowest chi squared
+                flash('No results found within upper and lower limits of UV fluxes. No model found\
+                     with a close FUV match. Returning model with lowest chi-square value.', 'warning')
+                data = [{'chi_squared': models_with_chi_squared[0]['chi_squared'],
+                         'fuv': models_with_chi_squared[0]['fuv'], 'nuv': models_with_chi_squared[0]['nuv'], 
+                         'euv': models_with_chi_squared[0]['euv']}]
+                filename = models_with_chi_squared[0]['fits_filename']
+            else:
+                flash('No results found within upper and lower limits of UV fluxes.\
+                      Returning document with nearest chi squared value weighted towards the FUV.', 'warning')
+                data = [{'chi_squared': models_weighted[0]['chi_squared'],
+                         'fuv': models_weighted[0]['fuv'], 'nuv': models_weighted[0]['nuv'], 
+                         'euv': models_weighted[0]['euv']}]
+                filename = models_weighted[0]['fits_filename']
 
-            # STEP 8.1: Read FITS file from matching model and create graph from data
-            filename = models_weighted[0]['fits_filename']
+            # STEP 9.1: Read FITS file from matching model and create graph from data
             filepath = os.path.abspath(
                 f"euv_spectra_app/fits_files/{stellar_target.model_subtype}/{filename}")
 
-            # flux_ratios = list(get_flux_ratios(session, model_collection))
-            # print(flux_ratios[:5])
-            # for i in flux_ratios:
-            #     flux_ratio_chi_sqaured =
-
             '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
             if os.path.exists(filepath) == False:
-                flash('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
+                flash('EUV data not available yet, using test data for viewing purposes.\
+                      Please contact us for more information.', 'danger')
                 filepath = test_filepath
                 filename = test_filename
 
-            data = [{'chi_squared': models_with_chi_squared[0]['chi_squared'],
-                     'fuv': models_with_chi_squared[0]['fuv'], 'nuv': models_with_chi_squared[0]['nuv']}]
             plotly_fig = create_plotly_graph([filepath], data)
             graphJSON = json.dumps(
                 plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
 
-            flash('No results found within upper and lower limits of UV fluxes. Returning document with nearest chi squared value.', 'warning')
             session['stellar_target'] = to_json(stellar_target)
             return render_template('result.html', subtype=matching_subtype, modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=[filename], stellar_target=stellar_target)
         else:
@@ -263,7 +268,8 @@ def return_results():
                     file_data = {
                         'chi_squared': doc['chi_squared'],
                         'fuv': doc['fuv'],
-                        'nuv': doc['nuv']
+                        'nuv': doc['nuv'],
+                        'euv': doc['euv']
                     }
                     data.append(file_data)
                 else:
@@ -271,19 +277,20 @@ def return_results():
                     file_data = {
                         'chi_squared': doc['chi_squared'],
                         'fuv': doc['fuv'],
-                        'nuv': doc['nuv']
+                        'nuv': doc['nuv'],
+                        'euv': doc['euv']
                     }
                     data.append(file_data)
                     filepaths.append(test_filepath)
                     filenames.append(test_filename)
-                    flash(
-                        'EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
+                    flash('EUV data not available yet, using test data for viewing purposes.\
+                          Please contact us for more information.', 'danger')
 
             plotly_fig = create_plotly_graph(filepaths, data)
             graphJSON = json.dumps(
                 plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
-            flash(
-                f'{len(list(models_in_limits))} results found within your submitted parameters', 'success')
+            flash(f'{len(list(models_in_limits))} results found within your\
+                 submitted parameters', 'success')
             session['stellar_target'] = to_json(stellar_target)
             return render_template('result.html', subtype=matching_subtype, modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=filenames, stellar_target=stellar_target)
     else:
