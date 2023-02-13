@@ -10,7 +10,6 @@ from euv_spectra_app.helpers_astroquery import StellarTarget
 from euv_spectra_app.helpers_flux import GalexFlux
 from euv_spectra_app.helpers_graph import create_plotly_graph
 from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios
-
 main = Blueprint("main", __name__)
 
 
@@ -173,9 +172,12 @@ def return_results():
     # check if required data is avaialable for use before continuing
     if hasattr(stellar_target, 'teff') and hasattr(stellar_target, 'logg') and hasattr(stellar_target, 'mass') and hasattr(stellar_target, 'rad') and hasattr(stellar_target, 'dist') and hasattr(stellar_target, 'fuv') and hasattr(stellar_target, 'nuv'):
         '''———————————FOR TESTING PURPOSES (Test file)——————————'''
-        test_filepath = os.path.abspath(
-            f"euv_spectra_app/fits_files/M0/M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits")
-        test_filename = "M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits"
+        # original test filename is M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits
+        test_filepaths = [os.path.abspath(
+            f"euv_spectra_app/fits_files/test/original_test.fits"), 
+            os.path.abspath(
+            f"euv_spectra_app/fits_files/test/new_test.fits")]
+        test_filenames = ["original_test.fits", "new_test.fits"]
 
         # STEP 1: Search the model_parameter_grid collection to find closest matching subtype
         matching_subtype = find_matching_subtype(
@@ -241,8 +243,8 @@ def return_results():
             if os.path.exists(filepath) == False:
                 flash('EUV data not available yet, using test data for viewing purposes.\
                       Please contact us for more information.', 'danger')
-                filepath = test_filepath
-                filename = test_filename
+                filepath = test_filepaths[0]
+                filename = test_filenames[0]
 
             plotly_fig = create_plotly_graph([filepath], data)
             graphJSON = json.dumps(
@@ -251,13 +253,14 @@ def return_results():
             session['stellar_target'] = to_json(stellar_target)
             return render_template('result.html', subtype=matching_subtype, modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=[filename], stellar_target=stellar_target)
         else:
+            flash(f'{len(list(models_in_limits))} results found within your\
+                 submitted parameters', 'success')
             # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
             results = []
             for x in models_in_limits:
                 for y in models_with_chi_squared:
                     if x['_id'] == y['_id']:
                         results.append(y)
-
             # STEP 8.2: Read all FITS files from matching models and create graph from data
             filenames = []
             filepaths = []
@@ -286,16 +289,15 @@ def return_results():
                         'euv': doc['euv']
                     }
                     data.append(file_data)
-                    filepaths.append(test_filepath)
-                    filenames.append(test_filename)
+                    i = results.index(doc)
+                    filepaths.append(test_filepaths[i])
+                    filenames.append(test_filenames[i])
                     flash('EUV data not available yet, using test data for viewing purposes.\
                           Please contact us for more information.', 'danger')
 
             plotly_fig = create_plotly_graph(filepaths, data)
             graphJSON = json.dumps(
                 plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
-            flash(f'{len(list(models_in_limits))} results found within your\
-                 submitted parameters', 'success')
             session['stellar_target'] = to_json(stellar_target)
             return render_template('result.html', subtype=matching_subtype, modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=filenames, stellar_target=stellar_target)
     else:
@@ -306,12 +308,16 @@ def return_results():
 @app.route('/check-directory/<filename>')
 def check_directory(filename):
     """Checks if a FITS file exists."""
-    # Retrieve the JSON formatted string from the session
-    target_json = session.get('stellar_target')
-    # Deserialize the JSON formatted string back into an object
-    stellar_target = from_json(target_json)
-    downloads = os.path.join(
-        current_app.root_path, app.config['FITS_FOLDER'], stellar_target.model_subtype)
+    if 'test' in filename:
+        downloads = os.path.join(
+            current_app.root_path, app.config['FITS_FOLDER'], 'test')
+    else:
+        # Retrieve the JSON formatted string from the session
+        target_json = session.get('stellar_target')
+        # Deserialize the JSON formatted string back into an object
+        stellar_target = from_json(target_json)
+        downloads = os.path.join(
+            current_app.root_path, app.config['FITS_FOLDER'], stellar_target.model_subtype)
     if os.path.exists(os.path.join(downloads, filename)):
         return jsonify({'exists': True})
     else:
@@ -321,12 +327,16 @@ def check_directory(filename):
 @app.route('/download/<filename>', methods=['GET', 'POST'])
 def download(filename):
     """Downloading FITS file on button click."""
-    # Retrieve the JSON formatted string from the session
-    target_json = session.get('stellar_target')
-    # Deserialize the JSON formatted string back into an object
-    stellar_target = from_json(target_json)
-    downloads = os.path.join(
-        current_app.root_path, app.config['FITS_FOLDER'], stellar_target.model_subtype)
+    if 'test' in filename:
+        downloads = os.path.join(
+            current_app.root_path, app.config['FITS_FOLDER'], 'test')
+    else:
+        # Retrieve the JSON formatted string from the session
+        target_json = session.get('stellar_target')
+        # Deserialize the JSON formatted string back into an object
+        stellar_target = from_json(target_json)
+        downloads = os.path.join(
+            current_app.root_path, app.config['FITS_FOLDER'], stellar_target.model_subtype)
     if not os.path.exists(os.path.join(downloads, filename)):
         flash('File is not available to download because it does not exist yet!')
     return send_from_directory(downloads, filename, as_attachment=True, download_name=filename)
