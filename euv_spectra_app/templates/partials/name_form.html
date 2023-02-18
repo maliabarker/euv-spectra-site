@@ -3,7 +3,7 @@
         {{ name_form.csrf_token }}
         <div class="search_field">
             {{ name_form.star_name(class="input", placeholder="Star Name", id="name-form-input-group", autocomplete="off") }}
-            <button type="submit" form="name-form" class="btn">
+            <button type="submit" form="name-form" class="btn" id="name-form-submit" disabled>
                 <i class="fas fa-search me-auto"></i>
             </button>
         </div>

@@ -10,6 +10,9 @@ function checkDirectory(filename){
                 // Do something if the directory does not exist
                 console.log('file does not exist')
                 errorBox = document.getElementById(`${filename}-errorbox`)
+                if (errorBox.style.display = 'none') {
+                    errorBox.style.display = 'block';
+                }
                 errorBox.innerHTML = 'File does not exist yet, unable to download'
                 setTimeout(function() { errorBox.style.display = 'none'; }, 5000);
             }

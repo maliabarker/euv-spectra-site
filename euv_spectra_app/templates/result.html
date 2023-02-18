@@ -20,40 +20,76 @@
     <h4 class="mt-5 pt-4 text-center">Closest Match PHOENIX Model for <i>{{ stellar_target.search_input }}</i></h4>
     
     <div class="row mt-4">
-        <div class="col-md-8 offset-md-2 text-center">
-            <table class="table table-striped">
+        <div class="col-md-8 offset-md-2 text-center table-responsive">
+            <table class="table table-striped align-middle">
                 <thead>
                     <tr>
                         <th scope="col">Stellar Parameter</th>
                         <th scope="col">Your Target's Parameters</th>
-                        <th scope="col">Model Subtype ({{ stellar_target.model_subtype }}) Parameters</th>
+                        {% for model in matching_models %}
+                            {% if loop.index == 1 %}
+                                <th scope="col">Model {{ loop.index }} (Best Match) Parameters</th>
+                            {% else %}
+                                <th scope="col">Model {{ loop.index }} Parameters</th>
+                            {% endif %}
+                        {% endfor %}
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <th scope="row">Teff</th>
+                        <th scope="row">T<sub>eff</sub> <small>(K)</small></th>
                         <td>{{ stellar_target.teff }}</td>
-                        <td>{{ subtype.teff }}</td>
+                        {% for model in matching_models %}
+                            <td>{{ model.teff }}</td>
+                        {% endfor %}
                     </tr>
                     <tr>
-                        <th scope="row">log(g)</th>
+                        <th scope="row">log(g) <small>(cm/s<sup>2</sup>)</small></th>
                         <td>{{ stellar_target.logg }}</td>
-                        <td>{{ subtype.logg }}</td>
+                        {% for model in matching_models %}
+                            <td>{{ model.logg }}</td>
+                        {% endfor %}
                     </tr>
                     <tr>
-                        <th scope="row">Mass</th>
+                        <th scope="row">Mass <small>(M<sub>sun</sub>)</small></th>
                         <td>{{ stellar_target.mass }}</td>
-                        <td>{{ subtype.mass }}</td>
+                        {% for model in matching_models %}
+                            <td>{{ model.mass }}</td>
+                        {% endfor %}
                     </tr>
                     <tr>
                         <th scope="row">GALEX FUV Flux Density<sup>*</sup></th>
                         <td>{{ "%.2f"|format(stellar_target.corrected_fuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_fuv_err) }}</td>
-                        <td>N/A</td>
+                        {% for model in matching_models %}
+                            <td>{{ "%.2f"|format(model.fuv) }}</td>
+                        {% endfor %}
                     </tr>
                     <tr>
                         <th scope="row">GALEX NUV Flux Density<sup>*</sup></th>
                         <td>{{ "%.2f"|format(stellar_target.corrected_nuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_nuv_err) }}</td>
+                        {% for model in matching_models %}
+                            <td>{{ "%.2f"|format(model.nuv) }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th scope="row">PHOENIX EUV Flux Density<sup>*</sup><br><small>(from 100 - 1000 Å)</small></th>
                         <td>N/A</td>
+                        {% for model in matching_models %}
+                            <td>{{ "%.2f"|format(model.euv) }}</td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th scope="col">Download FITS File<sup>**</sup></th>
+                        <td>N/A</td>
+                        {% for model in matching_models %}
+                            <td>
+                                <button class="btn btn-primary mb-2 small" id="flux-continue-btn" onclick="checkDirectory('{{ model.fits_filename }}')">
+                                    <i class="fa-solid fa-file-arrow-down"></i>
+                                    <small>Download Spectrum {{ loop.index }}</small>
+                                </button>
+                                <div id="{{ model.fits_filename }}-errorbox" style="color: tomato;"></div>
+                            </td>
+                        {% endfor %}
                     </tr>
                 </tbody>
             </table>              
@@ -61,14 +97,10 @@
     </div>
 
     <div class="text-center mt-3">
-        <a data-bs-toggle="modal" data-bs-target="#myModal" class="btn btn-primary py-3 px-2">Click Here to Edit Parameters</a>
+        <a data-bs-toggle="modal" data-bs-target="#myModal" class="btn btn-primary py-3 px-2">Click Here to Edit Your Parameters</a>
     </div>
     <hr>
-    
 
-    {#<!-- <div class="text-center"><small>Model Parameters : Teff = {{ subtype.teff }}, log(g) = {{ subtype.logg }}, Mass = {{ subtype.mass }}</small></div>
-    <div class="text-center"><small>Your Parameters : Teff = {{ stellar_target.teff }}, log(g) = {{ stellar_target.logg }}, Mass = {{ stellar_target.mass }}</small></div>
-    <div class="text-center mt-2"><small>GALEX Flux Densities<sup>*</sup> for {{ stellar_target.search_input }}: FUV = {{ "%.2f"|format(stellar_target.corrected_fuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_fuv_err) }}, NUV = {{ "%.2f"|format(stellar_target.corrected_nuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_nuv_err) }}</small></div> -->#}
     <h4 class="text-center">Closest Matches in PHOENIX {{ stellar_target.model_subtype }} Grid</i></h4>
     <div class="chart" id="linegraph">
         <script>
@@ -78,45 +110,13 @@
             Plotly.plot('linegraph', graphs, config);
         </script>
     </div>
-
-    {#<!-- <div class="row">
-        <div class="col-lg-10 col-offset-lg-2 col-md-12">
-            <div class="chart" id="linegraph">
-                <script>
-                    var graphs = JSON.parse('{{graphJSON | safe}}');
-                    console.log(graphs)
-                    var config = {responsive: true};
-                    Plotly.plot('linegraph', graphs, config);
-                </script>
-            </div>
-        </div>
-        <div class="col-lg-2 col-md-12 mt-5">
-            {% for filename in files %}
-                <button class="btn btn-primary mb-2 small mt-5" id="flux-continue-btn" onclick="checkDirectory('{{ filename }}')"><i class="fa-solid fa-file-arrow-down"></i><small>Download Spectrum {{ loop.index }}</small></button>
-                <div id="{{filename}}-errorbox" style="color: tomato;"></div>
-            {% endfor %}
-        </div>
-    </div> -->#}
-    <hr>
-    <p class="text-center fw-bold">Download Spectrum FITS Files, See More Info About FITS Products <a href="/about">Here</a></p>
-    {%- for file_row in files|batch(3) %}
-        <div class="row">
-            {%- for filename in file_row %}
-            <div class="col-md-4 text-center">
-                <button class="btn btn-primary mb-2 small" id="flux-continue-btn" onclick="checkDirectory('{{ filename }}')">
-                    <i class="fa-solid fa-file-arrow-down"></i>
-                    <small>Download Spectrum {{ loop.index }}</small>
-                </button>
-                <div id="{{filename}}-errorbox" style="color: tomato;"></div>
-            </div>
-            {%- endfor %}
-        </div>
-    {%- endfor %}
-
     <div class="my-3">
-      <small>NOTES: <br> *In units of ergs/s/cm<sup>2</sup>/Å, scaled to stellar surface and corrected for photospheric contribution.</small>
+        <small>
+            NOTES: <br> 
+            * In units of ergs/s/cm<sup>2</sup>/Å, scaled to stellar surface and corrected for photospheric contribution. <br>
+            ** See More Info About FITS Products <a href="/about">Here</a>
+        </small>
     </div>
-
     {% include 'partials/modal.html' %}
 {% endblock %}
 

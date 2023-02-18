@@ -22,3 +22,7 @@ class Config(object):
 
     # for downloads
     FITS_FOLDER = os.getenv("FITS_FOLDER_PATH")
+
+    # for cache
+    CACHE_TYPE = 'simple'
+    CACHE_DEFAULT_TIMEOUT = 1800

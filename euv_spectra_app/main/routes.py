@@ -4,9 +4,10 @@ from datetime import timedelta
 import json
 import plotly
 import os
+from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
 from euv_spectra_app.extensions import *
 from euv_spectra_app.main.forms import ManualForm, StarNameForm, PositionForm, ModalForm, ContactForm
-from euv_spectra_app.helpers_astroquery import StellarTarget
+from euv_spectra_app.helpers_astroquery import StellarTarget, get_all_star_names
 from euv_spectra_app.helpers_flux import GalexFlux
 from euv_spectra_app.helpers_graph import create_plotly_graph
 from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios
@@ -36,9 +37,16 @@ def inject_form():
 def make_session_permanent():
     """Initialize session."""
     session.permanent = True
-    app.permanent_session_lifetime = timedelta(minutes=20)
+    app.permanent_session_lifetime = timedelta(minutes=60)
     if not session.get('modal_show'):
         session['modal_show'] = False
+
+
+@cache.cached(key_prefix='pscomppars_cache')  # define a cache key
+def get_hostnames():
+    data = NasaExoplanetArchive.query_criteria(table="pscomppars", select="DISTINCT hostname")
+    hostnames = [d['hostname'] for d in data]
+    return hostnames
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -56,7 +64,8 @@ def homepage():
     name_form = StarNameForm()
     position_form = PositionForm()
     modal_form = ModalForm()
-    autofill_data = db.mast_galex_times.distinct('target')
+
+    autofill_data = get_hostnames()
 
     if request.method == 'POST':
         if position_form.validate_on_submit():
@@ -90,7 +99,7 @@ def homepage():
         return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, modal_form=modal_form, targets=autofill_data, stellar_target=stellar_target)
 
     flash('Website is under development. Files are not available for use yet. For testing purposes, try out object GJ 338 B.', 'warning')
-    return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, targets=autofill_data, extend_form=extend_form)
+    return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, extend_form=extend_form, targets=autofill_data)
 
 
 @main.route('/modal-submit', methods=['GET', 'POST'])
@@ -100,7 +109,7 @@ def submit_modal_form():
     name_form = StarNameForm()
     position_form = PositionForm()
     modal_form = ModalForm()
-    autofill_data = db.mast_galex_times.distinct('target')
+    autofill_data = get_hostnames()
 
     # Retrieve the JSON formatted string from the session
     target_json = session.get('stellar_target')
@@ -167,17 +176,18 @@ def return_results():
             attribute_value = getattr(stellar_target, attribute)
             radio_input.choices.insert(0, (attribute_value, attribute_value))
 
-    autofill_data = db.mast_galex_times.distinct('target')
+    autofill_data = get_hostnames()
 
     # check if required data is avaialable for use before continuing
     if hasattr(stellar_target, 'teff') and hasattr(stellar_target, 'logg') and hasattr(stellar_target, 'mass') and hasattr(stellar_target, 'rad') and hasattr(stellar_target, 'dist') and hasattr(stellar_target, 'fuv') and hasattr(stellar_target, 'nuv'):
         '''———————————FOR TESTING PURPOSES (Test file)——————————'''
         # original test filename is M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits
-        test_filepaths = [os.path.abspath(
-            f"euv_spectra_app/fits_files/test/original_test.fits"), 
+        test_filepaths = [
             os.path.abspath(
-            f"euv_spectra_app/fits_files/test/new_test.fits")]
-        test_filenames = ["original_test.fits", "new_test.fits"]
+                f"euv_spectra_app/fits_files/test/original_test.fits"),
+            os.path.abspath(
+                f"euv_spectra_app/fits_files/test/new_test.fits")
+        ]
 
         # STEP 1: Search the model_parameter_grid collection to find closest matching subtype
         matching_subtype = find_matching_subtype(
@@ -187,6 +197,7 @@ def return_results():
         # STEP 2: Find closest matching photosphere model and get flux values
         matching_photosphere_model = find_matching_photosphere(
             stellar_target.teff, stellar_target.logg, stellar_target.mass)
+
         # STEP 3: Convert, scale, and subtract photospheric contribution from fluxes
         nuv_obj = GalexFlux(stellar_target.nuv, stellar_target.nuv_err,
                             matching_photosphere_model['nuv'], stellar_target.dist, stellar_target.rad, wv=2274.4)
@@ -211,9 +222,9 @@ def return_results():
                                 stellar_target.corrected_nuv_err, stellar_target.corrected_fuv_err, model_collection))
 
         if len(models_in_limits) == 0:
-            # model_ratios = list(get_flux_ratios(stellar_target.corrected_nuv, stellar_target.corrected_fuv, model_collection))
-            # print(model_ratios[:5])
-            
+            model_ratios = list(get_flux_ratios(
+                stellar_target.corrected_nuv, stellar_target.corrected_fuv, model_collection))
+
             # STEP 7.1: If there are no models found within limits, return models ONLY with FUV < NUV, return with chi squared values
             models_weighted = get_models_with_weighted_fuv(
                 stellar_target.corrected_nuv, stellar_target.corrected_fuv, model_collection)
@@ -223,17 +234,13 @@ def return_results():
                 # if no weighted results, just use model with lowest chi squared
                 flash('No results found within upper and lower limits of UV fluxes. No model found\
                      with a close FUV match. Returning model with lowest chi-square value.', 'warning')
-                data = [{'chi_squared': models_with_chi_squared[0]['chi_squared'],
-                         'fuv': models_with_chi_squared[0]['fuv'], 'nuv': models_with_chi_squared[0]['nuv'], 
-                         'euv': models_with_chi_squared[0]['euv']}]
                 filename = models_with_chi_squared[0]['fits_filename']
+                matching_models = models_with_chi_squared[0]
             else:
                 flash('No results found within upper and lower limits of UV fluxes.\
                       Returning document with nearest chi squared value weighted towards the FUV.', 'warning')
-                data = [{'chi_squared': models_weighted[0]['chi_squared'],
-                         'fuv': models_weighted[0]['fuv'], 'nuv': models_weighted[0]['nuv'], 
-                         'euv': models_weighted[0]['euv']}]
                 filename = models_weighted[0]['fits_filename']
+                matching_models = [models_weighted[0]]
 
             # STEP 9.1: Read FITS file from matching model and create graph from data
             filepath = os.path.abspath(
@@ -244,62 +251,36 @@ def return_results():
                 flash('EUV data not available yet, using test data for viewing purposes.\
                       Please contact us for more information.', 'danger')
                 filepath = test_filepaths[0]
-                filename = test_filenames[0]
 
-            plotly_fig = create_plotly_graph([filepath], data)
+            plotly_fig = create_plotly_graph([filepath])
             graphJSON = json.dumps(
                 plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
 
             session['stellar_target'] = to_json(stellar_target)
-            return render_template('result.html', subtype=matching_subtype, modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=[filename], stellar_target=stellar_target)
+            return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, stellar_target=stellar_target, matching_models=matching_models)
         else:
             flash(f'{len(list(models_in_limits))} results found within your\
                  submitted parameters', 'success')
             # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
-            results = []
-            for x in models_in_limits:
-                for y in models_with_chi_squared:
-                    if x['_id'] == y['_id']:
-                        results.append(y)
             # STEP 8.2: Read all FITS files from matching models and create graph from data
-            filenames = []
             filepaths = []
-            data = []
-            for doc in results:
-                # print('DOC')
-                # print(doc)
+            for doc in models_in_limits:
                 filepath = os.path.abspath(
                     f"euv_spectra_app/fits_files/{stellar_target.model_subtype}/{doc['fits_filename']}")
                 if os.path.exists(filepath):
-                    filenames.append(doc['fits_filename'])
                     filepaths.append(filepath)
-                    file_data = {
-                        'chi_squared': doc['chi_squared'],
-                        'fuv': doc['fuv'],
-                        'nuv': doc['nuv'],
-                        'euv': doc['euv']
-                    }
-                    data.append(file_data)
                 else:
                     '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
-                    file_data = {
-                        'chi_squared': doc['chi_squared'],
-                        'fuv': doc['fuv'],
-                        'nuv': doc['nuv'],
-                        'euv': doc['euv']
-                    }
-                    data.append(file_data)
-                    i = results.index(doc)
+                    i = list(models_in_limits).index(doc)
                     filepaths.append(test_filepaths[i])
-                    filenames.append(test_filenames[i])
                     flash('EUV data not available yet, using test data for viewing purposes.\
-                          Please contact us for more information.', 'danger')
+                        Please contact us for more information.', 'danger')
 
-            plotly_fig = create_plotly_graph(filepaths, data)
+            plotly_fig = create_plotly_graph(filepaths)
             graphJSON = json.dumps(
                 plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
             session['stellar_target'] = to_json(stellar_target)
-            return render_template('result.html', subtype=matching_subtype, modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, files=filenames, stellar_target=stellar_target)
+            return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, stellar_target=stellar_target, matching_models=list(models_in_limits))
     else:
         flash('Submit the required data to view this page.', 'warning')
         return redirect(url_for('main.homepage'))

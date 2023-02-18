@@ -3,7 +3,7 @@ from euv_spectra_app.extensions import *
 import plotly.graph_objects as go
 
 
-def create_plotly_graph(files, model_data):
+def create_plotly_graph(files):
     """Creates a plotly graph with data from FITS files.
     
     Args:
@@ -26,12 +26,11 @@ def create_plotly_graph(files, model_data):
         w_obs = data['WAVELENGTH'][0]
         f_obs = data['FLUX'][0]
         if i == 0:
-            print(model_data[i])
             fig.add_trace(go.Scatter(
-                x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1} (Best Match)</b> <br> FUV={round(model_data[i]['fuv'], 2)} NUV={round(model_data[i]['nuv'], 2)} <br> EUV={round(model_data[i]['euv'], 2)}", line=dict(color=colors[i], width=1)))
+                x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1} (Best Match)</b>", line=dict(color=colors[i], width=1)))
         else:
             fig.add_trace(go.Scatter(
-                x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1}</b> <br> FUV={round(model_data[i]['fuv'], 2)} NUV={round(model_data[i]['nuv'], 2)} <br> EUV={round(model_data[i]['euv'], 2)}", line=dict(color=colors[i], width=1)))
+                x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1}</b>", line=dict(color=colors[i], width=1)))
         i += 1
     # STEP 3: Add additional styling
     fig.update_layout(xaxis=dict(title='Wavelength (Å)', range=[10, 3000]),

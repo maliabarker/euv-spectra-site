@@ -10,8 +10,16 @@ from astroquery.simbad import Simbad
 customSimbad = Simbad()
 customSimbad.remove_votable_fields('coordinates')
 customSimbad.add_votable_fields(
-    'ra', 'dec', 'pmra', 'pmdec', 'plx', 'rv_value')
+    'ra', 'dec', 'pmra', 'pmdec', 'plx', 'rv_value', 'typed_id')
 
+
+def get_all_star_names():
+    result_table = customSimbad.query_criteria('SELECT typed_id FROM basic WHERE idtype = "NAME"')
+    print(result_table)
+    # Extract the star names from the result table
+    # star_names = result_table['TYPED_ID']
+    # # Print the list of star names
+    # print(star_names)
 
 class StellarTarget():
     """Represents a stellar object."""
@@ -54,7 +62,9 @@ class StellarTarget():
                 return
         elif self.search_format == 'name':
             # STEP N1: Check if name is in the mast target database (meant to check for case & spacing errors)
-            for name in db.mast_galex_times.distinct('target'):
+            data = NasaExoplanetArchive.query_criteria(table="pscomppars", select="DISTINCT hostname")
+            host_stars = data['hostname']
+            for name in host_stars:
                 if self.search_input.upper().replace(' ', '') == name.upper().replace(' ', ''):
                     self.search_input = name
                     break
@@ -118,6 +128,10 @@ class StellarTarget():
         result_table = customSimbad.query_object(self.search_input)
         if result_table and len(result_table) > 0:
             data = result_table[0]
+            # if '*' in data['MAIN_ID']:
+            #     self.search_input = data['MAIN_ID'].lstrip('* ')
+            # else:
+            #     self.search_input = data['MAIN_ID']
             self.coordinates = (data['RA'], data['DEC'])
             self.pmra = data['PMRA']
             self.pmdec = data['PMDEC']
@@ -158,6 +172,7 @@ class StellarTarget():
             # STEP 1: Find a GALEX observation time from custom compiled dataset
             galex_time = db.mast_galex_times.find_one(
                 {'target': self.search_input})['t_min']
+            print(galex_time if galex_time else None)
         except:
             return 'No GALEX observations found, unable to correct coordinates. \nLook under question 3 on the FAQ page for more information.'
         else:
@@ -209,7 +224,8 @@ class StellarTarget():
                 ra=self.coordinates[0] * u.deg, dec=self.coordinates[1] * u.deg), radius=1.0 * u.deg)
         if len(nea_data) > 0:
             data = nea_data[0]
-            if 'M' in data['st_spectype'] or 'K' in data['st_spectype']:
+            if 2400 < data['st_teff'].unmasked.value < 5500:
+            # if 'M' in data['st_spectype'] or 'K' in data['st_spectype']:
                 self.teff = data['st_teff'].unmasked.value
                 self.logg = data['st_logg']
                 self.mass = data['st_mass'].unmasked.value
@@ -273,6 +289,7 @@ class StellarTarget():
                         # FUV is saturated
                         # predict flux and compare predicted flux to actual flux
                         # return whatever is higher
+                        print('FUV saturated')
                         self.predict_fluxes('fuv')
                         fuv_fluxes = [self.fuv, filtered_data['fuv_flux']]
                         fuv_errors = [self.fuv_err, filtered_data['fuv_fluxerr']]
@@ -283,6 +300,7 @@ class StellarTarget():
                         # NUV is saturated
                         # predict flux and compare predicted flux to actual flux
                         # return whatever is higher
+                        print('NUV saturated')
                         self.predict_fluxes('nuv')
                         nuv_fluxes = [self.fuv, filtered_data['nuv_flux']]
                         nuv_errors = [self.fuv_err, filtered_data['nuv_fluxerr']]
@@ -330,6 +348,7 @@ class StellarTarget():
         elif flux_type == 'fuv':
             upper_lim = self.nuv + self.nuv_err
             lower_lim = self.nuv - self.nuv_err
+            print('J BAND', j_band_ujy)
             # Predict FUV flux using FUV = ((NUV/J)^1.11) * J
             # STEP F1: Use equation to find upper, lower limits and new flux values
             new_fuv_upper_lim = (

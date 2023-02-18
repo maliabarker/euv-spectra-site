@@ -190,10 +190,30 @@ def get_models_within_limits(corrected_nuv, corrected_fuv, corrected_nuv_err, co
     fuv_upper_lim = corrected_fuv + corrected_fuv_err
     nuv_lower_lim = corrected_nuv - corrected_nuv_err
     nuv_upper_lim = corrected_nuv + corrected_nuv_err
-    models_within_limits = db.get_collection(model_collection).find(
-        {'nuv': {"$gte": nuv_lower_lim, "$lte": nuv_upper_lim},
-         'fuv': {"$gte": fuv_lower_lim, "$lte": fuv_upper_lim}}
-    )
+    models_within_limits = db.get_collection(model_collection).aggregate([
+        {
+            '$match': {
+                'fuv': { '$gte': fuv_lower_lim, '$lte': fuv_upper_lim },
+                'nuv': { '$gte': nuv_lower_lim, '$lte': nuv_upper_lim },
+            }
+        },
+        {
+            "$addFields": {
+                "chi_squared": {
+                    "$round": [ 
+                        { "$add": 
+                            [ 
+                                { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", corrected_nuv ] }, 2 ] }, corrected_nuv ] },
+                                { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", corrected_fuv ] }, 2 ] }, corrected_fuv ] } 
+                            ]
+                        }, 
+                        2 
+                    ]
+                } 
+            } 
+        },
+        { "$sort": { "chi_squared": 1 } }
+    ])
     return models_within_limits
 
 

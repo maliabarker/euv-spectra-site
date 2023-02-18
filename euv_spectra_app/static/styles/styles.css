@@ -185,6 +185,10 @@ body {
         color: white;
     }
 
+    button:disabled i {
+        color: grey;
+    }
+
 
 /* ——————————OTHER——————————— */
     #contact-header {

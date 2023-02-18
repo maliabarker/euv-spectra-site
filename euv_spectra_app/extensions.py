@@ -1,13 +1,18 @@
 from flask import Flask
 from flask_mail import Mail
+from flask_caching import Cache
 from pymongo import MongoClient
 from os import environ
 from euv_spectra_app.config import Config
 import flask_monitoringdashboard as dashboard
 
+cache = Cache()
+
 app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = environ.get('SECRET_KEY')
+
+cache.init_app(app)
 mail = Mail(app)
 app.jinja_env.filters['zip'] = zip
 
