@@ -7,25 +7,13 @@ import os
 from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
 from euv_spectra_app.extensions import *
 from euv_spectra_app.main.forms import ManualForm, StarNameForm, PositionForm, ModalForm, ContactForm
-from euv_spectra_app.helpers_astroquery import StellarTarget, get_all_star_names
+from euv_spectra_app.helpers_astroquery import StellarTarget, ProperMotionData
 from euv_spectra_app.helpers_flux import GalexFlux
 from euv_spectra_app.helpers_graph import create_plotly_graph
+from euv_spectra_app.helpers_json import to_json, from_json
 from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios
+
 main = Blueprint("main", __name__)
-
-
-def to_json(obj):
-    # Serialize the object into a JSON formatted string
-    return json.dumps(obj.__dict__)
-
-
-def from_json(json_str):
-    # Deserialize the JSON formatted string back into an object
-    data = json.loads(json_str)
-    target = StellarTarget()
-    for key, value in data.items():
-        setattr(target, key, value)
-    return target
 
 
 @main.context_processor
@@ -71,12 +59,14 @@ def homepage():
         if position_form.validate_on_submit():
             # Home position form
             print('position form validated!')
-            stellar_target.search_dbs(position_form.coords.data, 'position')
+            stellar_target.position = position_form.coords.data
+            stellar_target.search_dbs()
 
         elif name_form.validate_on_submit():
             # Home name form
             print(f'name form validated!')
-            stellar_target.search_dbs(name_form.star_name.data, 'name')
+            stellar_target.star_name = name_form.star_name.data
+            stellar_target.search_dbs()
 
         if hasattr(stellar_target, 'modal_error_msg'):
             # check if there were any errors returned from searching databases
@@ -94,7 +84,12 @@ def homepage():
                     0, (attribute_value, attribute_value))
 
         # store the object as a json variable for persistence
-        session['stellar_target'] = to_json(stellar_target)
+        print(vars(stellar_target))
+        print(vars(stellar_target.proper_motion_data))
+        print(vars(stellar_target.fluxes))
+        session['stellar_target'] = json.dumps(to_json(stellar_target))
+        print('STELLAR TARGET TO JSON', session['stellar_target'])
+
         session['modal_show'] = True
         return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, modal_form=modal_form, targets=autofill_data, stellar_target=stellar_target)
 
@@ -132,8 +127,7 @@ def submit_modal_form():
                     print('MANUAL DETECTED')
                     unmanual_field = field.name.replace('manual_', '')
                     setattr(stellar_target, unmanual_field, float(field.data))
-                    print(vars(stellar_target))
-            session['stellar_target'] = to_json(stellar_target)
+            session['stellar_target'] = json.dumps(to_json(stellar_target))
             return redirect(url_for('main.return_results'))
     return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, modal_form=modal_form, targets=autofill_data, stellar_target=stellar_target)
 
@@ -143,15 +137,21 @@ def submit_manual_form():
     """Submit route for manual form."""
     form = ManualForm(request.form)
     stellar_target = StellarTarget()
+    fields_not_to_include = ['dist_unit', 'fuv_flag', 'nuv_flag', 'submit', 'csrf_token']
     if form.validate_on_submit():
         for fieldname, value in form.data.items():
             # CHECK DISTANCE UNIT: if distance unit is mas, convert to parsecs
-            if fieldname == "dist_unit" or "flag" in fieldname or "csrf_token" in fieldname:
-                if value == 'mas':
+            if fieldname in fields_not_to_include:
+                if fieldname == 'dist_unit' and value == 'mas':
                     stellar_target.dist = int(1 / (form.dist.data / 1000))
+                elif 'flag' in fieldname:
+                    # TODO: deal with flags if they happen
+                    which_flux = fieldname[:3]
+                    print(which_flux)
             else:
+                print(fieldname, value)
                 setattr(stellar_target, fieldname, float(value))
-        session['stellar_target'] = to_json(stellar_target)
+        session['stellar_target'] = json.dumps(to_json(stellar_target))
         return redirect(url_for('main.return_results'))
     else:
         flash('Whoops, something went wrong. Please check your inputs and try again!', 'danger')
@@ -256,7 +256,7 @@ def return_results():
             graphJSON = json.dumps(
                 plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
 
-            session['stellar_target'] = to_json(stellar_target)
+            session['stellar_target'] = json.dumps(to_json(stellar_target))
             return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, stellar_target=stellar_target, matching_models=matching_models)
         else:
             flash(f'{len(list(models_in_limits))} results found within your\
@@ -279,7 +279,7 @@ def return_results():
             plotly_fig = create_plotly_graph(filepaths)
             graphJSON = json.dumps(
                 plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
-            session['stellar_target'] = to_json(stellar_target)
+            session['stellar_target'] = json.dumps(to_json(stellar_target))
             return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, stellar_target=stellar_target, matching_models=list(models_in_limits))
     else:
         flash('Submit the required data to view this page.', 'warning')

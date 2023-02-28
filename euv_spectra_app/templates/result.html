@@ -99,9 +99,6 @@
     <div class="text-center mt-3">
         <a data-bs-toggle="modal" data-bs-target="#myModal" class="btn btn-primary py-3 px-2">Click Here to Edit Your Parameters</a>
     </div>
-    <hr>
-
-    <h4 class="text-center">Closest Matches in PHOENIX {{ stellar_target.model_subtype }} Grid</i></h4>
     <div class="chart" id="linegraph">
         <script>
             var graphs = JSON.parse('{{graphJSON | safe}}');

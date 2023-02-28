@@ -1,5 +1,6 @@
 <form action="/manual-submit" method="POST" class="p-4">
     {{ manual_form.csrf_token }}
+    {{ manual_form.hidden_tag() }}
     <fieldset>
         <div class="form-floating mb-3">
             {{ manual_form.teff(class="form-control", placeholder="Teff — Stellar Effective Temperature (K)") }}
@@ -95,7 +96,7 @@
             {% for subfield in manual_form.nuv_flag %}
                 {% if subfield.data == 'null' %}
                     <div class="form-check form-check-inline mt-4">
-                        {{ subfield(class="form-check-input", onclick="populateNullFlux(this);") }}
+                        {{ subfield(class="form-check-input") }}
                         {{ subfield.label(class="form-check-label") }}
                     </div>
                 {% else %}
@@ -105,6 +106,11 @@
                     </div>
                 {% endif %}
             {% endfor %}
+        </div>
+
+        <div class="text-center mt-2">
+            <!--—————————MANUAL PARAMETER FORM——————————-->
+            {{ manual_form.submit(class="btn btn-primary border-0 mb-3", id="flux-continue-btn") }}
         </div>
     </fieldset>
 </form>

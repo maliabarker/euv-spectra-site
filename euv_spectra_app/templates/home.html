@@ -27,10 +27,6 @@
     <div class="col-sm-8 offset-sm-2">
         <div class="collapse mb-5" id="manual-form">
             {% include 'partials/manual_form.html' %}
-            <div class="text-center mt-2">
-                <!--—————————MANUAL PARAMETER FORM——————————-->
-                {{ manual_form.submit(class="btn btn-primary border-0 mb-3", id="flux-continue-btn") }}
-            </div>
         </div>
     </div>
 
@@ -43,6 +39,7 @@
 {% block script %}
     <script src="{{ url_for('static', filename='js/other.js') }}"></script>
     <script src="{{ url_for('static', filename='js/autocomplete.js' )}}"></script>
+    <script src="{{ url_for('static', filename='js/manual_form.js' )}}"></script>
     {% if targets %}
         <script>
             var data = JSON.parse('{{ targets | tojson }}');
