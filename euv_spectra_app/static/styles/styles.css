@@ -79,6 +79,14 @@ body {
             -moz-appearance: textfield;
         }
 
+    #clear-form-button {
+        background: none!important;
+        border: none;
+        padding: 0!important;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
 
 
 /* ————————————FOR LOADING PAGE—————————— */
