@@ -15,7 +15,7 @@ function selectAll(obj) {
     for (i=0; i < selectAllBtns.length; i++) {
         if ( selectAllBtns[i].id != obj.id ) {
             selectAllBtns[i].checked = false;
-        }
+        };
     };
 
     // get identifying number
@@ -41,37 +41,27 @@ function selectAll(obj) {
                 btns[i].checked = false;
             };
         };
-        obj.nextElementSibling.innerHTML = 'Select All'
-    }
+        obj.nextElementSibling.innerHTML = 'Select All';
+    };
 };
 
 function selectAllGalex(obj) {
     const btns = document.getElementById('star_name_flux_form_table').querySelectorAll(`[id*="0"]`);
-
     if (obj.checked) {
-        console.log('unchecked, now we need to check and select all')
+        console.log('unchecked, now we need to check and select all');
         for( i = 0 ; i < btns.length ; i++ ) {
             btns[i].checked = true;
         };
-        // document.getElementById('fuv-0').checked = true;
-        // document.getElementById('nuv-0').checked = true;
-        // document.getElementById('fuv_err-0').checked = true;
-        // document.getElementById('nuv_err-0').checked = true;
-        obj.nextElementSibling.innerHTML = 'Deselect All'
+        obj.nextElementSibling.innerHTML = 'Deselect All';
     } else {
-        console.log('checked, now we need to uncheck and deselect all')
+        console.log('checked, now we need to uncheck and deselect all');
         obj.checked = false;
         for( i = 0 ; i < btns.length ; i++ ) {
             btns[i].checked = false;
         };
-        // document.getElementById('fuv-0').checked = false;
-        // document.getElementById('nuv-0').checked = false;
-        // document.getElementById('fuv_err-0').checked = false;
-        // document.getElementById('nuv_err-0').checked = false;
-        obj.nextElementSibling.innerHTML = 'Select All'
-    }
-    
-}
+        obj.nextElementSibling.innerHTML = 'Select All';
+    };
+};
 //—————————————————————————SELECT ALL END————————————————————————
 
 
@@ -90,37 +80,11 @@ function checkManualRadio(obj) {
     obj.previousElementSibling.checked = true;
 };
 
-// function checkManualInputs(){
-//     // check all radio buttons and if a manual radio button is clicked assign the value from manual input to the actual input
-//     const manualBtns = document.querySelectorAll(`[id*="{{ last_num }}"]`);
-//     for(i = 0; i < manualBtns.length; i++){
-//         if (manualBtns[i].checked) {
-//             const newVal = manualBtns[i].nextElementSibling.value
-//             manualBtns[i].value = newVal
-//         };
-//     };
-//     return true; // submit the form
-// };
-
 function checkErrFlux(obj){
     console.log(obj);
     errRadioBtn = document.getElementById('fuv_err-1')
     errRadioBtn.checked = true;
-}
-
-//—————————————————————————NOT DETECTED FLAG CHECKS————————————————————————
-function populateNullFlux(obj) {
-    console.log('boop')
-    console.log(obj.id)
-    whichFlux = obj.id.slice(0,3)
-    console.log(whichFlux)
-    const fluxInputs = document.getElementById('manual-form').querySelectorAll(`[id*="${whichFlux}"]`);
-    for(i = 0; i < fluxInputs.length; i++) {
-        if (fluxInputs[i].id != obj.id){
-            fluxInputs[i].value = parseFloat(-999.0);
-        };
-    };
-}
+};
 
 function validateView() {
     form = document.getElementById('modal-form')
@@ -129,5 +93,4 @@ function validateView() {
     const texts = form.querySelectorAll(`[class*="form-control"]`)
     console.log(btns)
     console.log(texts)
-
 }

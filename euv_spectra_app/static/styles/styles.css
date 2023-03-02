@@ -263,6 +263,11 @@ body {
         min-height:70px;
     }
 
+    #name-form-input-group:focus {
+        border-color: red;
+        
+    }
+
     /* BOOTSTRAP EXTRA SMALL BREAKPOINT */ 
     @media (max-width: 576px) {
         .rounded-end-xs {
@@ -300,7 +305,7 @@ body {
 .wrapper .search_box{
     background: #fff;
     border-radius: 5px;
-    height: 65px;
+    height: 69px;
     display: flex;
     padding: 10px;
     box-shadow: 0 8px 6px -10px #b3c6ff;
@@ -373,10 +378,29 @@ body {
     width: 80%;
 }
 
-.wrapper .search_box .search_field .fas{
+.wrapper .search_box .search_field .input:focus {
+    outline: none !important;
+}
+
+/* .wrapper .search_box .search_field .input:focus {
+    outline-color: tomato;
+}
+
+.wrapper .search_box .search_field .input.found:focus {
+    outline-color: green;
+}
+
+.wrapper .search_box .search_field .input.not-found:focus {
+    outline-color: tomato;
+} */
+
+.wrapper .search_box .search_field button {
     position: absolute;
-    top: 10px;
+    top: 6px;
     right: 10px;
+}
+
+.wrapper .search_box .search_field .fas{
     font-size: 22px;
     color: #9c36e8;
     cursor: pointer;
@@ -391,6 +415,8 @@ body {
 :-ms-input-placeholder { /* IE 10+ */
     color: #9fa3b1;
 }
+
+/* Autocomplete */
 
 .autocomplete-items {
     background-color: white;

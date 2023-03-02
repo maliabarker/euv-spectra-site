@@ -175,6 +175,7 @@ class StellarTarget():
             A string detailing that SIMBAD coulld not find any object under the inputted name.
         """
         result_table = customSimbad.query_object(self.star_name)
+        print('TESTING', result_table)
         if result_table and len(result_table) > 0:
             data = result_table[0]
             self.coordinates = (data['RA'], data['DEC'])
@@ -222,12 +223,15 @@ class StellarTarget():
                 self.dist = data['sy_dist'].unmasked.value
                 self.j_band = data['sy_jmag'].unmasked.value
             else:
-                return 'Target is not an M or K type star. Data is currently only available for these spectral sybtypes. \nPlease contact us with your target and parameters if you think this is a mistake.'
+                return f'{self.star_name} is not an M or K type star. Data is currently only available for these spectral sybtypes. \nPlease contact us with your target and parameters if you think this is a mistake.'
         else:
             if self.star_name:
-                return f'Nothing found for {self.star_name} in the NASA exoplanet archive. \nPlease check spelling or coordinate format.'
+                return f'Nothing found for {self.star_name} in the NExSci database.\
+                         At this time, retrieved input parameters are only available for known exoplanet host stars with 2500 K < Teff < 5044 K.\
+                         If {self.star_name} is a known exoplanet host star, please check spelling or coordinates and resubmit, or enter the input parameters manually via <<this form>>.\
+                         If {self.star_name} is not a known exoplanet host star, please enter the input parameters manually via <<this form>>'
             elif self.position:
-                return f'Nothing found for {self.position} in the NASA exoplanet archive. \nPlease check spelling or coordinate format.'
+                return f'Nothing found for {self.position} in the NASA exoplanet archive. \nPlease check spelling or coordinate format. If this star is not an exoplanet host, please enter the input parameters manually on <a href={{ url_for("main.homepage", form="extended") }}>this form</a>.'
 
     def search_galex(self):
         """Searches the MAST GALEX database by coordinates for flux densities.

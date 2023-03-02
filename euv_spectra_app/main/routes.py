@@ -30,13 +30,6 @@ def make_session_permanent():
         session['modal_show'] = False
 
 
-@cache.cached(key_prefix='pscomppars_cache')  # define a cache key
-def get_hostnames():
-    data = NasaExoplanetArchive.query_criteria(table="pscomppars", select="DISTINCT hostname")
-    hostnames = [d['hostname'] for d in data]
-    return hostnames
-
-
 @main.route('/', methods=['GET', 'POST'])
 def homepage():
     """Home and submit route for search bar forms."""
@@ -52,8 +45,6 @@ def homepage():
     name_form = StarNameForm()
     position_form = PositionForm()
     modal_form = ModalForm()
-
-    autofill_data = get_hostnames()
 
     if request.method == 'POST':
         if position_form.validate_on_submit():
@@ -91,10 +82,10 @@ def homepage():
         print('STELLAR TARGET TO JSON', session['stellar_target'])
 
         session['modal_show'] = True
-        return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, modal_form=modal_form, targets=autofill_data, stellar_target=stellar_target)
+        return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, modal_form=modal_form, stellar_target=stellar_target)
 
     flash('Website is under development. Files are not available for use yet. For testing purposes, try out object GJ 338 B.', 'warning')
-    return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, extend_form=extend_form, targets=autofill_data)
+    return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, extend_form=extend_form)
 
 
 @main.route('/modal-submit', methods=['GET', 'POST'])
@@ -104,7 +95,6 @@ def submit_modal_form():
     name_form = StarNameForm()
     position_form = PositionForm()
     modal_form = ModalForm()
-    autofill_data = get_hostnames()
 
     # Retrieve the JSON formatted string from the session
     target_json = session.get('stellar_target')
@@ -129,16 +119,26 @@ def submit_modal_form():
                     setattr(stellar_target, unmanual_field, float(field.data))
             session['stellar_target'] = json.dumps(to_json(stellar_target))
             return redirect(url_for('main.return_results'))
-    return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, modal_form=modal_form, targets=autofill_data, stellar_target=stellar_target)
+    return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, modal_form=modal_form, stellar_target=stellar_target)
 
 
 @main.route('/manual-submit', methods=['POST'])
 def submit_manual_form():
     """Submit route for manual form."""
+    if request.args.get('form') == 'extended':
+        extend_form = True
+    else:
+        extend_form = False
+
     form = ManualForm(request.form)
     stellar_target = StellarTarget()
     fields_not_to_include = ['dist_unit', 'fuv_flag', 'nuv_flag', 'submit', 'csrf_token']
     if form.validate_on_submit():
+        # STEP 1: Check the values of the flux flags
+        fuv_flag = form.pop(fuv_flag)
+        nuv_flag = form.nuv_flag
+        print(form.fuv_flag, 'value is', form.fuv_flag.data)
+        # STEP 1a: If both flags are null, return flashed error message (with form extended) 
         for fieldname, value in form.data.items():
             # CHECK DISTANCE UNIT: if distance unit is mas, convert to parsecs
             if fieldname in fields_not_to_include:
@@ -148,6 +148,10 @@ def submit_manual_form():
                     # TODO: deal with flags if they happen
                     which_flux = fieldname[:3]
                     print(which_flux)
+                    print(fieldname, 'value is', fieldname.value)
+                    # TODO: add catch for null value
+                    # TODO: add catch for saturated value
+                    # if fieldname.value == 
             else:
                 print(fieldname, value)
                 setattr(stellar_target, fieldname, float(value))
@@ -155,7 +159,10 @@ def submit_manual_form():
         return redirect(url_for('main.return_results'))
     else:
         flash('Whoops, something went wrong. Please check your inputs and try again!', 'danger')
-        return redirect(url_for('main.homepage'))
+        for fieldname, error_msg in form.errors.items():
+            for err in error_msg:
+                flash(f'{fieldname}: {err}', 'danger')
+        return redirect(url_for('main.homepage', form='extended'))
 
 
 @main.route('/results', methods=['GET', 'POST'])
@@ -175,8 +182,6 @@ def return_results():
             radio_input = getattr(modal_form, attribute)
             attribute_value = getattr(stellar_target, attribute)
             radio_input.choices.insert(0, (attribute_value, attribute_value))
-
-    autofill_data = get_hostnames()
 
     # check if required data is avaialable for use before continuing
     if hasattr(stellar_target, 'teff') and hasattr(stellar_target, 'logg') and hasattr(stellar_target, 'mass') and hasattr(stellar_target, 'rad') and hasattr(stellar_target, 'dist') and hasattr(stellar_target, 'fuv') and hasattr(stellar_target, 'nuv'):
@@ -257,7 +262,7 @@ def return_results():
                 plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
 
             session['stellar_target'] = json.dumps(to_json(stellar_target))
-            return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, stellar_target=stellar_target, matching_models=matching_models)
+            return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_target=stellar_target, matching_models=matching_models)
         else:
             flash(f'{len(list(models_in_limits))} results found within your\
                  submitted parameters', 'success')
@@ -280,7 +285,7 @@ def return_results():
             graphJSON = json.dumps(
                 plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
             session['stellar_target'] = json.dumps(to_json(stellar_target))
-            return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, targets=autofill_data, graphJSON=graphJSON, stellar_target=stellar_target, matching_models=list(models_in_limits))
+            return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_target=stellar_target, matching_models=list(models_in_limits))
     else:
         flash('Submit the required data to view this page.', 'warning')
         return redirect(url_for('main.homepage'))

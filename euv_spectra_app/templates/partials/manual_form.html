@@ -61,7 +61,7 @@
             {% for subfield in manual_form.fuv_flag %}
                 {% if subfield.data == 'null' %}
                     <div class="form-check form-check-inline my-4">
-                        {{ subfield(class="form-check-input", onclick="populateNullFlux(this);") }}
+                        {{ subfield(class="form-check-input") }}
                         {{ subfield.label(class="form-check-label") }}
                     </div>
                 {% else %}
@@ -95,6 +95,7 @@
             <span class="me-3">NUV Flags:</span>
             {% for subfield in manual_form.nuv_flag %}
                 {% if subfield.data == 'null' %}
+                    <!-- data-bs-toggle="tooltip" data-bs-placement="top" title="Tooltip on top" -->
                     <div class="form-check form-check-inline mt-4">
                         {{ subfield(class="form-check-input") }}
                         {{ subfield.label(class="form-check-label") }}

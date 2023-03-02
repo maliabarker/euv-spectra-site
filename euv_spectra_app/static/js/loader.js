@@ -1,4 +1,3 @@
-//—————————————————————————LOADER START————————————————————————
 const loader = document.querySelector("#loading");
 const overlay = document.getElementById("overlay");
 const overlayBox = document.getElementById("overlay-box");
@@ -22,4 +21,3 @@ function hideLoading() {
     overlay.style.display = "none";
     overlayText.style.display = "none";
 }
-//—————————————————————————LOADER END————————————————————————
