@@ -123,10 +123,5 @@
             $(".alert").fadeOut(500);
         });
     </script>
-    <script src="{{ url_for('static', filename='js/autocomplete.js' )}}"></script>
-    <script>
-        var data = JSON.parse('{{ targets | tojson }}');
-        autocomplete(document.getElementById("name-form-input-group"), data);
-    </script>
     <script src="{{ url_for('static', filename='js/download.js' )}}"></script>
 {% endblock %}

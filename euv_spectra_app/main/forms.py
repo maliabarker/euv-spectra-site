@@ -27,7 +27,7 @@ class RequiredIf(DataRequired):
     field_flags = ('requiredif',)
 
     def __init__(self, *args, **kwargs):
-        super().__init__()
+        super(RequiredIf).__init__()
         self.message = "Manual input required."
         self.conditions = kwargs
 
