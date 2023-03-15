@@ -45,7 +45,9 @@
             {% endfor %}
 
             {% block content %}{% endblock %}
-            {% include 'partials/contact_form.html' %}
+            {% block contact_form %}
+                {% include 'partials/contact_form.html' %}
+            {% endblock %}
         </div>
         {% include 'partials/footer.html' %}
         {% block script %}{% endblock %}

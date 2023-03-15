@@ -6,9 +6,7 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord, Distance
 from astroquery.mast import Catalogs
 from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
-from astroquery.vizier import Vizier
 from astroquery.simbad import Simbad
-# import lightkurve as lk
 
 customSimbad = Simbad()
 customSimbad.remove_votable_fields('coordinates')
@@ -225,13 +223,15 @@ class StellarTarget():
             else:
                 return f'{self.star_name} is not an M or K type star. Data is currently only available for these spectral sybtypes. \nPlease contact us with your target and parameters if you think this is a mistake.'
         else:
+            error_term = ''
             if self.star_name:
-                return f'Nothing found for {self.star_name} in the NExSci database.\
-                         At this time, retrieved input parameters are only available for known exoplanet host stars with 2500 K < Teff < 5044 K.\
-                         If {self.star_name} is a known exoplanet host star, please check spelling or coordinates and resubmit, or enter the input parameters manually via <<this form>>.\
-                         If {self.star_name} is not a known exoplanet host star, please enter the input parameters manually via <<this form>>'
+                error_term = self.star_name
             elif self.position:
-                return f'Nothing found for {self.position} in the NASA exoplanet archive. \nPlease check spelling or coordinate format. If this star is not an exoplanet host, please enter the input parameters manually on <a href={{ url_for("main.homepage", form="extended") }}>this form</a>.'
+                error_term = self.position
+            return f'Nothing found for {error_term} in the NExSci database. <br>\
+                     At this time, retrieved input parameters are only available for known exoplanet host stars with 2500 K < Teff < 5044 K. <br>\
+                     If {error_term} is a known exoplanet host star, please check spelling or coordinates and resubmit, or enter the input parameters manually via <a href="{{ url_for(\'main.homepage\', form=\'extended\') }}">this form</a>. <br>\
+                     If {error_term} is not a known exoplanet host star, please enter the input parameters manually via <a href="{{ url_for(\'main.homepage\', form=\'extended\') }}">this form</a>.'
 
     def search_galex(self):
         """Searches the MAST GALEX database by coordinates for flux densities.
