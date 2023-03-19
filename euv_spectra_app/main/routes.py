@@ -4,7 +4,6 @@ from datetime import timedelta
 import json
 import plotly
 import os
-from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
 from euv_spectra_app.extensions import *
 from euv_spectra_app.main.forms import ManualForm, StarNameForm, PositionForm, ModalForm, ContactForm
 from euv_spectra_app.helpers_astroquery import StellarTarget, ProperMotionData
@@ -291,7 +290,7 @@ def return_results():
         return redirect(url_for('main.homepage'))
 
 
-@app.route('/check-directory/<filename>')
+@main.route('/check-directory/<filename>')
 def check_directory(filename):
     """Checks if a FITS file exists."""
     if 'test' in filename:
@@ -310,7 +309,7 @@ def check_directory(filename):
         return jsonify({'exists': False})
 
 
-@app.route('/download/<filename>', methods=['GET', 'POST'])
+@main.route('/download/<filename>', methods=['GET', 'POST'])
 def download(filename):
     """Downloading FITS file on button click."""
     if 'test' in filename:
