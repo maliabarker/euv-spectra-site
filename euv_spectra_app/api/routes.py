@@ -499,10 +499,10 @@ def find_matching_phoenix_subtype():
 def get_models_in_limits():
     """Returns PHOENIX models that have FUV and NUV flux density values within the upper and lower limits of the given GALEX FUV and NUV values.
 
-    Example HTML path: /api/get_models_in_limits?subtype_grid=M0&fuv=167.64971644316745&fuv_err=26.158229050822513&nuv=1219.2948859922221&nuv_err=20.57292489842814&test=True
+    Example HTML path: /api/get_models_in_limits?subtype=M0&fuv=167.64971644316745&fuv_err=26.158229050822513&nuv=1219.2948859922221&nuv_err=20.57292489842814&test=True
 
     Args:
-        subtype_grid: The name of the PHOENIX subtype grid to search on (example 'M2')
+        subtype: The name of the PHOENIX subtype grid to search on (example 'M2')
         fuv: GALEX FUV flux density converted, scaled, and photosphere subtracted from previous flux processing steps
         nuv: GALEX NUV flux density converted, scaled, and photosphere subtracted from previous flux processing steps
         fuv_err: GALEX FUV error flux density converted, scaled, and photosphere subtracted from previous flux processing steps
@@ -525,7 +525,7 @@ def get_models_in_limits():
                 },
             }
     """
-    subtype = request.args.get('subtype_grid')
+    subtype = request.args.get('subtype')
     fuv = request.args.get('fuv')
     nuv = request.args.get('nuv')
     fuv_err = request.args.get('fuv_err')
@@ -539,33 +539,32 @@ def get_models_in_limits():
                 return_data = {}
                 count = 0
                 for i in models_in_limits:
-                    downloads = os.path.join(
-                        current_app.root_path, current_app.config['FITS_FOLDER'], subtype.upper())
-                    file = os.path.join(downloads, i['fits_filename'])
+                    # downloads = os.path.join(
+                    #     current_app.root_path, current_app.config['FITS_FOLDER'], subtype.upper())
+                    # file = os.path.join(downloads, i['fits_filename'])
                     del i['_id']
-                    del i['fits_filename']
                     return_data[f'model_{count}'] = i
-                    if os.path.exists(file):
-                        hst = fits.open(file)
-                        data = hst[1].data
-                        return_data[f'model_{count}']['wavelength_data'] = data['WAVELENGTH'][0].tolist()
-                        return_data[f'model_{count}']['flux_data'] = data['FLUX'][0].tolist()
-                    elif bool(request.args.get('test')) == True:
-                        test_file = os.path.abspath(
-                                        f"euv_spectra_app/fits_files/test/original_test.fits")
-                        hst = fits.open(test_file)
-                        data = hst[1].data
-                        return_data[f'model_{count}']['wavelength_data'] = data['WAVELENGTH'][0].tolist()
-                        return_data[f'model_{count}']['flux_data'] = data['FLUX'][0].tolist()
-                    else:
-                        return_data[f'model_{count}']['wavelength_data'] = 'Data for this model is not yet available.'
-                        return_data[f'model_{count}']['flux_data'] = 'Data for this model is not yet available.'
+                    # if os.path.exists(file):
+                    #     hst = fits.open(file)
+                    #     data = hst[1].data
+                    #     return_data[f'model_{count}']['wavelength_data'] = data['WAVELENGTH'][0].tolist()
+                    #     return_data[f'model_{count}']['flux_data'] = data['FLUX'][0].tolist()
+                    # elif bool(request.args.get('test')) == True:
+                    #     test_file = os.path.abspath(
+                    #                     f"euv_spectra_app/fits_files/test/original_test.fits")
+                    #     hst = fits.open(test_file)
+                    #     data = hst[1].data
+                    #     return_data[f'model_{count}']['wavelength_data'] = data['WAVELENGTH'][0].tolist()
+                    #     return_data[f'model_{count}']['flux_data'] = data['FLUX'][0].tolist()
+                    # else:
+                    #     return_data[f'model_{count}']['wavelength_data'] = 'Data for this model is not yet available.'
+                    #     return_data[f'model_{count}']['flux_data'] = 'Data for this model is not yet available.'
                     count += 1
                 return json.dumps(return_data)
             else:
                 return json.dumps('Values are needed for fuv, fuv_err, nuv, and nuv_err, please include these arguments and try again.')
         else:
-            return json.dumps('Value is needed for subtype_grid, please include this argument and try again.')
+            return json.dumps('Value is needed for subtype, please include this argument and try again.')
     except ValueError:
         return json.dumps('Value of fuv, fuv_err, nuv, or nuv_err is non-numerical. Please check your arguments and try again.')
 
@@ -574,17 +573,17 @@ def get_models_in_limits():
 def get_models_by_chi_squared():
     """Returns PHOENIX models in the given subtype grid sorted by lowest to highest chi squared value.
 
-    Example HTML path: /api/get_models_by_chi_squared?subtype_grid=M0&fuv=167.64971644316745&nuv=1219.2948859922221
+    Example HTML path: /api/get_models_by_chi_squared?subtype=M0&fuv=167.64971644316745&nuv=1219.2948859922221
 
     Args:
-        subtype_grid: The name of the PHOENIX subtype grid to search on (example 'M2')
+        subtype: The name of the PHOENIX subtype grid to search on (example 'M2')
         fuv: GALEX FUV flux density converted, scaled, and photosphere subtracted from previous flux processing steps
         nuv: GALEX NUV flux density converted, scaled, and photosphere subtracted from previous flux processing steps
 
     Returns:
     
     """
-    subtype = request.args.get('subtype_grid')
+    subtype = request.args.get('subtype')
     fuv = request.args.get('fuv')
     nuv = request.args.get('nuv')
     try:
@@ -603,7 +602,7 @@ def get_models_by_chi_squared():
             else:
                 return json.dumps('Values are needed for fuv, and nuv, please include these arguments and try again.')
         else:
-            return json.dumps('Value is needed for subtype_grid, please include this argument and try again.')
+            return json.dumps('Value is needed for subtype, please include this argument and try again.')
     except ValueError:
         return json.dumps('Value of fuv, fuv_err, nuv, or nuv_err is non-numerical. Please check your arguments and try again.')
 
@@ -612,17 +611,17 @@ def get_models_by_chi_squared():
 def get_models_by_weighted_fuv():
     """Returns PHOENIX models in the given subtype grid sorted by lowest to highest chi squared values and weighted on the FUV.
 
-    Example HTML path: /api/get_models_by_weighted_fuv?subtype_grid=M0&fuv=167.64971644316745&nuv=1219.2948859922221
+    Example HTML path: /api/get_models_by_weighted_fuv?subtype=M0&fuv=167.64971644316745&nuv=1219.2948859922221
     
     Args:
-        subtype_grid: The name of the PHOENIX subtype grid to search on (example 'M2')
+        subtype: The name of the PHOENIX subtype grid to search on (example 'M2')
         fuv: GALEX FUV flux density converted, scaled, and photosphere subtracted from previous flux processing steps
         nuv: GALEX NUV flux density converted, scaled, and photosphere subtracted from previous flux processing steps
 
     Returns:
     
     """
-    subtype = request.args.get('subtype_grid')
+    subtype = request.args.get('subtype')
     fuv = request.args.get('fuv')
     nuv = request.args.get('nuv')
     try:
@@ -641,7 +640,7 @@ def get_models_by_weighted_fuv():
             else:
                 return json.dumps('Values are needed for fuv, and nuv, please include these arguments and try again.')
         else:
-            return json.dumps('Value is needed for subtype_grid, please include this argument and try again.')
+            return json.dumps('Value is needed for subtype, please include this argument and try again.')
     except ValueError:
         return json.dumps('Value of fuv, fuv_err, nuv, or nuv_err is non-numerical. Please check your arguments and try again.')
 
@@ -650,17 +649,17 @@ def get_models_by_weighted_fuv():
 def get_models_by_flux_ratio():
     """Returns PHOENIX models in the given subtype grid sorted from lowest to highest chi squared value of flux ratios.
 
-    Example HTML path: /api/get_models_by_flux_ratio?subtype_grid=M0&fuv=167.64971644316745&nuv=1219.2948859922221
+    Example HTML path: /api/get_models_by_flux_ratio?subtype=M0&fuv=167.64971644316745&nuv=1219.2948859922221
 
     Args:
-        subtype_grid: The name of the PHOENIX subtype grid to search on (example 'M2')
+        subtype: The name of the PHOENIX subtype grid to search on (example 'M2')
         fuv: GALEX FUV flux density converted, scaled, and photosphere subtracted from previous flux processing steps
         nuv: GALEX NUV flux density converted, scaled, and photosphere subtracted from previous flux processing steps
 
     Returns:
     
     """
-    subtype = request.args.get('subtype_grid')
+    subtype = request.args.get('subtype')
     fuv = request.args.get('fuv')
     nuv = request.args.get('nuv')
     try:
@@ -679,7 +678,7 @@ def get_models_by_flux_ratio():
             else:
                 return json.dumps('Values are needed for fuv, and nuv, please include these arguments and try again.')
         else:
-            return json.dumps('Value is needed for subtype_grid, please include this argument and try again.')
+            return json.dumps('Value is needed for subtype, please include this argument and try again.')
     except ValueError:
         return json.dumps('Value of fuv, fuv_err, nuv, or nuv_err is non-numerical. Please check your arguments and try again.')
 
