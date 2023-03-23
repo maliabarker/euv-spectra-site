@@ -509,19 +509,17 @@ def get_models_in_limits():
         nuv_err: GALEX NUV error flux density converted, scaled, and photosphere subtracted from previous flux processing steps
 
     Returns:
-        JSON string with all models within limits including their FITS file data
+        JSON string with all models within limits
         Example:
             {
                 "model_0": {
+                    "fits_filename": "PEGASUS.M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=5.5.cmin=3.fits",
                     "teff": 3850.0, 
                     "logg": 4.78, 
                     "mass": 0.53, 
                     "euv": 3330.45216695799, 
                     "fuv": 177.670504667116, 
-                    "nuv": 1236.00277651224, 
-                    "chi_squared": 0.83, 
-                    "wavelength_data": [5.0, 5.1, 5.2...],
-                    "flux_data": [2.208004733018906e-46, 5.767664633922544e-45, ...] 
+                    "nuv": 1236.00277651224
                 },
             }
     """
@@ -539,26 +537,8 @@ def get_models_in_limits():
                 return_data = {}
                 count = 0
                 for i in models_in_limits:
-                    # downloads = os.path.join(
-                    #     current_app.root_path, current_app.config['FITS_FOLDER'], subtype.upper())
-                    # file = os.path.join(downloads, i['fits_filename'])
                     del i['_id']
                     return_data[f'model_{count}'] = i
-                    # if os.path.exists(file):
-                    #     hst = fits.open(file)
-                    #     data = hst[1].data
-                    #     return_data[f'model_{count}']['wavelength_data'] = data['WAVELENGTH'][0].tolist()
-                    #     return_data[f'model_{count}']['flux_data'] = data['FLUX'][0].tolist()
-                    # elif bool(request.args.get('test')) == True:
-                    #     test_file = os.path.abspath(
-                    #                     f"euv_spectra_app/fits_files/test/original_test.fits")
-                    #     hst = fits.open(test_file)
-                    #     data = hst[1].data
-                    #     return_data[f'model_{count}']['wavelength_data'] = data['WAVELENGTH'][0].tolist()
-                    #     return_data[f'model_{count}']['flux_data'] = data['FLUX'][0].tolist()
-                    # else:
-                    #     return_data[f'model_{count}']['wavelength_data'] = 'Data for this model is not yet available.'
-                    #     return_data[f'model_{count}']['flux_data'] = 'Data for this model is not yet available.'
                     count += 1
                 return json.dumps(return_data)
             else:
@@ -581,7 +561,30 @@ def get_models_by_chi_squared():
         nuv: GALEX NUV flux density converted, scaled, and photosphere subtracted from previous flux processing steps
 
     Returns:
-    
+        JSON string with all models within provided subgrid sorted by chi squared value
+        Example:
+            { 
+                "model_0": 
+                    { 
+                        "fits_filename": "PEGASUS.M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=5.5.cmin=3.fits", 
+                        "teff": 3850.0, 
+                        "logg": 4.78, 
+                        "mass": 0.53, 
+                        "euv": 3330.45216695799, 
+                        "fuv": 177.670504667116, 
+                        "nuv": 1236.00277651224
+                    }, 
+                "model_1": 
+                    { 
+                        "fits_filename": "PEGASUS.M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=5.5.cmin=3.5.fits", 
+                        "teff": 3850.0, 
+                        "logg": 4.78, 
+                        "mass": 0.53, 
+                        "euv": 3334.06409275876, 
+                        "fuv": 161.605509788601, 
+                        "nuv": 860.302752341006
+                    }...
+            }
     """
     subtype = request.args.get('subtype')
     fuv = request.args.get('fuv')
@@ -619,7 +622,31 @@ def get_models_by_weighted_fuv():
         nuv: GALEX NUV flux density converted, scaled, and photosphere subtracted from previous flux processing steps
 
     Returns:
-    
+        Example:
+            { 
+                "model_0": 
+                    {
+                        "fits_filename": "PEGASUS.M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=5.5.cmin=3.5.fits", 
+                        "teff": 3850.0, 
+                        "logg": 4.78, 
+                        "mass": 0.53, 
+                        "euv": 3334.06409275876, 
+                        "fuv": 161.605509788601, 
+                        "nuv": 860.302752341006, 
+                        "chi_squared": 105.91
+                    }, 
+                "model_1": 
+                    {
+                        "fits_filename": "PEGASUS.M0.Teff=3850.logg=4.78.TRgrad=8.5.cmtop=6.cmin=3.fits", 
+                        "teff": 3850.0, 
+                        "logg": 4.78, 
+                        "mass": 0.53, 
+                        "euv": 3623.31043975706, 
+                        "fuv": 163.419435009827, 
+                        "nuv": 850.233439611939,
+                        "chi_squared": 111.82
+                    }...
+            }
     """
     subtype = request.args.get('subtype')
     fuv = request.args.get('fuv')
@@ -634,6 +661,8 @@ def get_models_by_weighted_fuv():
                 for i in models_weighted:
                     print(i)
                     del i['_id']
+                    del i['chi_squared_fuv']
+                    del i['chi_squared_nuv']
                     return_data[f'model_{count}'] = i
                     count += 1
                 return json.dumps(return_data)
@@ -657,7 +686,35 @@ def get_models_by_flux_ratio():
         nuv: GALEX NUV flux density converted, scaled, and photosphere subtracted from previous flux processing steps
 
     Returns:
-    
+        Example:
+            {
+                "model_0": 
+                    {
+                        "fits_filename": "PEGASUS.M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=5.5.cmin=3.fits", 
+                        "teff": 3850.0, 
+                        "logg": 4.78, 
+                        "mass": 0.53, 
+                        "euv": 3330.45216695799, 
+                        "fuv": 177.670504667116, 
+                        "nuv": 1236.00277651224, 
+                        "galex_flux_ratio": 7.272871746285106, 
+                        "model_flux_ratio": 6.956713376978461, 
+                        "ratio_chi_squared": 0.013743692721337146
+                    }, 
+                "model_1": 
+                    {
+                        "fits_filename": "PEGASUS.M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits", 
+                        "teff": 3850.0, 
+                        "logg": 4.78, 
+                        "mass": 0.53, 
+                        "euv": 1092.41877826431, 
+                        "fuv": 52.3437581238288, 
+                        "nuv": 401.803589862584, 
+                        "galex_flux_ratio": 7.272871746285106, 
+                        "model_flux_ratio": 7.676246495561966, 
+                        "ratio_chi_squared": 0.022372343969530358
+                    }...
+            }
     """
     subtype = request.args.get('subtype')
     fuv = request.args.get('fuv')
@@ -672,6 +729,8 @@ def get_models_by_flux_ratio():
                 for i in models_ratios:
                     print(i)
                     del i['_id']
+                    del i['galex_flux_ratio']
+                    del i['model_flux_ratio']
                     return_data[f'model_{count}'] = i
                     count += 1
                 return json.dumps(return_data)

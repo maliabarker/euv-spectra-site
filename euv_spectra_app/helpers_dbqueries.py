@@ -235,12 +235,12 @@ def get_flux_ratios(corrected_nuv, corrected_fuv, model_collection):
          stellar subtype.
 
     Returns:
-        The matching MongoDB collection with an additional field, 'flux_ratio_chi_squared',
+        The matching MongoDB collection with an additional field, 'chi_squared',
         that is calculated with the equation:
 
         ((((model_nuv / model_fuv) - (galex_nuv / galex_fuv)) ** 2) / (galex_nuv / galex_fuv))
 
-        The collection is returned from lowest value of flux_ratio_chi_squared to highest.
+        The collection is returned from lowest value of chi_squared to highest.
     """
     models_with_ratio = db.get_collection(model_collection).aggregate([
         {  
@@ -251,7 +251,7 @@ def get_flux_ratios(corrected_nuv, corrected_fuv, model_collection):
         },
         {
             "$addFields": {
-                "ratio_chi_squared": {
+                "chi_squared": {
                     "$divide": [
                         { "$pow": [ { "$subtract": [ "$model_flux_ratio", "$galex_flux_ratio" ] }, 2 ] },
                         "$galex_flux_ratio"
@@ -259,6 +259,6 @@ def get_flux_ratios(corrected_nuv, corrected_fuv, model_collection):
                 }
             }
         },
-        {"$sort": {"ratio_chi_squared": 1}}
+        {"$sort": {"chi_squared": 1}}
     ])
     return models_with_ratio
