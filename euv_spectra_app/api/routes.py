@@ -2,6 +2,7 @@ from flask import Blueprint, request, render_template, redirect, url_for, sessio
 import json
 import os
 from astropy.io import fits
+from euv_spectra_app.extensions import *
 from euv_spectra_app.helpers_astroquery import StellarTarget
 from euv_spectra_app.helpers_flux import GalexFlux
 from euv_spectra_app.helpers_json import to_json
@@ -13,8 +14,8 @@ api = Blueprint("api", __name__, url_prefix="/api")
 ROUTES:
 
 GETTING STELLAR PARAMETERS
-1. DONE Search for parameters by name (returns JSON)
-2. DONE Search for parameters by position/coords (returns JSON)
+1. Search for parameters by name (returns JSON)
+2. Search for parameters by position/coords (returns JSON)
 
 PREPARING GALEX FLUXES
 3. Convert GALEX ujy to flux (returns JSON)
@@ -48,6 +49,22 @@ def convert_ujy_to_flux(flux, wv):
 @api.route('/', methods=['GET', 'POST'])
 def load_api():
     return render_template('load_api.html')
+
+
+@api.route('/get_galex_obs_time', methods=['GET', 'POST'])
+def get_galex_obs_time():
+    """
+    Example HTML path: /api/get_galex_obs_time?star_name=GJ338B
+    """
+    star_name = request.args.get('star_name')
+    print(star_name)
+    if star_name is not None:
+        galex_time = db.mast_galex_times.find_one({'target': star_name})
+        print(galex_time)
+        if galex_time:
+            return_data = galex_time['t_min']
+            return json.dumps(return_data)
+    return json.dumps(f'No GALEX observations found for {star_name}. Please check your spelling, spacing, and/or capitalization and try again.')
 
 
 @api.route('/get_parameters_by_name', methods=['GET', 'POST'])
