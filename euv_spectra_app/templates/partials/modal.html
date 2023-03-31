@@ -3,9 +3,20 @@
         <div class="modal-content">
             <div class="modal-header text-center ms-2 d-flex justify-content-evenly">
                 <p class="mb-0 mt-2 ms-3">
-                    The following data was returned for your target: <b>{{ stellar_target.search_input }}</b> <br> 
+                    The following data was returned for your target: 
+                    <b>
+                        {% if stellar_obj.position is not none %}
+                            {{ stellar_obj.position }}
+                        {% elif stellar_obj.star_name is not none %}
+                            {{ stellar_obj.star_name }}
+                        {% endif %}
+                    </b> <br>
                     Use preselected values from
-                    <a href="https://exoplanetarchive.ipac.caltech.edu/overview/{{ stellar_target.search_term | urlencode }}">NExScI</a> 
+                    {% if stellar_obj.position is not none %}
+                        <a href="https://exoplanetarchive.ipac.caltech.edu/overview/{{ stellar_obj.position | urlencode }}">NExScI</a> 
+                    {% elif stellar_obj.star_name is not none %}
+                        <a href="https://exoplanetarchive.ipac.caltech.edu/index.html">NExScI</a> 
+                    {% endif %}
                     and 
                     <a href="http://galex.stsci.edu/gr6/?page=mastform">GALEX</a> <br>
                     or enter your own manual parameters in the corresponding text box

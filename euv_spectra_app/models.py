@@ -17,11 +17,12 @@ customSimbad.add_votable_fields(
 
 class ProperMotionData():
     """Represents proper motion data of a stellar object."""
+
     def __init__(self, pm_ra=None, pm_dec=None, plx=None, rad_vel=None):
         self.pm_ra = pm_ra
         self.pm_dec = pm_dec
         self.plx = plx
-        self.rad_vel=rad_vel
+        self.rad_vel = rad_vel
 
     def correct_pm(self, star_name, coords):
         """Corrects the given coordinates for proper motion using the GALEX observation time.
@@ -32,7 +33,7 @@ class ProperMotionData():
 
         Returns:
             tuple: A tuple containing two floats representing the corrected right ascension and declination coordinates.
-        
+
         Raises:
             Exception: If an error occurs during the API request or coordinate correction.
         """
@@ -48,7 +49,8 @@ class ProperMotionData():
                 coordinates = coords[0] + ' ' + coords[1]
                 skycoord_obj = ''
                 # STEP 3: Calculate time difference between observation time and Jan 1st, 2000 (J2000)
-                t3 = Time(galex_time, format='mjd') - Time(51544.0, format='mjd')
+                t3 = Time(galex_time, format='mjd') - \
+                    Time(51544.0, format='mjd')
                 # STEP 4: Convert time (which will return in seconds) into years
                 td_year = t3.sec / 60 / 60 / 24 / 365.25
                 # STEP 5: Check to see if radial velocity is given then create SkyCoord object with all data
@@ -67,8 +69,56 @@ class ProperMotionData():
                 return ("Unknown error during proper motion correction:" + str(e))
 
 
+class GalexFlux():
+    """Represents one GALEX flux and error (FUV or NUV)."""
+
+    def __init__(self, flux, flux_err, photospheric_flux, dist, rad, wv):
+        self.flux = flux
+        self.upper_lim = flux + flux_err
+        self.lower_lim = flux - flux_err
+        self.photo_flux = photospheric_flux
+        self.dist = dist * 3.08567758e18
+        self.rad = rad * 6.9e10
+        self.wv = wv
+        self.scale = ((self.dist**2) / (self.rad**2))
+
+    def convert_ujy_to_flux(self, chosen_flux):
+        """Converts microjanskies to ergs/s/cm2/A."""
+        return (((3e-5) * (chosen_flux * 10**-6)) / pow(self.wv, 2))
+
+    def scale_flux(self, chosen_flux):
+        """Scales flux to stellar surface."""
+        return chosen_flux * self.scale
+
+    def subtract_photosphere_flux(self, chosen_flux):
+        """Subtracts the photospheric contributed flux from GALEX flux."""
+        return chosen_flux - self.photo_flux
+
+    def run_calculations(self, chosen_flux):
+        """Runs calculations in correct order to return converted, scaled flux."""
+        converted_flux = self.convert_ujy_to_flux(chosen_flux)
+        scaled_flux = self.scale_flux(converted_flux)
+        photo_subtracted_flux = self.subtract_photosphere_flux(scaled_flux)
+        return photo_subtracted_flux
+
+    def return_new_flux(self):
+        """Returns newly calculated flux density."""
+        return self.run_calculations(self.flux)
+
+    def return_new_err(self):
+        """Calculates the new flux error."""
+        new_flux = self.return_new_flux()
+        new_upper_lim = self.run_calculations(self.upper_lim)
+        new_lower_lim = self.run_calculations(self.lower_lim)
+        new_upper_err = new_upper_lim - new_flux
+        new_lower_err = new_flux - new_lower_lim
+        new_err = (new_upper_err + new_lower_err) / 2
+        return new_err
+    
+
 class GalexFluxes():
     """Represents GALEX flux values."""
+
     def __init__(self, fuv=None, nuv=None, fuv_err=None, nuv_err=None, nuv_aper=None, fuv_aper=None, j_band=None, stellar_obj=None):
         self.fuv = fuv
         self.nuv = nuv
@@ -85,7 +135,7 @@ class GalexFluxes():
         if ma.is_masked(self.fuv) and ma.is_masked(self.nuv):
             # all fluxes are null/ no galex data
             self.fuv, self.fuv_err = 'No Detection', 'No Detection'
-            self.nuv, self.nuv_err = 'No Detection','No Detection'
+            self.nuv, self.nuv_err = 'No Detection', 'No Detection'
             return ('No GALEX detections found.')
         elif ma.is_masked(self.fuv):
             # only FUV is null, predict FUV and add error message
@@ -122,7 +172,7 @@ class GalexFluxes():
             nuv_is_saturated = self.nuv_aper > 108
             if fuv_is_saturated and nuv_is_saturated:
                 self.fuv, self.fuv_err = 'No Detection', 'No Detection'
-                self.nuv, self.nuv_err = 'No Detection','No Detection'
+                self.nuv, self.nuv_err = 'No Detection', 'No Detection'
                 return ('Both GALEX detection saturated, cannot correct.')
             elif fuv_is_saturated:
                 fuv_fluxes, fuv_errors = [self.fuv], [self.fuv_err]
@@ -144,11 +194,11 @@ class GalexFluxes():
 
         Args:
             flux_to_predict: Either fuv or nuv, specifies which flux to predict for.
-        
+
         Side Effects:
             If flux_to_predict is 'fuv', sets fuv and fuv_err of GalexFluxes object.
             If flux_to_predict is 'nuv', sets nuv and nuv_err of GalexFluxes object.
-        
+
         Raises:
             ValueError if j_band is None
         """
@@ -202,17 +252,18 @@ class GalexFluxes():
         """Returns the upper and lower limits of a specified flux."""
         upper_lim = flux + err
         lower_lim = flux - err
-        return {"upper_lim" : upper_lim, "lower_lim": lower_lim}
-    
+        return {"upper_lim": upper_lim, "lower_lim": lower_lim}
+
     def convert_ujy_to_flux_density(self, num, wv):
         """Converts microjanskies to ergs/s/cm2/A."""
         return (((3e-5) * (num * 10**-6)) / pow(wv, 2))
-    
+
     def scale_flux(self, num):
         """Scales flux to stellar surface."""
-        scale = (((self.stellar_obj['dist'] * 3.08567758e18)**2) / ((self.stellar_obj['rad'] * 6.9e10)**2))
+        scale = (((self.stellar_obj['dist'] * 3.08567758e18)
+                 ** 2) / ((self.stellar_obj['rad'] * 6.9e10)**2))
         return num * scale
-    
+
     def get_photosphere_model(self):
         try:
             matching_photosphere_model = find_matching_photosphere(
@@ -221,7 +272,7 @@ class GalexFluxes():
             return matching_photosphere_model
         except Exception:
             return ('Cannot find a photosphere model. Please try again.')
-    
+
     def subtract_photosphere_flux(self, chosen_flux, photo_flux):
         """Subtracts the photospheric contributed flux from GALEX flux."""
         return chosen_flux - photo_flux
@@ -238,25 +289,35 @@ class GalexFluxes():
         converted_nuv = self.convert_ujy_to_flux_density(self.nuv, NUV_WV)
         scaled_fuv = self.scale_flux(converted_fuv)
         scaled_nuv = self.scale_flux(converted_nuv)
-        photosub_fuv = self.subtract_photosphere_flux(scaled_fuv, photosphere_data['fuv'])
-        photosub_nuv = self.subtract_photosphere_flux(scaled_nuv, photosphere_data['nuv'])
+        photosub_fuv = self.subtract_photosphere_flux(
+            scaled_fuv, photosphere_data['fuv'])
+        photosub_nuv = self.subtract_photosphere_flux(
+            scaled_nuv, photosphere_data['nuv'])
         self.processed_fuv = photosub_fuv
         self.processed_nuv = photosub_nuv
 
-        converted_fuv_upper_lim = self.convert_ujy_to_flux_density(fuv_lims['upper_lim'], FUV_WV)
-        converted_nuv_upper_lim = self.convert_ujy_to_flux_density(nuv_lims['upper_lim'], NUV_WV)
-        converted_fuv_lower_lim = self.convert_ujy_to_flux_density(fuv_lims['lower_lim'], FUV_WV)
-        converted_nuv_lower_lim = self.convert_ujy_to_flux_density(nuv_lims['lower_lim'], NUV_WV)
+        converted_fuv_upper_lim = self.convert_ujy_to_flux_density(
+            fuv_lims['upper_lim'], FUV_WV)
+        converted_nuv_upper_lim = self.convert_ujy_to_flux_density(
+            nuv_lims['upper_lim'], NUV_WV)
+        converted_fuv_lower_lim = self.convert_ujy_to_flux_density(
+            fuv_lims['lower_lim'], FUV_WV)
+        converted_nuv_lower_lim = self.convert_ujy_to_flux_density(
+            nuv_lims['lower_lim'], NUV_WV)
 
         scaled_fuv_upper_lim = self.scale_flux(converted_fuv_upper_lim)
         scaled_nuv_upper_lim = self.scale_flux(converted_nuv_upper_lim)
         scaled_fuv_lower_lim = self.scale_flux(converted_fuv_lower_lim)
         scaled_nuv_lower_lim = self.scale_flux(converted_nuv_lower_lim)
 
-        photosub_fuv_upper_lim = self.subtract_photosphere_flux(scaled_fuv_upper_lim, photosphere_data['fuv'])
-        photosub_nuv_upper_lim = self.subtract_photosphere_flux(scaled_nuv_upper_lim, photosphere_data['nuv'])
-        photosub_fuv_lower_lim = self.subtract_photosphere_flux(scaled_fuv_lower_lim, photosphere_data['fuv'])
-        photosub_nuv_lower_lim = self.subtract_photosphere_flux(scaled_nuv_lower_lim, photosphere_data['nuv'])
+        photosub_fuv_upper_lim = self.subtract_photosphere_flux(
+            scaled_fuv_upper_lim, photosphere_data['fuv'])
+        photosub_nuv_upper_lim = self.subtract_photosphere_flux(
+            scaled_nuv_upper_lim, photosphere_data['nuv'])
+        photosub_fuv_lower_lim = self.subtract_photosphere_flux(
+            scaled_fuv_lower_lim, photosphere_data['fuv'])
+        photosub_nuv_lower_lim = self.subtract_photosphere_flux(
+            scaled_nuv_lower_lim, photosphere_data['nuv'])
 
         new_fuv_upper_err = photosub_fuv_upper_lim - self.processed_fuv
         new_fuv_lower_err = self.processed_fuv - photosub_fuv_lower_lim
@@ -270,6 +331,7 @@ class GalexFluxes():
 
 class StellarObject():
     """Represents a stellar object."""
+
     def __init__(self, star_name=None, position=None, coords=None, teff=None, logg=None, mass=None, dist=None, rad=None, pm_data=None, fluxes=None):
         self.star_name = star_name
         self.position = position
@@ -283,6 +345,12 @@ class StellarObject():
         self.fluxes = fluxes
         if self.fluxes is None:
             self.fluxes = GalexFluxes()
+
+    def can_query_pegasus(self):
+        if self.teff is not None and self.logg is not None and self.mass is not None and self.dist is not None and self.rad is not None and self.fluxes.fuv is not None and self.fluxes.nuv is not None:
+            return True
+        else:
+            return False
 
     def get_stellar_parameters(self):
         """Searches Astroquery databases for stellar data.
@@ -344,8 +412,8 @@ class StellarObject():
             self.modal_error_msg = nea_data
             return
         # TODO check that NEA search was successful, allow to continue to galex if not
-        # STEP 3: Check if coordinate correction happened then search GALEX with 
-                # corrected/converted coords
+        # STEP 3: Check if coordinate correction happened then search GALEX with
+            # corrected/converted coords
         # if self.star_name is not None and self.pm_data is not None:
             # coordinate correction happened which means GALEX data exists, execute galex query
         galex_data = self.query_galex()
@@ -375,7 +443,7 @@ class StellarObject():
             return ("Invalid `position` attribute: " + str(e))
         except Exception as e:
             return ("Unknown error during coordinate conversion: " + str(e))
-        
+
     def query_simbad(self):
         """Searches the SIMBAD astronomical database to retrieve data on a specified star.
 
@@ -504,6 +572,7 @@ class StellarObject():
 
 class PegasusGrid():
     """Represents the PEGASUS grid"""
+
     def __init__(self, stellar_obj=None):
         self.stellar_obj = stellar_obj
 
@@ -513,7 +582,7 @@ class PegasusGrid():
         try:
             matching_subtype = find_matching_subtype(
                 self.stellar_obj.teff, self.stellar_obj.logg, self.stellar_obj.mass)
-            
+
             self.stellar_obj.model_collection = f"{matching_subtype['model'].lower()}_grid"
             return matching_subtype
         except Exception as e:
@@ -524,8 +593,8 @@ class PegasusGrid():
         """
         try:
             models_in_limits = get_models_within_limits(
-                self.stellar_obj.fluxes.processed_nuv, self.stellar_obj.fluxes.processed_fuv, 
-                self.stellar_obj.fluxes.processed_nuv_err, self.stellar_obj.fluxes.processed_fuv_err, 
+                self.stellar_obj.fluxes.processed_nuv, self.stellar_obj.fluxes.processed_fuv,
+                self.stellar_obj.fluxes.processed_nuv_err, self.stellar_obj.fluxes.processed_fuv_err,
                 self.stellar_obj.model_collection)
             return list(models_in_limits)
         except Exception as e:

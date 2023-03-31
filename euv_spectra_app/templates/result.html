@@ -17,7 +17,13 @@
         </div>
     </div>
 
-    <h4 class="mt-5 pt-4 text-center">Closest Match PHOENIX Model for <i>{{ stellar_target.search_input }}</i></h4>
+    <h4 class="mt-5 pt-4 text-center">Closest Match PHOENIX Model
+        {% if stellar_obj.position is not none %}
+            for <i>{{ stellar_obj.position }}</i>
+        {% elif stellar_obj.star_name is not none %}
+            for <i>{{ stellar_obj.star_name }}</i>
+        {% endif %}
+    </h4>
     
     <div class="row mt-4">
         <div class="col-md-8 offset-md-2 text-center table-responsive">
@@ -38,35 +44,35 @@
                 <tbody>
                     <tr>
                         <th scope="row">T<sub>eff</sub> <small>(K)</small></th>
-                        <td>{{ stellar_target.teff }}</td>
+                        <td>{{ stellar_obj.teff }}</td>
                         {% for model in matching_models %}
                             <td>{{ model.teff }}</td>
                         {% endfor %}
                     </tr>
                     <tr>
                         <th scope="row">log(g) <small>(cm/s<sup>2</sup>)</small></th>
-                        <td>{{ stellar_target.logg }}</td>
+                        <td>{{ stellar_obj.logg }}</td>
                         {% for model in matching_models %}
                             <td>{{ model.logg }}</td>
                         {% endfor %}
                     </tr>
                     <tr>
                         <th scope="row">Mass <small>(M<sub>sun</sub>)</small></th>
-                        <td>{{ stellar_target.mass }}</td>
+                        <td>{{ stellar_obj.mass }}</td>
                         {% for model in matching_models %}
                             <td>{{ model.mass }}</td>
                         {% endfor %}
                     </tr>
                     <tr>
                         <th scope="row">GALEX FUV Flux Density<sup>*</sup></th>
-                        <td>{{ "%.2f"|format(stellar_target.corrected_fuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_fuv_err) }}</td>
+                        <td>{{ "%.2f"|format(stellar_obj.fluxes.processed_fuv) }} +/- {{ "%.2f"|format(stellar_obj.fluxes.processed_fuv_err) }}</td>
                         {% for model in matching_models %}
                             <td>{{ "%.2f"|format(model.fuv) }}</td>
                         {% endfor %}
                     </tr>
                     <tr>
                         <th scope="row">GALEX NUV Flux Density<sup>*</sup></th>
-                        <td>{{ "%.2f"|format(stellar_target.corrected_nuv) }} +/- {{ "%.2f"|format(stellar_target.corrected_nuv_err) }}</td>
+                        <td>{{ "%.2f"|format(stellar_obj.fluxes.processed_nuv) }} +/- {{ "%.2f"|format(stellar_obj.fluxes.processed_nuv_err) }}</td>
                         {% for model in matching_models %}
                             <td>{{ "%.2f"|format(model.nuv) }}</td>
                         {% endfor %}
