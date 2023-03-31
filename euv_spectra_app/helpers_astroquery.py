@@ -173,11 +173,10 @@ class StellarTarget():
             A string detailing that SIMBAD coulld not find any object under the inputted name.
         """
         result_table = customSimbad.query_object(self.star_name)
-        print('TESTING', result_table)
         if result_table and len(result_table) > 0:
             data = result_table[0]
             self.coordinates = (data['RA'], data['DEC'])
-            self.proper_motion_data = ProperMotionData(
+            self.proper_motion_data = ProperMotionDataOld(
                 data['PMRA'], data['PMDEC'], data['PLX_VALUE'])
             # check if radial velocity exists
             if ma.is_masked(data['RV_VALUE']):
@@ -264,7 +263,7 @@ class StellarTarget():
                     filtered_data = galex_data[MIN_DIST][0]
                     nuv_is_saturated = filtered_data['nuv_flux_aper_7'] > 108
                     fuv_is_saturated = filtered_data['fuv_flux_aper_7'] > 34
-                    self.fluxes = GalexFluxes(filtered_data['fuv_flux'], filtered_data['fuv_fluxerr'], filtered_data['nuv_flux'], filtered_data['nuv_fluxerr'], ((
+                    self.fluxes = GalexFluxesOld(filtered_data['fuv_flux'], filtered_data['fuv_fluxerr'], filtered_data['nuv_flux'], filtered_data['nuv_fluxerr'], ((
                         (self.dist * 3.08567758e18)**2) / ((self.rad * 6.9e10)**2)))
                     self.fuv = filtered_data['fuv_flux']
                     self.nuv = filtered_data['nuv_flux']
@@ -390,7 +389,7 @@ class StellarTarget():
             print('Cannot correct for that flux type, can only do FUV and NUV.')
 
 
-class ProperMotionData():
+class ProperMotionDataOld():
 
     def __init__(self, pmra=None, pmdec=None, parallax=None, radial_velocity=None):
         self.pmra = pmra
@@ -453,7 +452,7 @@ class ProperMotionData():
                 return 'Could not correct coordinates.'
 
 
-class GalexFluxes():
+class GalexFluxesOld():
     def __init__(self, fuv='No Detection', fuv_err='No Detection', nuv='No Detection', nuv_err='No Detection', scale=None):
         self.fuv = fuv
         self.fuv_err = fuv_err

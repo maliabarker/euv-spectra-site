@@ -6,12 +6,13 @@ import plotly
 import os
 from euv_spectra_app.extensions import *
 from euv_spectra_app.main.forms import ManualForm, StarNameForm, PositionForm, ModalForm, ContactForm
-from euv_spectra_app.helpers_astroquery import StellarTarget, ProperMotionData
+from euv_spectra_app.helpers_astroquery import StellarTarget
 from euv_spectra_app.helpers_flux import GalexFlux
 from euv_spectra_app.helpers_graph import create_plotly_graph
-from euv_spectra_app.helpers_json import to_json, from_json
+from euv_spectra_app.helpers_json import to_json, from_json, from_json_new
 from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios
-
+from euv_spectra_app.models import StellarObject, PegasusGrid, PhoenixModel
+from euv_spectra_app.helpers import insert_data_into_form
 main = Blueprint("main", __name__)
 
 
@@ -38,6 +39,8 @@ def homepage():
         extend_form = False
 
     session['modal_show'] = False
+    stellar_object = StellarObject()
+
     stellar_target = StellarTarget()
 
     manual_form = ManualForm()
@@ -52,33 +55,56 @@ def homepage():
             stellar_target.position = position_form.coords.data
             stellar_target.search_dbs()
 
+            stellar_object.position = position_form.coords.data
+            stellar_object.get_stellar_parameters()
+            print('——————————OLD——————————')
+            print(vars(stellar_target))
+            print('——————————NEW——————————')
+            print(vars(stellar_object))
+            print('—————————————————————')
+
         elif name_form.validate_on_submit():
             # Home name form
             print(f'name form validated!')
             stellar_target.star_name = name_form.star_name.data
             stellar_target.search_dbs()
 
-        if hasattr(stellar_target, 'modal_error_msg'):
-            # check if there were any errors returned from searching databases
-            if 'GALEX' in stellar_target.modal_error_msg:
-                flash(stellar_target.modal_error_msg, 'warning')
-            else:
-                return redirect(url_for('main.error', msg=stellar_target.modal_error_msg))
+            stellar_object.star_name = name_form.star_name.data
+            stellar_object.get_stellar_parameters()
+            print('——————————OLD——————————')
+            print(vars(stellar_target))
+            print('——————————NEW——————————')
+            print(vars(stellar_object))
+            print(vars(stellar_object.fluxes))
+            print('—————————————————————')
 
-        for attribute in vars(stellar_target):
-            # add the data returned from queries to the model form object
-            if hasattr(modal_form, attribute):
-                radio_input = getattr(modal_form, attribute)
-                attribute_value = getattr(stellar_target, attribute)
-                radio_input.choices.insert(
-                    0, (attribute_value, attribute_value))
+        if hasattr(stellar_object, 'modal_error_msg'):
+            # check if there were any errors returned from searching databases
+            if 'GALEX' in stellar_object.modal_error_msg:
+                flash(stellar_object.modal_error_msg, 'warning')
+            else:
+                return redirect(url_for('main.error', msg=stellar_object.modal_error_msg))
+                    
+
+        insert_data_into_form(stellar_object, modal_form)
+        # if hasattr(stellar_target, 'modal_error_msg'):
+        #     # check if there were any errors returned from searching databases
+        #     if 'GALEX' in stellar_target.modal_error_msg:
+        #         flash(stellar_target.modal_error_msg, 'warning')
+        #     else:
+        #         return redirect(url_for('main.error', msg=stellar_target.modal_error_msg))
+
+        # for attribute in vars(stellar_target):
+        #     # add the data returned from queries to the model form object
+        #     if hasattr(modal_form, attribute):
+        #         radio_input = getattr(modal_form, attribute)
+        #         attribute_value = getattr(stellar_target, attribute)
+        #         radio_input.choices.insert(
+        #             0, (attribute_value, attribute_value))
 
         # store the object as a json variable for persistence
-        print(vars(stellar_target))
-        print(vars(stellar_target.proper_motion_data))
-        print(vars(stellar_target.fluxes))
         session['stellar_target'] = json.dumps(to_json(stellar_target))
-        print('STELLAR TARGET TO JSON', session['stellar_target'])
+        session['stellar_object'] = json.dumps(to_json(stellar_object))
 
         session['modal_show'] = True
         return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, modal_form=modal_form, stellar_target=stellar_target)
@@ -97,26 +123,32 @@ def submit_modal_form():
 
     # Retrieve the JSON formatted string from the session
     target_json = session.get('stellar_target')
+    object_json = session.get('stellar_object')
     # Deserialize the JSON formatted string back into an object
     stellar_target = from_json(target_json)
+    stellar_object = from_json_new(object_json)
     # Populate the modal form with data from object
-    for attribute in vars(stellar_target):
-        if hasattr(modal_form, attribute):
-            radio_input = getattr(modal_form, attribute)
-            attribute_value = getattr(stellar_target, attribute)
-            radio_input.choices.insert(0, (attribute_value, attribute_value))
+    insert_data_into_form(stellar_object, modal_form)
+
+    # for attribute in vars(stellar_target):
+    #     if hasattr(modal_form, attribute):
+    #         radio_input = getattr(modal_form, attribute)
+    #         attribute_value = getattr(stellar_target, attribute)
+    #         radio_input.choices.insert(0, (attribute_value, attribute_value))
     modal_form.populate_obj(request.form)
 
     if request.method == 'POST':
         if modal_form.validate_on_submit():
             for field in modal_form:
                 # ignoring all manual parameters, submit, csrf token, and catalog names
-                if 'manual' in field.name and field.data != None:
+                if 'manual' in field.name and field.data is not None:
                     # if a manual parameter is submitted, add that data to the object
                     print('MANUAL DETECTED')
                     unmanual_field = field.name.replace('manual_', '')
                     setattr(stellar_target, unmanual_field, float(field.data))
+                    setattr(stellar_object, unmanual_field, float(field.data))
             session['stellar_target'] = json.dumps(to_json(stellar_target))
+            session['stellar_object'] = json.dumps(to_json(stellar_object))
             return redirect(url_for('main.return_results'))
     return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, modal_form=modal_form, stellar_target=stellar_target)
 
@@ -134,8 +166,9 @@ def submit_manual_form():
     fields_not_to_include = ['dist_unit', 'fuv_flag', 'nuv_flag', 'submit', 'csrf_token']
     if form.validate_on_submit():
         # STEP 1: Check the values of the flux flags
-        fuv_flag = form.pop(fuv_flag)
+        fuv_flag = form.fuv_flag
         nuv_flag = form.nuv_flag
+        print(form.nuv_flag, 'value is', form.nuv_flag.data)
         print(form.fuv_flag, 'value is', form.fuv_flag.data)
         # STEP 1a: If both flags are null, return flashed error message (with form extended) 
         for fieldname, value in form.data.items():
@@ -145,12 +178,15 @@ def submit_manual_form():
                     stellar_target.dist = int(1 / (form.dist.data / 1000))
                 elif 'flag' in fieldname:
                     # TODO: deal with flags if they happen
+                    # if one flag is null, predict that flux using the other
+                    # if the flag is saturated, predict the flux and take
                     which_flux = fieldname[:3]
                     print(which_flux)
-                    print(fieldname, 'value is', fieldname.value)
+                    print(fieldname, 'value is', value)
                     # TODO: add catch for null value
                     # TODO: add catch for saturated value
-                    # if fieldname.value == 
+                    if value == 'null':
+                        print(fieldname, 'is null')
             else:
                 print(fieldname, value)
                 setattr(stellar_target, fieldname, float(value))
@@ -173,14 +209,18 @@ def return_results():
 
     # Retrieve the JSON formatted string from the session
     target_json = session.get('stellar_target')
+    object_json = session.get('stellar_object')
     # Deserialize the JSON formatted string back into an object
     stellar_target = from_json(target_json)
+    stellar_object = from_json_new(object_json)
+    print('STELLAR OBJ RETURN', vars(stellar_object))
     # Populate the modal form with data from object
-    for attribute in vars(stellar_target):
-        if hasattr(modal_form, attribute):
-            radio_input = getattr(modal_form, attribute)
-            attribute_value = getattr(stellar_target, attribute)
-            radio_input.choices.insert(0, (attribute_value, attribute_value))
+    insert_data_into_form(stellar_object, modal_form)
+    # for attribute in vars(stellar_target):
+    #     if hasattr(modal_form, attribute):
+    #         radio_input = getattr(modal_form, attribute)
+    #         attribute_value = getattr(stellar_target, attribute)
+    #         radio_input.choices.insert(0, (attribute_value, attribute_value))
 
     # check if required data is avaialable for use before continuing
     if hasattr(stellar_target, 'teff') and hasattr(stellar_target, 'logg') and hasattr(stellar_target, 'mass') and hasattr(stellar_target, 'rad') and hasattr(stellar_target, 'dist') and hasattr(stellar_target, 'fuv') and hasattr(stellar_target, 'nuv'):
@@ -193,10 +233,20 @@ def return_results():
                 f"euv_spectra_app/fits_files/test/new_test.fits")
         ]
 
+        #prepare fluxes for searching the grid
+        stellar_object.fluxes.convert_scale_photosphere_subtract_fluxes()
+
+        # create new pegasusgrid object
+        pegasus = PegasusGrid(stellar_object)
+
         # STEP 1: Search the model_parameter_grid collection to find closest matching subtype
         matching_subtype = find_matching_subtype(
             stellar_target.teff, stellar_target.logg, stellar_target.mass)
         stellar_target.model_subtype = matching_subtype['model']
+
+        subtype = pegasus.query_pegasus_subtype()
+        stellar_object.model_subtype = subtype['model']
+        print('SUBTYPE', stellar_object.model_subtype)
 
         # STEP 2: Find closest matching photosphere model and get flux values
         matching_photosphere_model = find_matching_photosphere(
@@ -215,23 +265,33 @@ def return_results():
 
         # STEP 4: Check if model subtype data exists in database
         model_collection = f'{stellar_target.model_subtype.lower()}_grid'
+        model_collection_new = f'{stellar_object.model_subtype.lower()}_grid'
+        print('MODEL COLLECTION', model_collection_new)
         if model_collection not in db.list_collection_names():
             return redirect(url_for('main.error', msg=f'The grid for model subtype {stellar_target.model_subtype} is currently unavailable. Currently available subtypes: M0, M3, M4, M6. \nPlease contact us with your stellar parameters and returned subtype if you think this is incorrect.'))
 
         # STEP 5: Do chi squared test between all models within selected subgrid and corrected observation
         models_with_chi_squared = list(get_models_with_chi_squared(
             stellar_target.corrected_nuv, stellar_target.corrected_fuv, model_collection))
+        
+        models_w_x_2 = pegasus.query_pegasus_chi_square()
+        print('CHI SQUARED', models_w_x_2)
         # STEP 6: Find all matches in model grid within upper and lower limits of galex fluxes
         models_in_limits = list(get_models_within_limits(stellar_target.corrected_nuv, stellar_target.corrected_fuv,
                                 stellar_target.corrected_nuv_err, stellar_target.corrected_fuv_err, model_collection))
-
+        m_in_lims = pegasus.query_pegasus_models_in_limits()
+        print('IN LIMITS', m_in_lims)
         if len(models_in_limits) == 0:
             model_ratios = list(get_flux_ratios(
                 stellar_target.corrected_nuv, stellar_target.corrected_fuv, model_collection))
+            model_r = pegasus.query_pegasus_flux_ratio()
+            print('MODELS W RATIOS', model_r)
 
             # STEP 7.1: If there are no models found within limits, return models ONLY with FUV < NUV, return with chi squared values
             models_weighted = get_models_with_weighted_fuv(
                 stellar_target.corrected_nuv, stellar_target.corrected_fuv, model_collection)
+            model_w = pegasus.query_pegasus_weighted_fuv()
+            print('MODELS WEIGTHED', model_w)
 
             # STEP 8.1: Check if there are any results from weighted search
             if len(models_weighted) == 0:

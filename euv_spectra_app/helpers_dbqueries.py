@@ -187,12 +187,10 @@ def get_models_within_limits(corrected_nuv, corrected_fuv, corrected_nuv_err, co
         the upper and lower limits of the GALEX FUV flux density and an NUV flux 
         density value within the upper and lower limits of the GALEX NUV flux density.
     """
-    print(corrected_fuv, corrected_fuv_err, corrected_nuv, corrected_nuv_err)
     fuv_lower_lim = corrected_fuv - corrected_fuv_err
     fuv_upper_lim = corrected_fuv + corrected_fuv_err
     nuv_lower_lim = corrected_nuv - corrected_nuv_err
     nuv_upper_lim = corrected_nuv + corrected_nuv_err
-    print(fuv_upper_lim, fuv_lower_lim, nuv_upper_lim, nuv_lower_lim)
     models_within_limits = db.get_collection(model_collection).aggregate([
         {
             '$match': {
