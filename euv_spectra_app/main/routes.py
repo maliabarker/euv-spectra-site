@@ -4,10 +4,11 @@ from datetime import timedelta
 import json
 import plotly
 import os
+import math
 from euv_spectra_app.extensions import *
 from euv_spectra_app.main.forms import ManualForm, StarNameForm, PositionForm, ModalForm, ContactForm
 from euv_spectra_app.models import StellarObject, PegasusGrid
-from euv_spectra_app.helpers import insert_data_into_form, to_json, from_json, create_plotly_graph
+from euv_spectra_app.helpers import insert_data_into_form, to_json, from_json, create_plotly_graph, remove_objs_from_obj_dict
 main = Blueprint("main", __name__)
 
 
@@ -56,11 +57,10 @@ def homepage():
 
         if hasattr(stellar_object, 'modal_error_msg'):
             # check if there were any errors returned from searching databases
-            if 'GALEX' in stellar_object.modal_error_msg:
-                flash(stellar_object.modal_error_msg, 'warning')
-            else:
-                return redirect(url_for('main.error', msg=stellar_object.modal_error_msg))
-                    
+            return redirect(url_for('main.error', msg=stellar_object.modal_error_msg))
+        
+        for msg in stellar_object.modal_galex_error_msgs:
+            flash(msg, 'warning')
 
         insert_data_into_form(stellar_object, modal_form)
 
@@ -114,8 +114,8 @@ def submit_manual_form():
 
     form = ManualForm(request.form)
     stellar_object = StellarObject()
-    fields_not_to_include = ['dist_unit', 'fuv_flag', 'nuv_flag', 'submit', 'csrf_token']
-    fluxes = ['fuv', 'fuv_err', 'nuv', 'nuv_err']
+    fields_not_to_include = ['dist_unit', 'fuv_flag', 'nuv_flag', 'j_band_unit', 'submit', 'csrf_token']
+    flux_data = ['fuv', 'fuv_err', 'nuv', 'nuv_err', 'j_band']
 
     # iterate over each field in the form and set the attributes to the stellar object
     # if a flag indicates null field, make sure specified fluxes are None and run check null fluxes
@@ -129,6 +129,10 @@ def submit_manual_form():
                 if fieldname == 'dist_unit' and value == 'mas':
                     # if the distance unit is milliarcseconds (mas) convert to parsecs
                     stellar_object.dist = int(1 / (form.dist.data / 1000))
+                elif fieldname == 'j_band_unit' and value == 'flux':
+                    # TODO convert flux density (ujy) to mag
+                    ZEROPOINT = 1594
+                    stellar_object.fluxes.j_band = -2.5 * ( math.log(form.j_band.data) - math.log(ZEROPOINT) )/ math.log(10.0)
                 elif 'flag' in fieldname:
                     # if one flag is null, predict that flux using the other
                     # if the flag is saturated, predict the flux and take
@@ -149,14 +153,31 @@ def submit_manual_form():
                         # TODO what to do if upper limit?
                         print(fieldname, 'is upper limit')
             else:
-                print(fieldname, value)
-                if value is not None:
-                    setattr(stellar_object, fieldname, float(value))
+                if fieldname in flux_data:
+                    # deal with fluxes
+                    print('FLUX')
+                    print(fieldname, value)
+                    if value is not None:
+                        setattr(stellar_object.fluxes, fieldname, float(value))
+                    else:
+                        setattr(stellar_object.fluxes, fieldname, value)
                 else:
-                    setattr(stellar_object, fieldname, value)
+                    print('NORMAL')
+                    print(fieldname, value)
+                    if value is not None:
+                        setattr(stellar_object, fieldname, float(value))
+                    else:
+                        setattr(stellar_object, fieldname, value)
+        # assign stellar object to fluxes
+        stellar_object.fluxes.stellar_obj = remove_objs_from_obj_dict(stellar_object.__dict__.copy())
+        
         stellar_object.fluxes.check_null_fluxes()
+        print(stellar_object.fluxes.check_null_fluxes())
         stellar_object.fluxes.check_saturated_fluxes()
-        session['stellar_target'] = json.dumps(to_json(stellar_object))
+        print('FINAL')
+        print(vars(stellar_object))
+        print(vars(stellar_object.fluxes))
+        session['stellar_object'] = json.dumps(to_json(stellar_object))
         return redirect(url_for('main.return_results'))
     else:
         flash('Whoops, something went wrong. Please check your inputs and try again!', 'danger')

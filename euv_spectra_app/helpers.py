@@ -5,10 +5,16 @@ from euv_spectra_app.extensions import *
 from euv_spectra_app.models import StellarObject, ProperMotionData, GalexFluxes
 
 
+def remove_objs_from_obj_dict(obj_dict):
+            del obj_dict['fluxes']
+            del obj_dict['pm_data']
+            return obj_dict
+
+
 def insert_data_into_form(obj, form):
     attrs = vars(obj)
     for attr_name, attr_value in attrs.items():
-        if hasattr(attr_value, '__dict__'):
+        if attr_name is 'fluxes':
             # is an object, go again
             print(f'{attr_name} is an object')
             insert_data_into_form(attr_value, form)

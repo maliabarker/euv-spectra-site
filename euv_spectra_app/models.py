@@ -130,18 +130,19 @@ class GalexFluxes():
         self.stellar_obj = stellar_obj
 
     def check_null_fluxes(self):
+        print('CHECKING NULL FLUXES')
         if self.fuv is None and self.nuv is None:
             return ('Values of GALEX FUV and NUV cannot be None.')
-        if ma.is_masked(self.fuv) and ma.is_masked(self.nuv):
+        if (self.fuv is None or ma.is_masked(self.fuv)) and (self.nuv is None or ma.is_masked(self.nuv)):
             # all fluxes are null/ no galex data
             self.fuv, self.fuv_err = 'No Detection', 'No Detection'
             self.nuv, self.nuv_err = 'No Detection', 'No Detection'
             return ('No GALEX detections found.')
-        elif ma.is_masked(self.fuv):
+        elif self.fuv is None or ma.is_masked(self.fuv):
             # only FUV is null, predict FUV and add error message
             self.predict_fluxes('fuv')
             return ('GALEX FUV not detected. Predicting for FUV and FUV error.')
-        elif ma.is_masked(self.nuv):
+        elif self.nuv is None or ma.is_masked(self.nuv):
             # only NUV is null, predict NUV and add error message
             self.predict_fluxes('nuv')
             return ('GALEX NUV not detected. Predicting for NUV and NUV error.')
@@ -167,27 +168,30 @@ class GalexFluxes():
             ValueError if fuv_aper or nuv_aper is invalid.
             Exception if both fluxes are saturated.
         """
-        try:
-            fuv_is_saturated = self.fuv_aper > 34
-            nuv_is_saturated = self.nuv_aper > 108
-            if fuv_is_saturated and nuv_is_saturated:
-                self.fuv, self.fuv_err = 'No Detection', 'No Detection'
-                self.nuv, self.nuv_err = 'No Detection', 'No Detection'
-                return ('Both GALEX detection saturated, cannot correct.')
-            elif fuv_is_saturated:
-                fuv_fluxes, fuv_errors = [self.fuv], [self.fuv_err]
-                self.predict_fluxes('fuv')
-                fuv_fluxes.append(self.fuv)
-                fuv_errors.append(self.fuv_err)
-                self.fuv, self.fuv_err = max(fuv_fluxes), max(fuv_errors)
-            elif nuv_is_saturated:
-                nuv_fluxes, nuv_errors = [self.nuv], [self.nuv_err]
-                self.predict_fluxes('nuv')
-                nuv_fluxes.append(self.nuv)
-                nuv_errors.append(self.nuv_err)
-                self.nuv, self.nuv_err = max(nuv_fluxes), max(nuv_errors)
-        except ValueError as e:
-            return ('Invalid `fuv_aper` and/or `nuv_aper` attributes:' + str(e))
+        if self.fuv_aper is None or self.nuv_aper is None:
+            return ('Unable to check if GALEX fluxes are saturated because either fuv_aper or nuv_aper is None.')
+        else:
+            try:
+                fuv_is_saturated = self.fuv_aper > 34
+                nuv_is_saturated = self.nuv_aper > 108
+                if fuv_is_saturated and nuv_is_saturated:
+                    self.fuv, self.fuv_err = 'No Detection', 'No Detection'
+                    self.nuv, self.nuv_err = 'No Detection', 'No Detection'
+                    return ('Both GALEX detection saturated, cannot correct.')
+                elif fuv_is_saturated:
+                    fuv_fluxes, fuv_errors = [self.fuv], [self.fuv_err]
+                    self.predict_fluxes('fuv')
+                    fuv_fluxes.append(self.fuv)
+                    fuv_errors.append(self.fuv_err)
+                    self.fuv, self.fuv_err = max(fuv_fluxes), max(fuv_errors)
+                elif nuv_is_saturated:
+                    nuv_fluxes, nuv_errors = [self.nuv], [self.nuv_err]
+                    self.predict_fluxes('nuv')
+                    nuv_fluxes.append(self.nuv)
+                    nuv_errors.append(self.nuv_err)
+                    self.nuv, self.nuv_err = max(nuv_fluxes), max(nuv_errors)
+            except ValueError as e:
+                return ('Invalid `fuv_aper` and/or `nuv_aper` attributes:' + str(e))
 
     def predict_fluxes(self, flux_to_predict):
         """Predicts the specified flux based on the remaining GALEX flux values.
@@ -343,6 +347,7 @@ class StellarObject():
         self.rad = rad
         self.pm_data = pm_data
         self.fluxes = fluxes
+        self.modal_galex_error_msgs = []
         if self.fluxes is None:
             self.fluxes = GalexFluxes()
 
@@ -403,9 +408,11 @@ class StellarObject():
             if isinstance(pm_corrected_coords, tuple):
                 self.coords = pm_corrected_coords
             else:
-                self.modal_error_msg = pm_corrected_coords
                 if 'GALEX' not in pm_corrected_coords:
+                    self.modal_error_msg = pm_corrected_coords
                     return
+                else:
+                    self.modal_galex_error_msgs.append(pm_corrected_coords)
         # STEP 2: Search NASA Exoplanet Archive with the search term & type
         nea_data = self.query_nasa_exoplanet_archive()
         if nea_data is not None:
@@ -418,7 +425,7 @@ class StellarObject():
             # coordinate correction happened which means GALEX data exists, execute galex query
         galex_data = self.query_galex()
         if galex_data is not None:
-            self.modal_error_msg = galex_data
+            self.modal_galex_error_msgs.append(galex_data)
             return
         # TODO check that flux object was successfully created
 
@@ -544,6 +551,7 @@ class StellarObject():
                 MIN_DIST = galex_data['distance_arcmin'] < 0.167
                 if len(galex_data[MIN_DIST]) > 0:
                     filtered_data = galex_data[MIN_DIST][0]
+                    print(filtered_data)
                     if self.fluxes is None:
                         self.fluxes = GalexFluxes()
                     fluxes_stell_obj = self.__dict__.copy()
@@ -554,15 +562,22 @@ class StellarObject():
                     self.fluxes.nuv = filtered_data['nuv_flux']
                     self.fluxes.fuv_err = filtered_data['fuv_fluxerr']
                     self.fluxes.nuv_err = filtered_data['nuv_fluxerr']
-                    self.fluxes.fuv_aper = filtered_data['fuv_flux_aper_7']
-                    self.fluxes.nuv_aper = filtered_data['fuv_flux_aper_7']
+                    if (ma.is_masked(filtered_data['fuv_flux_aper_7'])):
+                        self.fluxes.fuv_aper = None
+                    else:
+                        self.fluxes.fuv_aper = filtered_data['fuv_flux_aper_7']
+
+                    if (ma.is_masked(filtered_data['nuv_flux_aper_7'])):
+                        self.fluxes.nuv_aper = None
+                    else:
+                        self.fluxes.nuv_aper = filtered_data['nuv_flux_aper_7']
                     # STEP 3: Check if there are any masked values (these will be null values) and change accordingly
                     null_fluxes = self.fluxes.check_null_fluxes()
                     if null_fluxes is not None:
-                        self.modal_error_msg = null_fluxes
+                        self.modal_galex_error_msgs.append(null_fluxes)
                     saturated_fluxes = self.fluxes.check_saturated_fluxes()
                     if saturated_fluxes is not None:
-                        self.modal_error_msg = saturated_fluxes
+                        self.modal_galex_error_msgs.append(saturated_fluxes)
                     return
                 else:
                     return 'No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'

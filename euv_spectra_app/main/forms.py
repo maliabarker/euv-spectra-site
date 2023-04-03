@@ -42,6 +42,29 @@ class RequiredIf(DataRequired):
             Optional()(form, field)
 
 
+class RequiredIfOneOf(DataRequired):
+    """
+    Validator which makes a field required if any of the specified conditions are true.
+    """
+    field_flags = ('requiredifoneof',)
+
+    def __init__(self, conditions, message=None):
+        super(RequiredIfOneOf, self).__init__(message)
+        self.conditions = conditions
+
+    def __call__(self, form, field):
+        for name, data in self.conditions.items():
+            other_field = form[name]
+            if other_field is None:
+                raise Exception('no field named "%s" in form' % name)
+            if (other_field.data == data or
+                    (isinstance(data, (list, tuple)) and other_field.data in data)) \
+                    and not field.data:
+                DataRequired.__call__(self, form, field)
+            else:
+                Optional().__call__(form, field)
+
+
 teff_label = Markup('T<sub>eff</sub> (K)')
 mass_label = Markup('Mass (M<sub>sun</sub>)')
 rad_label = Markup('Radius (R<sub>sun</sub>)')
@@ -67,6 +90,9 @@ class ManualForm(FlaskForm):
     nuv_err = DecimalField('NUV err (μJy)', validators=[NotRequiredIf(nuv_flag='null')])
     nuv_flag = RadioField('NUV Flag', validators=[Optional()], choices=[(
         'null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated')])
+    j_band = DecimalField('2MASS J Band', validators=[RequiredIfOneOf({'fuv_flag':'null', 'nuv_flag':'null', 'fuv_flag':'saturated', 'nuv_flag':'saturated'})])
+    j_band_unit = SelectField('J Band Unit', validators=[RequiredIfOneOf({'fuv_flag':'null', 'nuv_flag':'null', 'fuv_flag':'saturated', 'nuv_flag':'saturated'})], 
+                              choices=[('mag', 'Magnitude (mag)'), ('flux', 'Flux Density (μJy)')])
     submit = SubmitField('Submit and Find EUV Spectrum')
 
 

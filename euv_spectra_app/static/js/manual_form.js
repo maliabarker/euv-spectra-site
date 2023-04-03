@@ -1,12 +1,33 @@
 const fuvFlagRadioBtns = document.querySelectorAll('input[name="fuv_flag"]');
-const fuvNullRadio = document.querySelector('input[name="fuv_flag"]');
+const fuvNullRadio = document.getElementById('fuv_flag-0')
+const fuvSatRadio = document.getElementById('fuv_flag-2')
 const fuvInput = document.getElementById('fuv');
 const fuvErrInput = document.getElementById('fuv_err');
 
 const nuvFlagRadioBtns = document.querySelectorAll('input[name="nuv_flag"]');
-const nuvNullRadio = document.querySelector('input[name="nuv_flag"]');
+const nuvNullRadio = document.getElementById('nuv_flag-0')
+const nuvSatRadio = document.getElementById('nuv_flag-2')
 const nuvInput = document.getElementById('nuv');
 const nuvErrInput = document.getElementById('nuv_err');
+
+
+const jBandCont = document.getElementById('j_band');
+const jBandInput = jBandCont.querySelector('.form-control');
+const jBandSelect = jBandCont.querySelector('.form-select')
+
+
+function showJBandInput() {
+    if (fuvNullRadio.checked || nuvNullRadio.checked || fuvSatRadio.checked || nuvSatRadio.checked) {
+        jBandCont.style.display = '';
+        jBandInput.required = true;
+        jBandSelect.required = true;
+    } else {
+        jBandCont.style.display = 'none';
+        jBandInput.required = false;
+        jBandSelect.required = false;
+    }
+}
+
 
 function updateFuvRequired() {
     if (fuvNullRadio.checked) {
@@ -70,14 +91,17 @@ function runToolTips() {
 for (let i=0; i < fuvFlagRadioBtns.length; i++) {
     // adding change function on every radio in flags for FUV
     fuvFlagRadioBtns[i].addEventListener('change', updateFuvRequired);
+    fuvFlagRadioBtns[i].addEventListener('change', showJBandInput);
 }
 
 for (let i=0; i < nuvFlagRadioBtns.length; i++) {
     // adding change function on every radio in flags for NUV
     nuvFlagRadioBtns[i].addEventListener('change', updateNuvRequired);
+    nuvFlagRadioBtns[i].addEventListener('change', showJBandInput);
 }
 
  // initial calls to set required attributes based on initial state of radio button and instantiate tooltips
 updateFuvRequired();
 updateNuvRequired();
+showJBandInput();
 runToolTips();

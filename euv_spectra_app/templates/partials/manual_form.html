@@ -95,7 +95,6 @@
             <span class="me-3">NUV Flags:</span>
             {% for subfield in manual_form.nuv_flag %}
                 {% if subfield.data == 'null' %}
-                    <!-- data-bs-toggle="tooltip" data-bs-placement="top" title="Tooltip on top" -->
                     <div class="form-check form-check-inline mt-4">
                         {{ subfield(class="form-check-input") }}
                         {{ subfield.label(class="form-check-label") }}
@@ -107,6 +106,21 @@
                     </div>
                 {% endif %}
             {% endfor %}
+        </div>
+
+        <div class="row mt-2" id="j_band">
+            <div class="col-sm-8">
+                <div class="form-floating mb-3">
+                    {{ manual_form.j_band(class="form-control", placeholder="J Band") }}
+                    {{ manual_form.j_band.label(text='* ' + manual_form.j_band.label.text) }}
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="form-floating mb-3">
+                    {{ manual_form.j_band_unit(class="form-select") }}
+                    {{ manual_form.j_band_unit.label(text='* ' + manual_form.j_band_unit.label.text) }}
+                </div>
+            </div>
         </div>
 
         <div class="text-center mt-2">
