@@ -7,6 +7,9 @@
     </div>
     <div class="text-center">
         <h1>Oops...</h1>
-        <p>{{ error_msg|safe }}</p>
+        <p>{{ error_msg }}</p>
+        {% if manual_form_error_msg %}
+            {% include 'partials/manual_form_error_msg.html' %}
+        {% endif %}
     </div>
 {% endblock %}

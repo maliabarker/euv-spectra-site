@@ -465,7 +465,7 @@ class StellarObject():
                     self.pm_data.rad_vel = data['RV_VALUE']
                 return
             else:
-                return (f"No results found in SIMBAD for {self.star_name}. Please check spelling, spacing, and/or capitalization and try again.")
+                return (f"No results found in SIMBAD for {self.star_name}. Please check spelling, spacing, and or capitalization and try again.")
         except Exception as e:
             return ("Unknown error during SIMBAD search:" + str(e))
 
@@ -488,8 +488,12 @@ class StellarObject():
         error_var = ''
         if self.star_name:
             error_var = self.star_name
+            corrected_star_name = self.star_name.replace("'", "''")
             nea_data = NasaExoplanetArchive.query_criteria(
-                table="pscomppars", select="top 5 disc_refname, st_spectype, st_teff, st_logg, st_mass, st_rad, sy_dist, sy_jmag", where=f"hostname like '%{self.star_name}%'", order="hostname")
+                table="pscomppars", 
+                select="top 5 disc_refname, st_spectype, st_teff, st_logg, st_mass, st_rad, sy_dist, sy_jmag", 
+                where=f"hostname like '%{corrected_star_name}%'", 
+                order="hostname")
         elif self.position:
             error_var = self.position
             nea_data = NasaExoplanetArchive.query_region(table="pscomppars", coordinates=SkyCoord(
@@ -509,9 +513,7 @@ class StellarObject():
             else:
                 return (f'{error_var} is not an M or K type star. Data is currently only available for these spectral sybtypes.')
         else:
-            return (f'No results found in the NExSci database for {error_var}. \
-                            At this time, retrieved input parameters are only available for known exoplanet host stars with 2500 K < Teff < 5044 K. \
-                            If {error_var} is a known exoplanet host star, please check spelling, spacing, and/or capitalization and try again.')
+            return f'Nothing found for {error_var} in the NExSci database.'
 
     def query_galex(self):
         """Searches the MAST GALEX database by coordinates for flux densities.

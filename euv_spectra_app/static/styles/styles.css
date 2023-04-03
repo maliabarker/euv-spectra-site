@@ -390,18 +390,6 @@ body {
     outline: none !important;
 }
 
-/* .wrapper .search_box .search_field .input:focus {
-    outline-color: tomato;
-}
-
-.wrapper .search_box .search_field .input.found:focus {
-    outline-color: green;
-}
-
-.wrapper .search_box .search_field .input.not-found:focus {
-    outline-color: tomato;
-} */
-
 .wrapper .search_box .search_field button {
     position: absolute;
     top: 6px;

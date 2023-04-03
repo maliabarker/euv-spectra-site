@@ -115,32 +115,47 @@ def submit_manual_form():
     form = ManualForm(request.form)
     stellar_object = StellarObject()
     fields_not_to_include = ['dist_unit', 'fuv_flag', 'nuv_flag', 'submit', 'csrf_token']
+    fluxes = ['fuv', 'fuv_err', 'nuv', 'nuv_err']
+
+    # iterate over each field in the form and set the attributes to the stellar object
+    # if a flag indicates null field, make sure specified fluxes are None and run check null fluxes
+    # if a flag indicates 
+
     if form.validate_on_submit():
-        # STEP 1: Check the values of the flux flags
-        fuv_flag = form.fuv_flag
-        nuv_flag = form.nuv_flag
-        print(form.nuv_flag, 'value is', form.nuv_flag.data)
-        print(form.fuv_flag, 'value is', form.fuv_flag.data)
         # STEP 1a: If both flags are null, return flashed error message (with form extended) 
         for fieldname, value in form.data.items():
             # CHECK DISTANCE UNIT: if distance unit is mas, convert to parsecs
             if fieldname in fields_not_to_include:
                 if fieldname == 'dist_unit' and value == 'mas':
+                    # if the distance unit is milliarcseconds (mas) convert to parsecs
                     stellar_object.dist = int(1 / (form.dist.data / 1000))
                 elif 'flag' in fieldname:
-                    # TODO: deal with flags if they happen
                     # if one flag is null, predict that flux using the other
                     # if the flag is saturated, predict the flux and take
-                    which_flux = fieldname[:3]
-                    print(which_flux)
+                    flux = fieldname[:3]
+                    flux_err = f'{flux}_err'
                     print(fieldname, 'value is', value)
-                    # TODO: add catch for null value
-                    # TODO: add catch for saturated value
                     if value == 'null':
                         print(fieldname, 'is null')
+                        # set fluxes to None
+                        setattr(stellar_object.fluxes, flux, None)
+                        setattr(stellar_object.fluxes, flux_err, None)
+                    elif value == 'saturated':
+                        print(fieldname, 'is saturated')
+                        flux_aper = f'{flux}_aper'
+                        # set flux_aper to a large unit so it is detected as saturated
+                        setattr(stellar_object.fluxes, flux_aper, 1000)
+                    elif value == 'upper_limit':
+                        # TODO what to do if upper limit?
+                        print(fieldname, 'is upper limit')
             else:
                 print(fieldname, value)
-                setattr(stellar_object, fieldname, float(value))
+                if value is not None:
+                    setattr(stellar_object, fieldname, float(value))
+                else:
+                    setattr(stellar_object, fieldname, value)
+        stellar_object.fluxes.check_null_fluxes()
+        stellar_object.fluxes.check_saturated_fluxes()
         session['stellar_target'] = json.dumps(to_json(stellar_object))
         return redirect(url_for('main.return_results'))
     else:
@@ -347,8 +362,11 @@ def send_email():
 @main.route('/error/<msg>')
 def error(msg):
     """Custom error page."""
+    show_nexsci_error_msg = False
+    if 'NExSci' in msg:
+        show_nexsci_error_msg = True
     session['modal_show'] = False
-    return render_template('error.html', error_msg=msg)
+    return render_template('error.html', error_msg=msg, manual_form_error_msg=show_nexsci_error_msg)
 
 
 @main.app_errorhandler(503)
