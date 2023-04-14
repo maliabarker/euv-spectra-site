@@ -7,7 +7,7 @@ from astroquery.mast import Catalogs
 from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
 from astroquery.simbad import Simbad
 from euv_spectra_app.extensions import db
-from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios
+from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios, get_models_within_limits_saturated_fuv, get_models_within_limits_saturated_nuv
 
 customSimbad = Simbad()
 customSimbad.remove_votable_fields('coordinates')
@@ -42,7 +42,7 @@ class ProperMotionData():
             galex_time = db.mast_galex_times.find_one(
                 {'target': star_name})['t_min']
         except:
-            return 'No GALEX observations found, unable to correct coordinates. \nLook under question 3 on the FAQ page for more information.'
+            return 'No GALEX observations found, unable to correct coordinates for proper motion. \nLook under question 3 on the FAQ page for more information.'
         else:
             try:
                 # STEP 2: If observation time is found, start coordinate correction by initializing variables
@@ -119,13 +119,15 @@ class GalexFlux():
 class GalexFluxes():
     """Represents GALEX flux values."""
 
-    def __init__(self, fuv=None, nuv=None, fuv_err=None, nuv_err=None, nuv_aper=None, fuv_aper=None, j_band=None, stellar_obj=None):
+    def __init__(self, fuv=None, nuv=None, fuv_saturated=None, nuv_saturated=None, fuv_err=None, nuv_err=None, fuv_is_saturated=None, nuv_is_saturated=None, j_band=None, stellar_obj=None):
         self.fuv = fuv
         self.nuv = nuv
+        self.fuv_saturated = fuv_saturated
+        self.nuv_saturated = nuv_saturated
         self.fuv_err = fuv_err
         self.nuv_err = nuv_err
-        self.nuv_aper = nuv_aper
-        self.fuv_aper = fuv_aper
+        self.fuv_is_saturated = fuv_is_saturated
+        self.nuv_is_saturated = nuv_is_saturated
         self.j_band = j_band
         self.stellar_obj = stellar_obj
 
@@ -168,30 +170,27 @@ class GalexFluxes():
             ValueError if fuv_aper or nuv_aper is invalid.
             Exception if both fluxes are saturated.
         """
-        if self.fuv_aper is None or self.nuv_aper is None:
-            return ('Unable to check if GALEX fluxes are saturated because either fuv_aper or nuv_aper is None.')
-        else:
-            try:
-                fuv_is_saturated = self.fuv_aper > 34
-                nuv_is_saturated = self.nuv_aper > 108
-                if fuv_is_saturated and nuv_is_saturated:
-                    self.fuv, self.fuv_err = 'No Detection', 'No Detection'
-                    self.nuv, self.nuv_err = 'No Detection', 'No Detection'
-                    return ('Both GALEX detection saturated, cannot correct.')
-                elif fuv_is_saturated:
-                    fuv_fluxes, fuv_errors = [self.fuv], [self.fuv_err]
-                    self.predict_fluxes('fuv')
-                    fuv_fluxes.append(self.fuv)
-                    fuv_errors.append(self.fuv_err)
-                    self.fuv, self.fuv_err = max(fuv_fluxes), max(fuv_errors)
-                elif nuv_is_saturated:
-                    nuv_fluxes, nuv_errors = [self.nuv], [self.nuv_err]
-                    self.predict_fluxes('nuv')
-                    nuv_fluxes.append(self.nuv)
-                    nuv_errors.append(self.nuv_err)
-                    self.nuv, self.nuv_err = max(nuv_fluxes), max(nuv_errors)
-            except ValueError as e:
-                return ('Invalid `fuv_aper` and/or `nuv_aper` attributes:' + str(e))
+        try:
+            if self.fuv_is_saturated and self.nuv_is_saturated:
+                self.fuv, self.fuv_err = 'No Detection', 'No Detection'
+                self.nuv, self.nuv_err = 'No Detection', 'No Detection'
+                return ('Both GALEX detections cannot be saturated, cannot correct fluxes.')
+            elif self.fuv_is_saturated:
+                # Option A: Predict
+                self.predict_fluxes('fuv')
+                print('Testing resulting saturated fluxes to compare:', self.fuv, self.fuv_saturated)
+                if self.fuv < self.fuv_saturated:
+                    # if predicted flux is not greater than saturated flux, change flux and err to None
+                    self.fuv = None
+                    self.fuv_err = None
+            elif self.nuv_is_saturated:
+                self.predict_fluxes('nuv')
+                print('Testing resulting saturated fluxes to compare:', self.nuv, self.nuv_saturated)
+                if self.nuv < self.nuv_saturated:
+                    self.nuv = None
+                    self.nuv_err = None
+        except ValueError as e:
+            return ('Invalid `fuv_saturated`, `fuv_is_saturated` and/or `nuv_saturated`, `nuv_is_saturated` attributes:' + str(e))
 
     def predict_fluxes(self, flux_to_predict):
         """Predicts the specified flux based on the remaining GALEX flux values.
@@ -212,6 +211,7 @@ class GalexFluxes():
         # STEP 2: Convert J band 2MASS magnitude to microjanskies
         ZEROPOINT = 1594
         j_band_ujy = 1000 * (ZEROPOINT * pow(10.0, -0.4 * self.j_band))
+        print('Converted J-band (mag to ujy):', j_band_ujy)
         # STEP 3: Use equation to predict missing flux & error
         if flux_to_predict == 'nuv':
             upper_lim = self.fuv + self.fuv_err
@@ -231,6 +231,7 @@ class GalexFluxes():
             # STEP N3: Assign new values to return data dict using calculated flux & error
             self.nuv = new_nuv
             self.nuv_err = avg_nuv_err
+            print('PREDICTED NUV:', self.nuv, self.nuv_err)
         elif flux_to_predict == 'fuv':
             upper_lim = self.nuv + self.nuv_err
             lower_lim = self.nuv - self.nuv_err
@@ -280,57 +281,64 @@ class GalexFluxes():
     def subtract_photosphere_flux(self, chosen_flux, photo_flux):
         """Subtracts the photospheric contributed flux from GALEX flux."""
         return chosen_flux - photo_flux
-
-    def convert_scale_photosphere_subtract_fluxes(self):
-        FUV_WV = 1542.3
-        NUV_WV = 2274.4
+    
+    def convert_scale_photosphere_subtract_single_flux(self, flux, flux_type):
+        wv = None
+        photo_flux = None
         photosphere_data = self.get_photosphere_model()
-
+        if flux_type == 'fuv':
+            wv = 1542.3
+            photo_flux = photosphere_data['fuv']
+        elif flux_type == 'nuv':
+            wv = 2274.4
+            photo_flux = photosphere_data['nuv']
+        else:
+            return ('Can only run calculations on fuv or nuv flux types. Please input one of these and try again.')
+        converted_flux = self.convert_ujy_to_flux_density(flux, wv)
+        scaled_flux = self.scale_flux(converted_flux)
+        photosub_flux = self.subtract_photosphere_flux(scaled_flux, photo_flux)
+        return photosub_flux
+    
+    def convert_scale_photosphere_subtract_fuv(self):
+        self.processed_fuv = self.convert_scale_photosphere_subtract_single_flux(self.fuv, 'fuv')
         fuv_lims = self.get_limits(self.fuv, self.fuv_err)
-        nuv_lims = self.get_limits(self.nuv, self.nuv_err)
-
-        converted_fuv = self.convert_ujy_to_flux_density(self.fuv, FUV_WV)
-        converted_nuv = self.convert_ujy_to_flux_density(self.nuv, NUV_WV)
-        scaled_fuv = self.scale_flux(converted_fuv)
-        scaled_nuv = self.scale_flux(converted_nuv)
-        photosub_fuv = self.subtract_photosphere_flux(
-            scaled_fuv, photosphere_data['fuv'])
-        photosub_nuv = self.subtract_photosphere_flux(
-            scaled_nuv, photosphere_data['nuv'])
-        self.processed_fuv = photosub_fuv
-        self.processed_nuv = photosub_nuv
-
-        converted_fuv_upper_lim = self.convert_ujy_to_flux_density(
-            fuv_lims['upper_lim'], FUV_WV)
-        converted_nuv_upper_lim = self.convert_ujy_to_flux_density(
-            nuv_lims['upper_lim'], NUV_WV)
-        converted_fuv_lower_lim = self.convert_ujy_to_flux_density(
-            fuv_lims['lower_lim'], FUV_WV)
-        converted_nuv_lower_lim = self.convert_ujy_to_flux_density(
-            nuv_lims['lower_lim'], NUV_WV)
-
-        scaled_fuv_upper_lim = self.scale_flux(converted_fuv_upper_lim)
-        scaled_nuv_upper_lim = self.scale_flux(converted_nuv_upper_lim)
-        scaled_fuv_lower_lim = self.scale_flux(converted_fuv_lower_lim)
-        scaled_nuv_lower_lim = self.scale_flux(converted_nuv_lower_lim)
-
-        photosub_fuv_upper_lim = self.subtract_photosphere_flux(
-            scaled_fuv_upper_lim, photosphere_data['fuv'])
-        photosub_nuv_upper_lim = self.subtract_photosphere_flux(
-            scaled_nuv_upper_lim, photosphere_data['nuv'])
-        photosub_fuv_lower_lim = self.subtract_photosphere_flux(
-            scaled_fuv_lower_lim, photosphere_data['fuv'])
-        photosub_nuv_lower_lim = self.subtract_photosphere_flux(
-            scaled_nuv_lower_lim, photosphere_data['nuv'])
-
+        photosub_fuv_upper_lim = self.convert_scale_photosphere_subtract_single_flux(fuv_lims['upper_lim'], 'fuv')
+        photosub_fuv_lower_lim = self.convert_scale_photosphere_subtract_single_flux(fuv_lims['lower_lim'], 'fuv')
         new_fuv_upper_err = photosub_fuv_upper_lim - self.processed_fuv
         new_fuv_lower_err = self.processed_fuv - photosub_fuv_lower_lim
+        self.processed_fuv_err = (new_fuv_upper_err + new_fuv_lower_err) / 2
 
+    def convert_scale_photosphere_subtract_nuv(self):
+        self.processed_nuv = self.convert_scale_photosphere_subtract_single_flux(self.nuv, 'nuv')
+        nuv_lims = self.get_limits(self.nuv, self.nuv_err)
+        photosub_nuv_upper_lim = self.convert_scale_photosphere_subtract_single_flux(nuv_lims['upper_lim'], 'nuv')
+        photosub_nuv_lower_lim = self.convert_scale_photosphere_subtract_single_flux(nuv_lims['lower_lim'], 'nuv')
         new_nuv_upper_err = photosub_nuv_upper_lim - self.processed_nuv
         new_nuv_lower_err = self.processed_nuv - photosub_nuv_lower_lim
-
-        self.processed_fuv_err = (new_fuv_upper_err + new_fuv_lower_err) / 2
         self.processed_nuv_err = (new_nuv_upper_err + new_nuv_lower_err) / 2
+
+    def convert_scale_photosphere_subtract_fluxes(self):
+        if self.fuv is None and self.nuv is None:
+            return ValueError('The values of FUV and NUV cannot both be None. Please check values of the GalexFluxes object and try again.')
+        elif self.nuv_is_saturated and self.nuv is None:
+            # means that prediction test of saturation did not work, only do fuv and nuv_saturated values
+            self.convert_scale_photosphere_subtract_fuv()
+            self.processed_nuv_saturated = self.convert_scale_photosphere_subtract_single_flux(self.nuv_saturated, 'nuv')
+        elif self.fuv_is_saturated and self.fuv is None:
+            # means that prediction test of saturation did not work, only do nuv and fuv_saturated values
+            self.convert_scale_photosphere_subtract_nuv()
+            self.processed_fuv_saturated = self.convert_scale_photosphere_subtract_single_flux(self.fuv_saturated, 'fuv')
+        else:
+            # means either:
+            #   all fluxes are available, may have predicted flux but no saturated flux OR
+            #   a flux is saturated, prediction test worked, treat all flux values as is and do calculations on saturated value as well
+            if self.nuv_is_saturated:
+                self.processed_nuv_saturated = self.convert_scale_photosphere_subtract_single_flux(self.nuv_saturated, 'nuv')
+            if self.fuv_is_saturated:
+                self.processed_fuv_saturated = self.convert_scale_photosphere_subtract_single_flux(self.fuv_saturated, 'fuv')
+            # This means both are fine to process
+            self.convert_scale_photosphere_subtract_nuv()
+            self.convert_scale_photosphere_subtract_fuv()
 
 
 class StellarObject():
@@ -351,8 +359,26 @@ class StellarObject():
         if self.fluxes is None:
             self.fluxes = GalexFluxes()
 
-    def can_query_pegasus(self):
-        if self.teff is not None and self.logg is not None and self.mass is not None and self.dist is not None and self.rad is not None and self.fluxes.fuv is not None and self.fluxes.nuv is not None:
+    def has_all_stellar_parameters(self):
+        if self.teff is not None and self.logg is not None and self.mass is not None and self.dist is not None and self.rad is not None:
+            return True
+        else:
+            return False
+        
+    def has_null_fluxes(self):
+        if self.fluxes.processed_fuv is None or self.fluxes.processed_nuv is None:
+            return True
+        else:
+            return False
+        
+    def has_saturated_fluxes(self):
+        if self.fluxes.fuv_saturated or self.fluxes.nuv_saturated:
+            return True
+        else:
+            return False
+
+    def has_all_processed_fluxes(self):
+        if self.fluxes.processed_fuv is not None and self.fluxes.processed_fuv_err is not None and self.fluxes.processed_nuv is not None and self.fluxes.processed_nuv_err is not None:
             return True
         else:
             return False
@@ -562,15 +588,19 @@ class StellarObject():
                     self.fluxes.nuv = filtered_data['nuv_flux']
                     self.fluxes.fuv_err = filtered_data['fuv_fluxerr']
                     self.fluxes.nuv_err = filtered_data['nuv_fluxerr']
-                    if (ma.is_masked(filtered_data['fuv_flux_aper_7'])):
-                        self.fluxes.fuv_aper = None
+                    print('Testing masked return data:', ma.is_masked(filtered_data['fuv_flux_aper_7']))
+                    if not ma.is_masked(filtered_data['fuv_flux_aper_7']) and filtered_data['fuv_flux_aper_7'] > 34:
+                        self.fluxes.fuv_is_saturated = True
+                        self.fluxes.fuv_saturated = filtered_data['fuv_flux']
                     else:
-                        self.fluxes.fuv_aper = filtered_data['fuv_flux_aper_7']
+                        self.fluxes.fuv_is_saturated = False
 
-                    if (ma.is_masked(filtered_data['nuv_flux_aper_7'])):
-                        self.fluxes.nuv_aper = None
+                    if not ma.is_masked(filtered_data['nuv_flux_aper_7']) and filtered_data['nuv_flux_aper_7'] > 108:
+                        self.fluxes.nuv_is_saturated = True
+                        self.fluxes.nuv_saturated = filtered_data['nuv_flux']
                     else:
-                        self.fluxes.nuv_aper = filtered_data['nuv_flux_aper_7']
+                        self.fluxes.nuv_is_saturated = False
+
                     # STEP 3: Check if there are any masked values (these will be null values) and change accordingly
                     null_fluxes = self.fluxes.check_null_fluxes()
                     if null_fluxes is not None:
@@ -646,7 +676,20 @@ class PegasusGrid():
             return list(models_with_ratios)
         except Exception as e:
             return ('Error fetching PEGASUS models:', e)
-
+    
+    def query_pegasus_saturated_nuv(self):
+        try:
+            models_in_limits = get_models_within_limits_saturated_nuv(self.stellar_obj.fluxes.processed_nuv_saturated, self.stellar_obj.fluxes.processed_fuv, self.stellar_obj.fluxes.processed_fuv_err, self.stellar_obj.model_collection)
+            return list(models_in_limits)
+        except Exception as e:
+            return ('Error fetching PEGASUS models:', e)
+        
+    def query_pegasus_saturated_fuv(self):
+        try:
+            models_in_limits = get_models_within_limits_saturated_fuv(self.stellar_obj.fluxes.processed_fuv_saturated, self.stellar_obj.fluxes.processed_nuv, self.stellar_obj.fluxes.processed_nuv_err, self.stellar_obj.model_collection)
+            return list(models_in_limits)
+        except Exception as e:
+            return ('Error fetching PEGASUS models:', e)
 
 class PhoenixModel():
     def __init__(self, fits_filename, teff, logg, mass, euv, fuv, nuv, chi_squared):

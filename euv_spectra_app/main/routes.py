@@ -146,12 +146,16 @@ def submit_manual_form():
                         setattr(stellar_object.fluxes, flux_err, None)
                     elif value == 'saturated':
                         print(fieldname, 'is saturated')
-                        flux_aper = f'{flux}_aper'
-                        # set flux_aper to a large unit so it is detected as saturated
-                        setattr(stellar_object.fluxes, flux_aper, 1000)
+                        flux_saturated = f'{flux}_saturated'
+                        flux_is_saturated = f'{flux}_is_saturated'
+                        form_attr = getattr(form, flux)
+                        setattr(stellar_object.fluxes, flux_saturated, float(form_attr.data))
+                        setattr(stellar_object.fluxes, flux_is_saturated, True)
                     elif value == 'upper_limit':
                         # TODO what to do if upper limit?
                         print(fieldname, 'is upper limit')
+                    else:
+                        print(fieldname, value)
             else:
                 if fieldname in flux_data:
                     # deal with fluxes
@@ -201,14 +205,11 @@ def return_results():
     print('STELLAR OBJ RETURN', vars(stellar_object))
     # Populate the modal form with data from object
     insert_data_into_form(stellar_object, modal_form)
-    # for attribute in vars(stellar_target):
-    #     if hasattr(modal_form, attribute):
-    #         radio_input = getattr(modal_form, attribute)
-    #         attribute_value = getattr(stellar_target, attribute)
-    #         radio_input.choices.insert(0, (attribute_value, attribute_value))
+    # STEP 1: Prepare GALEX fluxes for searching the grid
+    stellar_object.fluxes.convert_scale_photosphere_subtract_fluxes()
 
-    # check if required data is avaialable for use before continuing
-    if stellar_object.can_query_pegasus():
+    # check if all stellar intrinstic parameters are available to start querying pegasus
+    if stellar_object.has_all_stellar_parameters():
         '''———————————FOR TESTING PURPOSES (Test file)——————————'''
         # original test filename is M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits
         test_filepaths = [
@@ -217,9 +218,6 @@ def return_results():
             os.path.abspath(
                 f"euv_spectra_app/fits_files/test/new_test.fits")
         ]
-
-        # STEP 1: Prepare GALEX fluxes for searching the grid
-        stellar_object.fluxes.convert_scale_photosphere_subtract_fluxes()
 
         # STEP 2: Create new PegasusGrid object and insert the stellar object with corrected fluxes
         pegasus = PegasusGrid(stellar_object)
@@ -234,71 +232,100 @@ def return_results():
         if model_collection not in db.list_collection_names():
             return redirect(url_for('main.error', msg=f'The grid for model subtype {stellar_object.model_subtype} is currently unavailable. Currently available subtypes: M0, M3, M4, M6. \nPlease contact us with your stellar parameters and returned subtype if you think this is incorrect.'))
 
-        # STEP 5: Do chi squared test between all models within selected subgrid and corrected observation
-        models_with_chi_squared = pegasus.query_pegasus_chi_square()
+        saturated_models = []
+        normal_models = []
+        filepaths = []
+        saturated_flags = False
+        # TODO: if saturated flags is True, make sure to somehow add flags to normal models as option a
 
-        # STEP 6: Find all matches in model grid within upper and lower limits of galex fluxes
-        models_in_limits = pegasus.query_pegasus_models_in_limits()
-        if len(models_in_limits) == 0:
-            model_ratios = pegasus.query_pegasus_flux_ratio()
-
-            # STEP 7.1: If there are no models found within limits, return models ONLY with FUV < NUV, return with chi squared values
-            models_weighted = pegasus.query_pegasus_weighted_fuv()
-
-            # STEP 8.1: Check if there are any results from weighted search
-            if len(models_weighted) == 0:
-                # if no weighted results, just use model with lowest chi squared
-                flash('No results found within upper and lower limits of UV fluxes. No model found\
-                     with a close FUV match. Returning model with lowest chi-square value.', 'warning')
-                filename = models_with_chi_squared[0]['fits_filename']
-                matching_models = models_with_chi_squared[0]
-            else:
-                flash('No results found within upper and lower limits of UV fluxes.\
-                      Returning document with nearest chi squared value weighted towards the FUV.', 'warning')
-                filename = models_weighted[0]['fits_filename']
-                matching_models = [models_weighted[0]]
-
-            # STEP 9.1: Read FITS file from matching model and create graph from data
-            filepath = os.path.abspath(
-                f"euv_spectra_app/fits_files/{stellar_object.model_subtype}/{filename}")
-
-            '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
-            if os.path.exists(filepath) == False:
-                flash('EUV data not available yet, using test data for viewing purposes.\
-                      Please contact us for more information.', 'danger')
-                filepath = test_filepaths[0]
-
-            plotly_fig = create_plotly_graph([filepath])
-            graphJSON = json.dumps(
-                plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
-
-            session['stellar_target'] = json.dumps(to_json(stellar_object))
-            return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_obj=stellar_object, matching_models=matching_models)
-        else:
-            flash(f'{len(models_in_limits)} results found within your\
-                 submitted parameters', 'success')
-            # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
-            # STEP 8.2: Read all FITS files from matching models and create graph from data
-            filepaths = []
-            for doc in models_in_limits:
+        if stellar_object.has_saturated_fluxes():
+            # run special saturated flux search and flag with option b, don't run normal search
+            # TODO: find way to flag these models with 'option b'
+            if stellar_object.fluxes.fuv_is_saturated:
+                nuv_err = stellar_object.fluxes.processed_nuv_err
+                saturated_models = pegasus.query_pegasus_saturated_fuv()
+                if len(saturated_models) == 0:
+                    stellar_object.fluxes.processed_nuv_err = nuv_err * 3
+                    saturated_models = pegasus.query_pegasus_saturated_fuv()
+                    if len(saturated_models) == 0:
+                        stellar_object.fluxes.processed_nuv_err = nuv_err * 5
+                        saturated_models = pegasus.query_pegasus_saturated_fuv()
+            elif stellar_object.fluxes.nuv_is_saturated:
+                fuv_err = stellar_object.fluxes.processed_fuv_err
+                saturated_models = pegasus.query_pegasus_saturated_nuv()
+                if len(saturated_models) == 0:
+                    stellar_object.fluxes.processed_fuv_err = fuv_err * 3
+                    saturated_models = pegasus.query_pegasus_saturated_nuv()
+                    if len(saturated_models) == 0:
+                        stellar_object.fluxes.processed_fuv_err = fuv_err * 5
+                        saturated_models = pegasus.query_pegasus_saturated_nuv()
+            for doc in saturated_models:
                 filepath = os.path.abspath(
                     f"euv_spectra_app/fits_files/{stellar_object.model_subtype}/{doc['fits_filename']}")
                 if os.path.exists(filepath):
                     filepaths.append(filepath)
                 else:
                     '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
-                    i = list(models_in_limits).index(doc)
+                    i = list(saturated_models).index(doc)
                     filepaths.append(test_filepaths[i])
                     flash('EUV data not available yet, using test data for viewing purposes.\
                         Please contact us for more information.', 'danger')
 
-            plotly_fig = create_plotly_graph(filepaths)
-            graphJSON = json.dumps(
-                plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
-            session['stellar_target'] = json.dumps(to_json(stellar_object))
-            return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_obj=stellar_object, matching_models=models_in_limits)
+        if stellar_object.has_all_processed_fluxes():
+            # STEP 5: Do chi squared test between all models within selected subgrid and corrected observation
+            models_with_chi_squared = pegasus.query_pegasus_chi_square()
+            # STEP 6: Find all matches in model grid within upper and lower limits of galex fluxes
+            models_in_limits = pegasus.query_pegasus_models_in_limits()
+            if len(models_in_limits) == 0:
+                # model_ratios = pegasus.query_pegasus_flux_ratio()
+                # STEP 7.1: If there are no models found within limits, return models ONLY with FUV < NUV, return with chi squared values
+                models_weighted = pegasus.query_pegasus_weighted_fuv()
+                # STEP 8.1: Check if there are any results from weighted search
+                if len(models_weighted) == 0:
+                    # if no weighted results, just use model with lowest chi squared
+                    flash('No results found within upper and lower limits of UV fluxes. No model found\
+                        with a close FUV match. Returning model with lowest chi-square value.', 'warning')
+                    filename = models_with_chi_squared[0]['fits_filename']
+                    normal_models = [models_with_chi_squared[0]]
+                else:
+                    flash('No results found within upper and lower limits of UV fluxes.\
+                        Returning document with nearest chi squared value weighted towards the FUV.', 'warning')
+                    filename = models_weighted[0]['fits_filename']
+                    normal_models = [models_weighted[0]]
+                # STEP 9.1: Read FITS file from matching model and create graph from data
+                filepath = os.path.abspath(
+                    f"euv_spectra_app/fits_files/{stellar_object.model_subtype}/{filename}")
+                '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
+                if os.path.exists(filepath) == False:
+                    flash('EUV data not available yet, using test data for viewing purposes.\
+                        Please contact us for more information.', 'danger')
+                    filepath = test_filepaths[0]
+                filepaths.append(filepath)
+            else:
+                flash(f'{len(models_in_limits)} results found within your\
+                    submitted parameters', 'success')
+                # STEP 7.2: If there are models found within limits, map the id's to the models with chi squared
+                # STEP 8.2: Read all FITS files from matching models and create graph from data
+                for doc in models_in_limits:
+                    filepath = os.path.abspath(
+                        f"euv_spectra_app/fits_files/{stellar_object.model_subtype}/{doc['fits_filename']}")
+                    if os.path.exists(filepath):
+                        filepaths.append(filepath)
+                    else:
+                        '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
+                        i = list(models_in_limits).index(doc)
+                        filepaths.append(test_filepaths[i])
+                        flash('EUV data not available yet, using test data for viewing purposes.\
+                            Please contact us for more information.', 'danger')
+                normal_models = models_in_limits
+
+        plotly_fig = create_plotly_graph(filepaths)
+        graphJSON = json.dumps(
+            plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
+        session['stellar_target'] = json.dumps(to_json(stellar_object))
+        return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_obj=stellar_object, matching_models=normal_models, saturated_models=saturated_models)
     else:
-        flash('Submit the required data to view this page.', 'warning')
+        flash('Missing required stellar parameters. Submit the required data to view this page.', 'danger')
         return redirect(url_for('main.homepage'))
 
 

@@ -167,6 +167,71 @@ def get_models_with_weighted_fuv(corrected_nuv, corrected_fuv, model_collection)
     return final_models
 
 
+def get_models_within_limits_saturated_nuv(corrected_saturated_nuv, corrected_fuv, corrected_fuv_err, model_collection):
+    """
+
+    """
+    fuv_lower_lim = corrected_fuv - corrected_fuv_err
+    fuv_upper_lim = corrected_fuv + corrected_fuv_err
+    models_within_limits = db.get_collection(model_collection).aggregate([
+        {
+            '$match': {
+                'fuv': { '$gte': fuv_lower_lim, '$lte': fuv_upper_lim },
+                'nuv': { '$gte': corrected_saturated_nuv },
+            }
+        },
+        {
+            "$addFields": {
+                "chi_squared": {
+                    "$round": [ 
+                        { "$add": 
+                            [ 
+                                { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", corrected_saturated_nuv ] }, 2 ] }, corrected_saturated_nuv ] },
+                                { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", corrected_fuv ] }, 2 ] }, corrected_fuv ] } 
+                            ]
+                        }, 
+                        2 
+                    ]
+                } 
+            } 
+        },
+        { "$sort": { "chi_squared": 1 } }
+    ])
+    return models_within_limits
+
+
+def get_models_within_limits_saturated_fuv(corrected_saturated_fuv, corrected_nuv, corrected_nuv_err, model_collection):
+    """
+    """
+    nuv_lower_lim = corrected_nuv - corrected_nuv_err
+    nuv_upper_lim = corrected_nuv + corrected_nuv_err
+    models_within_limits = db.get_collection(model_collection).aggregate([
+        {
+            '$match': {
+                'fuv': { '$gte': corrected_saturated_fuv },
+                'nuv': { '$gte': nuv_lower_lim, '$lte': nuv_upper_lim },
+            }
+        },
+        {
+            "$addFields": {
+                "chi_squared": {
+                    "$round": [ 
+                        { "$add": 
+                            [ 
+                                { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", corrected_nuv ] }, 2 ] }, corrected_nuv ] },
+                                { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", corrected_saturated_fuv ] }, 2 ] }, corrected_saturated_fuv ] } 
+                            ]
+                        }, 
+                        2 
+                    ]
+                } 
+            } 
+        },
+        { "$sort": { "chi_squared": 1 } }
+    ])
+    return models_within_limits
+
+
 def get_models_within_limits(corrected_nuv, corrected_fuv, corrected_nuv_err, corrected_fuv_err, model_collection):
     """Searches for models within limits of GALEX FUV and NUV flux densities.
 

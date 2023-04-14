@@ -98,10 +98,10 @@ def create_plotly_graph(files):
         f_obs = data['FLUX'][0]
         if i == 0:
             fig.add_trace(go.Scatter(
-                x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1} (Best Match)</b>", line=dict(color=colors[i], width=1)))
+                x=w_obs, y=f_obs, name=f"<b>Model {i+1} Spectrum (Best Match)</b>", line=dict(color=colors[i], width=1)))
         else:
             fig.add_trace(go.Scatter(
-                x=w_obs, y=f_obs, name=f"<b>Spectrum {i+1}</b>", line=dict(color=colors[i], width=1)))
+                x=w_obs, y=f_obs, name=f"<b>Model {i+1} Spectrum</b>", line=dict(color=colors[i], width=1)))
         i += 1
     # STEP 3: Add additional styling
     fig.update_layout(xaxis=dict(title='Wavelength (Å)', range=[10, 3000]),
