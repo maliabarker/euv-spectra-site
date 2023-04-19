@@ -3,7 +3,6 @@ from wtforms import StringField, SelectField, SubmitField, DecimalField, RadioFi
 from wtforms.validators import DataRequired, Email, Optional
 from flask import Markup
 
-
 class NotRequiredIf(Optional):
     """Validator which makes a field not required if another field is set and has a falsy value."""
     field_flags = ('notrequiredif',)
@@ -11,14 +10,19 @@ class NotRequiredIf(Optional):
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.message = ""
-        self.conditions = kwargs
+        self.conditions = {}
+        for name, data in kwargs.items():
+            if isinstance(data, list):
+                self.conditions[name] = data
+            else:
+                self.conditions[name] = [data]
 
     def __call__(self, form, field):
-        for name, data in self.conditions.items():
+        for name, data_list in self.conditions.items():
             other_field = form[name]
             if other_field is None:
                 raise Exception('no field named "%s" in form' % name)
-            if other_field.data == data and field.data is None:
+            if other_field.data in data_list and field.data is None:
                 Optional().__call__(form, field)
 
 
@@ -82,14 +86,14 @@ class ManualForm(FlaskForm):
     dist = DecimalField('d — Distance', validators=[DataRequired()])
     dist_unit = SelectField('d Unit', validators=[DataRequired()], choices=[
                             ('pc', 'Parsecs (pc)'), ('mas', 'Milliarcseconds (mas)')])
-    fuv = DecimalField('FUV (μJy)', validators=[NotRequiredIf(fuv_flag='null')])
-    fuv_err = DecimalField('FUV err (μJy)', validators=[NotRequiredIf(fuv_flag='null')])
+    fuv = DecimalField('FUV (μJy)', validators=[NotRequiredIf(fuv_flag=['null'])])
+    fuv_err = DecimalField('FUV err (μJy)', validators=[NotRequiredIf(fuv_flag=['null', 'saturated'])])
     fuv_flag = RadioField('FUV Flag', validators=[Optional()], choices=[(
-        'null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated')])
-    nuv = DecimalField('NUV (μJy)', validators=[NotRequiredIf(nuv_flag='null')])
-    nuv_err = DecimalField('NUV err (μJy)', validators=[NotRequiredIf(nuv_flag='null')])
+        'null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated'), ('none', 'None')])
+    nuv = DecimalField('NUV (μJy)', validators=[NotRequiredIf(nuv_flag=['null'])])
+    nuv_err = DecimalField('NUV err (μJy)', validators=[NotRequiredIf(nuv_flag=['null', 'saturated'])])
     nuv_flag = RadioField('NUV Flag', validators=[Optional()], choices=[(
-        'null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated')])
+        'null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated'), ('none', 'None')])
     j_band = DecimalField('2MASS J Band', validators=[RequiredIfOneOf({'fuv_flag':'null', 'nuv_flag':'null', 'fuv_flag':'saturated', 'nuv_flag':'saturated'})])
     j_band_unit = SelectField('J Band Unit', validators=[RequiredIfOneOf({'fuv_flag':'null', 'nuv_flag':'null', 'fuv_flag':'saturated', 'nuv_flag':'saturated'})], 
                               choices=[('mag', 'Magnitude (mag)'), ('flux', 'Flux Density (μJy)')])

@@ -78,9 +78,7 @@ def create_plotly_graph(files):
     """Creates a plotly graph with data from FITS files.
     
     Args:
-        files: A list of FITS files to pull data from.
-        model_data: A list of lists that represents the data of the model corresponding
-         to the FITS file.
+        files: A dictionary of dictionaries with FITS files to pull data from and a file tag to include in the legend.
     
     Returns:
         A plotly figure. Will then be json serialized and sent to the front end.
@@ -91,18 +89,61 @@ def create_plotly_graph(files):
               "#EE26DB", "#FE63A0", "#FE8F77", "#FDAE5A"]
     # STEP 2: for each file, add new trace with data
     i = 0
-    while i <= len(files) - 1:
-        hst = fits.open(files[i])
-        data = hst[1].data
-        w_obs = data['WAVELENGTH'][0]
-        f_obs = data['FLUX'][0]
-        if i == 0:
+    for key, value in files.items():
+        if 'model' in key:
+            hst = fits.open(value['filepath'])
+            data = hst[1].data
+            w_obs = data['WAVELENGTH'][0]
+            f_obs = data['FLUX'][0]
+            if value['index'] == 0:
+                if 'flag' in value:
+                    value['flag'] = f'{value["flag"]} (Best Match)'
+                else:
+                    value['flag'] = '(Best Match)'
+            if 'flag' in value:
+                fig.add_trace(go.Scatter(
+                    x=w_obs, y=f_obs, name=f"<b>Model {value['index']} Spectrum: {value['flag']}</b>", line=dict(color=colors[value['index']], width=1)))
+            else:
+                fig.add_trace(go.Scatter(
+                    x=w_obs, y=f_obs, name=f"<b>Model {value['index']} Spectrum</b>", line=dict(color=colors[value['index']], width=1)))
             fig.add_trace(go.Scatter(
-                x=w_obs, y=f_obs, name=f"<b>Model {i+1} Spectrum (Best Match)</b>", line=dict(color=colors[i], width=1)))
+                x=[2315], y=[value['nuv']], name=f'Model {value["index"]} NUV',
+                mode='markers', marker=dict(color=colors[value['index']], line=dict(color="DarkGrey", width=1), size=10)))
+            fig.add_trace(go.Scatter(
+                x=[1542], y=[value['fuv']], name=f'Model {value["index"]} FUV',
+                mode='markers', marker=dict(color=colors[value['index']], line=dict(color="DarkGrey", width=1), size=10)))
+            fig.add_trace(go.Scatter(
+                x=[500], y=[value['euv']], name=f'Model {value["index"]} EUV',
+                mode='markers', marker=dict(color=colors[value['index']], line=dict(color="DarkGrey", width=1), size=10)))
+            
+    for galex_flux in [files['galex_nuv'], files['galex_fuv']]:
+        # plot galex flux
+        if 'flag' in galex_flux and galex_flux['flag'] == 'saturated':
+            fig.add_trace(go.Scatter(
+                x=[galex_flux['wavelength']], y=[galex_flux['flux_density']], name=galex_flux['name'],
+                mode='markers', marker=dict(color='black', symbol='triangle-up', size=10)))
+        elif 'flag' in galex_flux and galex_flux['flag'] == 'upper_limit':
+            fig.add_trace(go.Scatter(
+                x=[galex_flux['wavelength']], y=[galex_flux['flux_density']], name=galex_flux['name'],
+                mode='markers', marker=dict(color='black', symbol='triangle-down', size=10)))
         else:
             fig.add_trace(go.Scatter(
-                x=w_obs, y=f_obs, name=f"<b>Model {i+1} Spectrum</b>", line=dict(color=colors[i], width=1)))
-        i += 1
+                x=[galex_flux['wavelength']], y=[galex_flux['flux_density']], name=galex_flux['name'],
+                error_y=dict(type='data', array=[galex_flux['flux_density_err']], visible=True), 
+                mode='markers', marker=dict(color='black', size=10)))
+    # while i <= len(files) - 1:
+    #     hst = fits.open(files[i])
+    #     data = hst[1].data
+    #     w_obs = data['WAVELENGTH'][0]
+    #     f_obs = data['FLUX'][0]
+    #     if i == 0:
+
+    #         fig.add_trace(go.Scatter(
+    #             x=w_obs, y=f_obs, name=f"<b>Model {i+1} Spectrum (Best Match)</b>", line=dict(color=colors[i], width=1)))
+    #     else:
+    #         fig.add_trace(go.Scatter(
+    #             x=w_obs, y=f_obs, name=f"<b>Model {i+1} Spectrum</b>", line=dict(color=colors[i], width=1)))
+    #     i += 1
     # STEP 3: Add additional styling
     fig.update_layout(xaxis=dict(title='Wavelength (Å)', range=[10, 3000]),
                       yaxis=dict(title='Flux Density (erg/cm2/s/Å)',

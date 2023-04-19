@@ -131,6 +131,12 @@ class GalexFluxes():
         self.j_band = j_band
         self.stellar_obj = stellar_obj
 
+    def has_attr_val(self, attr):
+        if hasattr(self, attr) and getattr(self, attr) is not None:
+            return True
+        else:
+            return False
+
     def check_null_fluxes(self):
         print('CHECKING NULL FLUXES')
         if self.fuv is None and self.nuv is None:
@@ -366,19 +372,21 @@ class StellarObject():
             return False
         
     def has_null_fluxes(self):
-        if self.fluxes.processed_fuv is None or self.fluxes.processed_nuv is None:
+        if self.fluxes.has_attr_val('processed_fuv') is False or self.fluxes.has_attr_val('processed_nuv') is False:
+        # if self.fluxes.processed_fuv is None or self.fluxes.processed_nuv is None:
             return True
         else:
             return False
         
     def has_saturated_fluxes(self):
-        if self.fluxes.fuv_saturated or self.fluxes.nuv_saturated:
+        if hasattr(self.fluxes, 'fuv_saturated') and self.fluxes.fuv_saturated or hasattr(self.fluxes, 'nuv_saturated') and self.fluxes.nuv_saturated:
             return True
         else:
             return False
 
     def has_all_processed_fluxes(self):
-        if self.fluxes.processed_fuv is not None and self.fluxes.processed_fuv_err is not None and self.fluxes.processed_nuv is not None and self.fluxes.processed_nuv_err is not None:
+        if self.fluxes.has_attr_val('processed_fuv') and self.fluxes.has_attr_val('processed_fuv_err') and self.fluxes.has_attr_val('processed_nuv') and self.fluxes.has_attr_val('processed_nuv_err'):
+        # if self.fluxes.processed_fuv is not None and self.fluxes.processed_fuv_err is not None and self.fluxes.processed_nuv is not None and self.fluxes.processed_nuv_err is not None:
             return True
         else:
             return False

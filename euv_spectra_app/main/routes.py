@@ -210,6 +210,7 @@ def return_results():
 
     # check if all stellar intrinstic parameters are available to start querying pegasus
     if stellar_object.has_all_stellar_parameters():
+        print('HAS ALL STELLAR PARAMETERS, CONTINUING')
         '''———————————FOR TESTING PURPOSES (Test file)——————————'''
         # original test filename is M0.Teff=3850.logg=4.78.TRgrad=9.cmtop=6.cmin=4.fits
         test_filepaths = [
@@ -234,14 +235,19 @@ def return_results():
 
         saturated_models = []
         normal_models = []
+        plot_data = {}
         filepaths = []
-        saturated_flags = False
-        # TODO: if saturated flags is True, make sure to somehow add flags to normal models as option a
+        using_test_data = False
 
         if stellar_object.has_saturated_fluxes():
+            print('HAS SATURATED VALUES, CONTINUING')
+            print('FLUX DATA:', vars(stellar_object.fluxes))
             # run special saturated flux search and flag with option b, don't run normal search
-            # TODO: find way to flag these models with 'option b'
             if stellar_object.fluxes.fuv_is_saturated:
+                plot_data['galex_fuv'] = {'name': 'GALEX Processed FUV (Saturated)',
+                                          'flux_density': stellar_object.fluxes.processed_fuv_saturated,
+                                          'wavelength': 1542,
+                                          'flag': 'saturated'}
                 nuv_err = stellar_object.fluxes.processed_nuv_err
                 saturated_models = pegasus.query_pegasus_saturated_fuv()
                 if len(saturated_models) == 0:
@@ -251,6 +257,10 @@ def return_results():
                         stellar_object.fluxes.processed_nuv_err = nuv_err * 5
                         saturated_models = pegasus.query_pegasus_saturated_fuv()
             elif stellar_object.fluxes.nuv_is_saturated:
+                plot_data['galex_nuv'] = {'name': 'GALEX Processed NUV (Saturated)',
+                                          'flux_density': stellar_object.fluxes.processed_nuv_saturated,
+                                          'wavelength': 2315,
+                                          'flag': 'saturated'}
                 fuv_err = stellar_object.fluxes.processed_fuv_err
                 saturated_models = pegasus.query_pegasus_saturated_nuv()
                 if len(saturated_models) == 0:
@@ -264,14 +274,28 @@ def return_results():
                     f"euv_spectra_app/fits_files/{stellar_object.model_subtype}/{doc['fits_filename']}")
                 if os.path.exists(filepath):
                     filepaths.append(filepath)
+                    key = f'model_{len(plot_data)}'
+                    plot_data[key] = {'filepath': filepath,
+                                      'nuv': doc['nuv'],
+                                      'fuv': doc['fuv'],
+                                      'euv': doc['euv'],
+                                      'index': len(plot_data),
+                                      'flag': 'Saturated Option A'}
                 else:
                     '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
                     i = list(saturated_models).index(doc)
                     filepaths.append(test_filepaths[i])
-                    flash('EUV data not available yet, using test data for viewing purposes.\
-                        Please contact us for more information.', 'danger')
+                    key = f'model_{len(plot_data)}'
+                    plot_data[key] = {'filepath': test_filepaths[i],
+                                      'nuv': doc['nuv'],
+                                      'fuv': doc['fuv'],
+                                      'euv': doc['euv'],
+                                      'index': len(plot_data),
+                                      'flag': 'Saturated Option A'}
+                    using_test_data = True
 
         if stellar_object.has_all_processed_fluxes():
+            print('HAS ALL PROCESSED FLUXES, CONTINUING')
             # STEP 5: Do chi squared test between all models within selected subgrid and corrected observation
             models_with_chi_squared = pegasus.query_pegasus_chi_square()
             # STEP 6: Find all matches in model grid within upper and lower limits of galex fluxes
@@ -297,10 +321,26 @@ def return_results():
                     f"euv_spectra_app/fits_files/{stellar_object.model_subtype}/{filename}")
                 '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
                 if os.path.exists(filepath) == False:
-                    flash('EUV data not available yet, using test data for viewing purposes.\
-                        Please contact us for more information.', 'danger')
+                    # flash('EUV data not available yet, using test data for viewing purposes.\
+                    #     Please contact us for more information.', 'danger')
                     filepath = test_filepaths[0]
+                    using_test_data = True
                 filepaths.append(filepath)
+                if stellar_object.has_saturated_fluxes():
+                    key = f'model_{len(plot_data)}'
+                    plot_data[key] = {'filepath': filepath,
+                                      'nuv': doc['nuv'],
+                                      'fuv': doc['fuv'],
+                                      'euv': doc['euv'],
+                                      'index': len(plot_data),
+                                      'flag': 'Saturated Option B'}
+                else:
+                    key = f'model_{len(plot_data)}'
+                    plot_data[key] = {'filepath': filepath,
+                                      'nuv': doc['nuv'],
+                                      'fuv': doc['fuv'],
+                                      'euv': doc['euv'],
+                                      'index': len(plot_data)}
             else:
                 flash(f'{len(models_in_limits)} results found within your\
                     submitted parameters', 'success')
@@ -311,19 +351,63 @@ def return_results():
                         f"euv_spectra_app/fits_files/{stellar_object.model_subtype}/{doc['fits_filename']}")
                     if os.path.exists(filepath):
                         filepaths.append(filepath)
+                        if stellar_object.has_saturated_fluxes():
+                            key = f'model_{len(plot_data)}'
+                            plot_data[key] = {'filepath': filepath,
+                                              'nuv': doc['nuv'],
+                                              'fuv': doc['fuv'],
+                                              'euv': doc['euv'],
+                                              'index': len(plot_data),
+                                              'flag': 'Saturated Option B'}
+                        else:
+                            key = f'model_{len(plot_data)}'
+                            plot_data[key] = {'filepath': filepath,
+                                              'nuv': doc['nuv'],
+                                              'fuv': doc['fuv'],
+                                              'euv': doc['euv'],
+                                              'index': len(plot_data)}
                     else:
                         '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
                         i = list(models_in_limits).index(doc)
                         filepaths.append(test_filepaths[i])
-                        flash('EUV data not available yet, using test data for viewing purposes.\
-                            Please contact us for more information.', 'danger')
+                        if stellar_object.has_saturated_fluxes():
+                            key = f'model_{len(plot_data)}'
+                            plot_data[key] = {'filepath': test_filepaths[i],
+                                              'nuv': doc['nuv'],
+                                              'fuv': doc['fuv'],
+                                              'euv': doc['euv'],
+                                              'index': len(plot_data),
+                                              'flag': 'Saturated Option B'}
+                        else:
+                            key = f'model_{len(plot_data)}'
+                            plot_data[key] = {'filepath': test_filepaths[i],
+                                              'nuv': doc['nuv'],
+                                              'fuv': doc['fuv'],
+                                              'euv': doc['euv'],
+                                              'index': len(plot_data)}
+                        # flash('EUV data not available yet, using test data for viewing purposes.\
+                        #     Please contact us for more information.', 'danger')
+                        using_test_data = True
                 normal_models = models_in_limits
-
-        plotly_fig = create_plotly_graph(filepaths)
+        if 'galex_fuv' not in plot_data:
+            plot_data['galex_fuv'] = {'name': 'GALEX Processed FUV',
+                                      'flux_density': stellar_object.fluxes.processed_fuv,
+                                      'flux_density_err': stellar_object.fluxes.processed_fuv_err,
+                                      'wavelength': 1542}
+        if 'galex_nuv' not in plot_data:
+            plot_data['galex_nuv'] = {'name': 'GALEX Processed NUV',
+                                      'flux_density': stellar_object.fluxes.processed_nuv,
+                                      'flux_density_err': stellar_object.fluxes.processed_nuv_err,
+                                      'wavelength': 2315}
+        plotly_fig = create_plotly_graph(plot_data)
         graphJSON = json.dumps(
             plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
         session['stellar_target'] = json.dumps(to_json(stellar_object))
-        return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_obj=stellar_object, matching_models=normal_models, saturated_models=saturated_models)
+        if using_test_data == True:
+            flash('EUV data not available yet, using test data for viewing purposes.\
+                   Please contact us for more information.', 'danger')
+        return_models = normal_models + saturated_models
+        return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_obj=stellar_object, matching_models=return_models)
     else:
         flash('Missing required stellar parameters. Submit the required data to view this page.', 'danger')
         return redirect(url_for('main.homepage'))
