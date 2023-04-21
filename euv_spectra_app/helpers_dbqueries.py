@@ -232,6 +232,73 @@ def get_models_within_limits_saturated_fuv(corrected_saturated_fuv, corrected_nu
     return models_within_limits
 
 
+def get_models_within_limits_upper_limit_nuv(corrected_upper_limit_nuv, corrected_fuv, corrected_fuv_err, model_collection):
+    """
+
+    """
+    fuv_lower_lim = corrected_fuv - corrected_fuv_err
+    fuv_upper_lim = corrected_fuv + corrected_fuv_err
+    models_within_limits = db.get_collection(model_collection).aggregate([
+        {
+            '$match': {
+                'fuv': { '$gte': fuv_lower_lim, '$lte': fuv_upper_lim },
+                'nuv': { '$lte': corrected_upper_limit_nuv },
+            }
+        },
+        {
+            "$addFields": {
+                "chi_squared": {
+                    "$round": [ 
+                        { "$add": 
+                            [ 
+                                { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", corrected_upper_limit_nuv ] }, 2 ] }, corrected_upper_limit_nuv ] },
+                                { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", corrected_fuv ] }, 2 ] }, corrected_fuv ] } 
+                            ]
+                        }, 
+                        2 
+                    ]
+                } 
+            } 
+        },
+        { "$sort": { "chi_squared": 1 } }
+    ])
+    return models_within_limits
+
+
+def get_models_within_limits_upper_limit_fuv(corrected_upper_limit_fuv, corrected_nuv, corrected_nuv_err, model_collection):
+    """
+    """
+    nuv_lower_lim = corrected_nuv - corrected_nuv_err
+    nuv_upper_lim = corrected_nuv + corrected_nuv_err
+    print('NUV UPPER LIM:', nuv_upper_lim, 'NUV LOWER LIM:', nuv_lower_lim)
+    print('FUV LESS THAN:', corrected_upper_limit_fuv)
+    models_within_limits = db.get_collection(model_collection).aggregate([
+        {
+            '$match': {
+                'fuv': { '$lte': corrected_upper_limit_fuv },
+                'nuv': { '$gte': nuv_lower_lim, '$lte': nuv_upper_lim },
+            }
+        },
+        {
+            "$addFields": {
+                "chi_squared": {
+                    "$round": [ 
+                        { "$add": 
+                            [ 
+                                { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", corrected_nuv ] }, 2 ] }, corrected_nuv ] },
+                                { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", corrected_upper_limit_fuv ] }, 2 ] }, corrected_upper_limit_fuv ] } 
+                            ]
+                        }, 
+                        2 
+                    ]
+                } 
+            } 
+        },
+        { "$sort": { "chi_squared": 1 } }
+    ])
+    return models_within_limits
+
+
 def get_models_within_limits(corrected_nuv, corrected_fuv, corrected_nuv_err, corrected_fuv_err, model_collection):
     """Searches for models within limits of GALEX FUV and NUV flux densities.
 

@@ -7,7 +7,7 @@ from astroquery.mast import Catalogs
 from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
 from astroquery.simbad import Simbad
 from euv_spectra_app.extensions import db
-from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios, get_models_within_limits_saturated_fuv, get_models_within_limits_saturated_nuv
+from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios, get_models_within_limits_saturated_fuv, get_models_within_limits_saturated_nuv, get_models_within_limits_upper_limit_fuv, get_models_within_limits_upper_limit_nuv
 
 customSimbad = Simbad()
 customSimbad.remove_votable_fields('coordinates')
@@ -119,15 +119,19 @@ class GalexFlux():
 class GalexFluxes():
     """Represents GALEX flux values."""
 
-    def __init__(self, fuv=None, nuv=None, fuv_saturated=None, nuv_saturated=None, fuv_err=None, nuv_err=None, fuv_is_saturated=None, nuv_is_saturated=None, j_band=None, stellar_obj=None):
+    def __init__(self, fuv=None, nuv=None, fuv_saturated=None, nuv_saturated=None, fuv_upper_limit=None, nuv_upper_limit=None, fuv_err=None, nuv_err=None, fuv_is_saturated=None, nuv_is_saturated=None, fuv_is_upper_limit=None, nuv_is_upper_limit=None, j_band=None, stellar_obj=None):
         self.fuv = fuv
         self.nuv = nuv
         self.fuv_saturated = fuv_saturated
         self.nuv_saturated = nuv_saturated
+        self.fuv_upper_limit = fuv_upper_limit
+        self.nuv_upper_limit = nuv_upper_limit
         self.fuv_err = fuv_err
         self.nuv_err = nuv_err
         self.fuv_is_saturated = fuv_is_saturated
         self.nuv_is_saturated = nuv_is_saturated
+        self.fuv_is_upper_limit = fuv_is_upper_limit
+        self.nuv_is_upper_limit = nuv_is_upper_limit
         self.j_band = j_band
         self.stellar_obj = stellar_obj
 
@@ -197,6 +201,30 @@ class GalexFluxes():
                     self.nuv_err = None
         except ValueError as e:
             return ('Invalid `fuv_saturated`, `fuv_is_saturated` and/or `nuv_saturated`, `nuv_is_saturated` attributes:' + str(e))
+
+    def check_upper_limit_fluxes(self):
+        try:
+            if self.fuv_is_upper_limit and self.nuv_is_upper_limit:
+                self.fuv, self.fuv_err = 'No Detection', 'No Detection'
+                self.nuv, self.nuv_err = 'No Detection', 'No Detection'
+                return ('Both GALEX detections cannot be upper limits, cannot correct fluxes.')
+            elif self.fuv_is_upper_limit:
+                # Option A: Predict
+                self.predict_fluxes('fuv')
+                print('Testing resulting upper limit fluxes to compare:', self.fuv, self.fuv_upper_limit)
+                if self.fuv > self.fuv_upper_limit:
+                    # if predicted flux is not less than saturated flux, change flux and err to None
+                    self.fuv = None
+                    self.fuv_err = None
+            elif self.nuv_is_upper_limit:
+                self.predict_fluxes('nuv')
+                print('Testing resulting upper limit fluxes to compare:', self.nuv, self.nuv_upper_limit)
+                if self.nuv > self.nuv_upper_limit:
+                    self.nuv = None
+                    self.nuv_err = None
+        except ValueError as e:
+            return ('Invalid `fuv_upper_limit`, `fuv_is_upper_limit` and/or `nuv_upper_limit`, `nuv_is_upper_limit` attributes:' + str(e))
+
 
     def predict_fluxes(self, flux_to_predict):
         """Predicts the specified flux based on the remaining GALEX flux values.
@@ -334,14 +362,27 @@ class GalexFluxes():
             # means that prediction test of saturation did not work, only do nuv and fuv_saturated values
             self.convert_scale_photosphere_subtract_nuv()
             self.processed_fuv_saturated = self.convert_scale_photosphere_subtract_single_flux(self.fuv_saturated, 'fuv')
+        elif self.nuv_is_upper_limit and self.nuv is None:
+            # means that prediction test of upper limit did not work, only do fuv and nuv_upper_limit values
+            self.convert_scale_photosphere_subtract_fuv()
+            self.processed_nuv_upper_limit = self.convert_scale_photosphere_subtract_single_flux(self.nuv_upper_limit, 'nuv')
+        elif self.fuv_is_upper_limit and self.fuv is None:
+            # means that prediction test of saturation did not work, only do nuv and fuv_upper_limit values
+            self.convert_scale_photosphere_subtract_nuv()
+            self.processed_fuv_upper_limit = self.convert_scale_photosphere_subtract_single_flux(self.fuv_upper_limit, 'fuv')
         else:
             # means either:
-            #   all fluxes are available, may have predicted flux but no saturated flux OR
-            #   a flux is saturated, prediction test worked, treat all flux values as is and do calculations on saturated value as well
+            #   all fluxes are available, may have predicted flux but no saturated/upper limit flux OR
+            #   a flux is saturated/upper limit, prediction test worked, treat all flux values as is and 
+            #   do calculations on saturated/upper limit value as well
             if self.nuv_is_saturated:
                 self.processed_nuv_saturated = self.convert_scale_photosphere_subtract_single_flux(self.nuv_saturated, 'nuv')
             if self.fuv_is_saturated:
                 self.processed_fuv_saturated = self.convert_scale_photosphere_subtract_single_flux(self.fuv_saturated, 'fuv')
+            if self.nuv_is_upper_limit:
+                self.processed_nuv_upper_limit = self.convert_scale_photosphere_subtract_single_flux(self.nuv_upper_limit, 'nuv')
+            if self.fuv_is_upper_limit:
+                self.processed_fuv_upper_limit = self.convert_scale_photosphere_subtract_single_flux(self.fuv_upper_limit, 'fuv')
             # This means both are fine to process
             self.convert_scale_photosphere_subtract_nuv()
             self.convert_scale_photosphere_subtract_fuv()
@@ -380,6 +421,12 @@ class StellarObject():
         
     def has_saturated_fluxes(self):
         if hasattr(self.fluxes, 'fuv_saturated') and self.fluxes.fuv_saturated or hasattr(self.fluxes, 'nuv_saturated') and self.fluxes.nuv_saturated:
+            return True
+        else:
+            return False
+        
+    def has_upper_limit_fluxes(self):
+        if hasattr(self.fluxes, 'fuv_upper_limit') and self.fluxes.fuv_upper_limit or hasattr(self.fluxes, 'nuv_upper_limit') and self.fluxes.nuv_upper_limit:
             return True
         else:
             return False
@@ -695,6 +742,20 @@ class PegasusGrid():
     def query_pegasus_saturated_fuv(self):
         try:
             models_in_limits = get_models_within_limits_saturated_fuv(self.stellar_obj.fluxes.processed_fuv_saturated, self.stellar_obj.fluxes.processed_nuv, self.stellar_obj.fluxes.processed_nuv_err, self.stellar_obj.model_collection)
+            return list(models_in_limits)
+        except Exception as e:
+            return ('Error fetching PEGASUS models:', e)
+        
+    def query_pegasus_upper_limit_nuv(self):
+        try:
+            models_in_limits = get_models_within_limits_upper_limit_nuv(self.stellar_obj.fluxes.processed_nuv_upper_limit, self.stellar_obj.fluxes.processed_fuv, self.stellar_obj.fluxes.processed_fuv_err, self.stellar_obj.model_collection)
+            return list(models_in_limits)
+        except Exception as e:
+            return ('Error fetching PEGASUS models:', e)
+        
+    def query_pegasus_upper_limit_fuv(self):
+        try:
+            models_in_limits = get_models_within_limits_upper_limit_fuv(self.stellar_obj.fluxes.processed_fuv_upper_limit, self.stellar_obj.fluxes.processed_nuv, self.stellar_obj.fluxes.processed_nuv_err, self.stellar_obj.model_collection)
             return list(models_in_limits)
         except Exception as e:
             return ('Error fetching PEGASUS models:', e)

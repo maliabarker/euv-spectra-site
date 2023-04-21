@@ -87,11 +87,11 @@ class ManualForm(FlaskForm):
     dist_unit = SelectField('d Unit', validators=[DataRequired()], choices=[
                             ('pc', 'Parsecs (pc)'), ('mas', 'Milliarcseconds (mas)')])
     fuv = DecimalField('FUV (μJy)', validators=[NotRequiredIf(fuv_flag=['null'])])
-    fuv_err = DecimalField('FUV err (μJy)', validators=[NotRequiredIf(fuv_flag=['null', 'saturated'])])
+    fuv_err = DecimalField('FUV err (μJy)', validators=[NotRequiredIf(fuv_flag=['null', 'saturated', 'upper_limit'])])
     fuv_flag = RadioField('FUV Flag', validators=[Optional()], choices=[(
         'null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated'), ('none', 'None')])
     nuv = DecimalField('NUV (μJy)', validators=[NotRequiredIf(nuv_flag=['null'])])
-    nuv_err = DecimalField('NUV err (μJy)', validators=[NotRequiredIf(nuv_flag=['null', 'saturated'])])
+    nuv_err = DecimalField('NUV err (μJy)', validators=[NotRequiredIf(nuv_flag=['null', 'saturated', 'upper_limit'])])
     nuv_flag = RadioField('NUV Flag', validators=[Optional()], choices=[(
         'null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated'), ('none', 'None')])
     j_band = DecimalField('2MASS J Band', validators=[RequiredIfOneOf({'fuv_flag':'null', 'nuv_flag':'null', 'fuv_flag':'saturated', 'nuv_flag':'saturated'})])

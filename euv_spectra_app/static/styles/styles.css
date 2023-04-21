@@ -1,8 +1,8 @@
-html, body {
+/* html, body {
     max-width: 100%;
     overflow-x: hidden;
     height: 100%;
-}
+} */
 
 body {
     padding-top: 66px; /* This should be equal to the height of your header, helps with overlap of sticky navbar */

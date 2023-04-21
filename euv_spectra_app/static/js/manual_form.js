@@ -1,39 +1,23 @@
 const fuvFlagRadioBtns = document.querySelectorAll('input[name="fuv_flag"]');
 const fuvNullRadio = document.getElementById('fuv_flag-0')
+const fuvUpLimRadio = document.getElementById('fuv_flag-1')
 const fuvSatRadio = document.getElementById('fuv_flag-2')
 const fuvInput = document.getElementById('fuv');
 const fuvErrInput = document.getElementById('fuv_err');
 
 const nuvFlagRadioBtns = document.querySelectorAll('input[name="nuv_flag"]');
 const nuvNullRadio = document.getElementById('nuv_flag-0')
+const nuvUpLimRadio = document.getElementById('nuv_flag-1')
 const nuvSatRadio = document.getElementById('nuv_flag-2')
 const nuvInput = document.getElementById('nuv');
 const nuvErrInput = document.getElementById('nuv_err');
-
 
 const jBandCont = document.getElementById('j_band');
 const jBandInput = jBandCont.querySelector('.form-control');
 const jBandSelect = jBandCont.querySelector('.form-select')
 
-// $(document).ready(function() {
-//     // add click event handler to radio buttons
-//     $('#nuv-flags-container :radio').click(function() {
-//       // get current selection status
-//       var selected = $(this).attr('data-selected');
-
-//       // toggle selection status
-//       if (selected === 'true') {
-//         $(this).attr('data-selected', 'false');
-//         $(this).prop('checked', false);
-//       } else {
-//         $(this).attr('data-selected', 'true');
-//         $(this).prop('checked', true);
-//       }
-//     });
-//   });
-
 function showJBandInput() {
-    if (fuvNullRadio.checked || nuvNullRadio.checked || fuvSatRadio.checked || nuvSatRadio.checked) {
+    if (fuvNullRadio.checked || nuvNullRadio.checked || fuvSatRadio.checked || nuvSatRadio.checked || fuvUpLimRadio.checked || nuvUpLimRadio.checked) {
         jBandCont.style.display = '';
         jBandInput.required = true;
         jBandSelect.required = true;
@@ -55,14 +39,40 @@ function updateFuvRequired() {
         // set radio states 
         nuvNullRadio.disabled = true;
         nuvSatRadio.disabled = false;
+        nuvUpLimRadio.disabled = false;
         // set popover states (remove sat, add null)
         nuvSatRadio.parentElement.removeAttribute('data-bs-toggle');
         nuvSatRadio.parentElement.removeAttribute('data-bs-placement');
         nuvSatRadio.parentElement.removeAttribute('title');
         nuvSatRadio.parentElement.removeAttribute('data-bs-original-title');
+        nuvUpLimRadio.parentElement.removeAttribute('data-bs-toggle');
+        nuvUpLimRadio.parentElement.removeAttribute('data-bs-placement');
+        nuvUpLimRadio.parentElement.removeAttribute('title');
+        nuvUpLimRadio.parentElement.removeAttribute('data-bs-original-title');
         nuvNullRadio.parentElement.setAttribute('data-bs-toggle', 'tooltip');
         nuvNullRadio.parentElement.setAttribute('data-bs-placement', 'top');
         nuvNullRadio.parentElement.setAttribute('title', 'Cannot have both flux densities be null. Please see question 3 on the FAQs page for more information.');
+    } else if (fuvUpLimRadio.checked) {
+        console.log('FUV upper limit radio button checked')
+        // set input states
+        fuvInput.required = true;
+        fuvErrInput.required = false;
+        // set radio states
+        nuvNullRadio.disabled = false;
+        nuvSatRadio.disabled = false;
+        nuvUpLimRadio.disabled = true;
+        // set popover states (remove null, add sat)
+        nuvNullRadio.parentElement.removeAttribute('data-bs-toggle');
+        nuvNullRadio.parentElement.removeAttribute('data-bs-placement');
+        nuvNullRadio.parentElement.removeAttribute('title');
+        nuvNullRadio.parentElement.removeAttribute('data-bs-original-title');
+        nuvSatRadio.parentElement.removeAttribute('data-bs-toggle');
+        nuvSatRadio.parentElement.removeAttribute('data-bs-placement');
+        nuvSatRadio.parentElement.removeAttribute('title');
+        nuvSatRadio.parentElement.removeAttribute('data-bs-original-title');
+        nuvUpLimRadio.parentElement.setAttribute('data-bs-toggle', 'tooltip');
+        nuvUpLimRadio.parentElement.setAttribute('data-bs-placement', 'top');
+        nuvUpLimRadio.parentElement.setAttribute('title', 'Cannot have both flux densities be upper limits. Please see question 3 on the FAQs page for more information.');
     } else if (fuvSatRadio.checked) {
         console.log('FUV saturated radio button checked')
         // set input states
@@ -71,11 +81,16 @@ function updateFuvRequired() {
         // set radio states
         nuvNullRadio.disabled = false;
         nuvSatRadio.disabled = true;
+        nuvUpLimRadio.disabled = false;
         // set popover states (remove null, add sat)
         nuvNullRadio.parentElement.removeAttribute('data-bs-toggle');
         nuvNullRadio.parentElement.removeAttribute('data-bs-placement');
         nuvNullRadio.parentElement.removeAttribute('title');
         nuvNullRadio.parentElement.removeAttribute('data-bs-original-title');
+        nuvUpLimRadio.parentElement.removeAttribute('data-bs-toggle');
+        nuvUpLimRadio.parentElement.removeAttribute('data-bs-placement');
+        nuvUpLimRadio.parentElement.removeAttribute('title');
+        nuvUpLimRadio.parentElement.removeAttribute('data-bs-original-title');
         nuvSatRadio.parentElement.setAttribute('data-bs-toggle', 'tooltip');
         nuvSatRadio.parentElement.setAttribute('data-bs-placement', 'top');
         nuvSatRadio.parentElement.setAttribute('title', 'Cannot have both flux densities be saturated. Please see question 3 on the FAQs page for more information.');
@@ -88,6 +103,7 @@ function updateFuvRequired() {
         // set radio states
         nuvNullRadio.disabled = false;
         nuvSatRadio.disabled = false;
+        nuvUpLimRadio.disabled = false;
         // set popover states (remove null and sat)
         nuvNullRadio.parentElement.removeAttribute('data-bs-toggle');
         nuvNullRadio.parentElement.removeAttribute('data-bs-placement');
@@ -97,33 +113,15 @@ function updateFuvRequired() {
         nuvSatRadio.parentElement.removeAttribute('data-bs-placement');
         nuvSatRadio.parentElement.removeAttribute('title');
         nuvSatRadio.parentElement.removeAttribute('data-bs-original-title');
+        nuvUpLimRadio.parentElement.removeAttribute('data-bs-toggle');
+        nuvUpLimRadio.parentElement.removeAttribute('data-bs-placement');
+        nuvUpLimRadio.parentElement.removeAttribute('title');
+        nuvUpLimRadio.parentElement.removeAttribute('data-bs-original-title');
     }
     // run tooltip instantiation every time tooltips change
     runToolTips();
 }
 
-// function updateSaturatedFuvRequired() {
-//     if (fuvSatRadio.checked) {
-//         // if the fuv null flag is checked make fuv inputs not required
-//         // disable nuv null flag radio btn and add tooltip to give more info
-//         fuvErrInput.required = false;
-//         nuvSatRadio.disabled = true;
-//         nuvSatRadio.parentElement.setAttribute('data-bs-toggle', 'tooltip');
-//         nuvSatRadio.parentElement.setAttribute('data-bs-placement', 'top');
-//         nuvSatRadio.parentElement.setAttribute('title', 'Cannot have both flux densities be saturated. Please see question 3 on the FAQs page for more information.');
-//     } else {
-//         // else if the flag value is equal to None (nothing checked) or any other option
-//         // make fuv inputs required, make sure other nuv null flag is not disabled, and remove tooltip
-//         fuvErrInput.required = true;
-//         nuvSatRadio.disabled = false;
-//         nuvSatRadio.parentElement.removeAttribute('data-bs-toggle');
-//         nuvSatRadio.parentElement.removeAttribute('data-bs-placement');
-//         nuvSatRadio.parentElement.removeAttribute('title');
-//         nuvSatRadio.parentElement.removeAttribute('data-bs-original-title');
-//     }
-//     // run tooltip instantiation every time tooltips change
-//     runToolTips();
-// }
 
 function updateNuvRequired() {
     if (nuvNullRadio.checked) {
@@ -135,26 +133,58 @@ function updateNuvRequired() {
         // set radio states
         fuvNullRadio.disabled = true;
         fuvSatRadio.disabled = false;
+        fuvUpLimRadio.disabled = false;
         // set popover states (remove sat, add null)
         fuvSatRadio.parentElement.removeAttribute('data-bs-toggle');
         fuvSatRadio.parentElement.removeAttribute('data-bs-placement');
         fuvSatRadio.parentElement.removeAttribute('title');
         fuvSatRadio.parentElement.removeAttribute('data-bs-original-title');
+        fuvUpLimRadio.parentElement.removeAttribute('data-bs-toggle');
+        fuvUpLimRadio.parentElement.removeAttribute('data-bs-placement');
+        fuvUpLimRadio.parentElement.removeAttribute('title');
+        fuvUpLimRadio.parentElement.removeAttribute('data-bs-original-title');
         fuvNullRadio.parentElement.setAttribute('data-bs-toggle', 'tooltip');
         fuvNullRadio.parentElement.setAttribute('data-bs-placement', 'top');
         fuvNullRadio.parentElement.setAttribute('title', 'Cannot have both flux densities be null. See Q3 on the FAQs page for more information.');
-    } else if (nuvSatRadio.checked) {
+    } 
+    else if (nuvUpLimRadio.checked) {
+        // set input states
+        nuvInput.required = true;
+        nuvErrInput.required = false;
+        // set radio states
+        fuvNullRadio.disabled = false;
+        fuvSatRadio.disabled = false;
+        fuvUpLimRadio.disabled = true;
+        // set popover states (remove null, add sat)
+        fuvNullRadio.parentElement.removeAttribute('data-bs-toggle');
+        fuvNullRadio.parentElement.removeAttribute('data-bs-placement');
+        fuvNullRadio.parentElement.removeAttribute('title');
+        fuvNullRadio.parentElement.removeAttribute('data-bs-original-title');
+        fuvSatRadio.parentElement.removeAttribute('data-bs-toggle');
+        fuvSatRadio.parentElement.removeAttribute('data-bs-placement');
+        fuvSatRadio.parentElement.removeAttribute('title');
+        fuvSatRadio.parentElement.removeAttribute('data-bs-original-title');
+        fuvUpLimRadio.parentElement.setAttribute('data-bs-toggle', 'tooltip');
+        fuvUpLimRadio.parentElement.setAttribute('data-bs-placement', 'top');
+        fuvUpLimRadio.parentElement.setAttribute('title', 'Cannot have both flux densities be upper limits. See Q3 on the FAQs page for more information.');
+    } 
+    else if (nuvSatRadio.checked) {
         // set input states
         nuvInput.required = true;
         nuvErrInput.required = false;
         // set radio states
         fuvNullRadio.disabled = false;
         fuvSatRadio.disabled = true;
+        fuvUpLimRadio.disabled = false;
         // set popover states (remove null, add sat)
         fuvNullRadio.parentElement.removeAttribute('data-bs-toggle');
         fuvNullRadio.parentElement.removeAttribute('data-bs-placement');
         fuvNullRadio.parentElement.removeAttribute('title');
         fuvNullRadio.parentElement.removeAttribute('data-bs-original-title');
+        fuvUpLimRadio.parentElement.removeAttribute('data-bs-toggle');
+        fuvUpLimRadio.parentElement.removeAttribute('data-bs-placement');
+        fuvUpLimRadio.parentElement.removeAttribute('title');
+        fuvUpLimRadio.parentElement.removeAttribute('data-bs-original-title');
         fuvSatRadio.parentElement.setAttribute('data-bs-toggle', 'tooltip');
         fuvSatRadio.parentElement.setAttribute('data-bs-placement', 'top');
         fuvSatRadio.parentElement.setAttribute('title', 'Cannot have both flux densities be saturated. See Q3 on the FAQs page for more information.');
@@ -168,6 +198,7 @@ function updateNuvRequired() {
         // set radio states
         fuvNullRadio.disabled = false;
         fuvSatRadio.disabled = false;
+        fuvUpLimRadio.disabled = false;
         // set popover states (remove both)
         fuvNullRadio.parentElement.removeAttribute('data-bs-toggle');
         fuvNullRadio.parentElement.removeAttribute('data-bs-placement');
@@ -177,36 +208,15 @@ function updateNuvRequired() {
         fuvSatRadio.parentElement.removeAttribute('data-bs-placement');
         fuvSatRadio.parentElement.removeAttribute('title');
         fuvSatRadio.parentElement.removeAttribute('data-bs-original-title');
+        fuvUpLimRadio.parentElement.removeAttribute('data-bs-toggle');
+        fuvUpLimRadio.parentElement.removeAttribute('data-bs-placement');
+        fuvUpLimRadio.parentElement.removeAttribute('title');
+        fuvUpLimRadio.parentElement.removeAttribute('data-bs-original-title');
     }
     // run tooltip instantiation every time tooltips change
     runToolTips();
 }
 
-// function updateSaturatedNuvRequired() {
-//     console.log(nuvSatuaratedRadio.value);
-//     if (nuvNullRadio.checked) {
-//         // if the nuv null flag is checked make nuv inputs not required
-//         // disable fuv null flag radio btn and add tooltip to give more info
-//         nuvInput.required = false;
-//         nuvErrInput.required = false;
-//         fuvNullRadio.disabled = true;
-//         fuvNullRadio.parentElement.setAttribute('data-bs-toggle', 'tooltip');
-//         fuvNullRadio.parentElement.setAttribute('data-bs-placement', 'top');
-//         fuvNullRadio.parentElement.setAttribute('title', 'Cannot have both flux densities be null. See Q3 on the FAQs page for more information.');
-//     } else {
-//         // else if the flag value is equal to None (nothing checked) or any other option
-//         // make nuv inputs required, make sure other fuv null flag is not disabled, and remove tooltip
-//         nuvInput.required = true;
-//         nuvErrInput.required = true;
-//         fuvNullRadio.disabled = false;
-//         fuvNullRadio.parentElement.removeAttribute('data-bs-toggle');
-//         fuvNullRadio.parentElement.removeAttribute('data-bs-placement');
-//         fuvNullRadio.parentElement.removeAttribute('title');
-//         fuvNullRadio.parentElement.removeAttribute('data-bs-original-title');
-//     }
-//     // run tooltip instantiation every time tooltips change
-//     runToolTips();
-// }
 
 function runToolTips() {
     // tooltip instantiation, need to make tooltips work

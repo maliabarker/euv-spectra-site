@@ -88,7 +88,6 @@ def create_plotly_graph(files):
     colors = ['#2E42FC', "#7139F1", "#9A33EA", "#C32DE3",
               "#EE26DB", "#FE63A0", "#FE8F77", "#FDAE5A"]
     # STEP 2: for each file, add new trace with data
-    i = 0
     for key, value in files.items():
         if 'model' in key:
             hst = fits.open(value['filepath'])
@@ -102,48 +101,35 @@ def create_plotly_graph(files):
                     value['flag'] = '(Best Match)'
             if 'flag' in value:
                 fig.add_trace(go.Scatter(
-                    x=w_obs, y=f_obs, name=f"<b>Model {value['index']} Spectrum: {value['flag']}</b>", line=dict(color=colors[value['index']], width=1)))
+                    x=w_obs, y=f_obs, name=f"<b>Model {value['index'] + 1} Spectrum: {value['flag']}</b>", line=dict(color=colors[value['index']], width=1)))
             else:
                 fig.add_trace(go.Scatter(
-                    x=w_obs, y=f_obs, name=f"<b>Model {value['index']} Spectrum</b>", line=dict(color=colors[value['index']], width=1)))
+                    x=w_obs, y=f_obs, name=f"<b>Model {value['index'] + 1} Spectrum</b>", line=dict(color=colors[value['index']], width=1)))
             fig.add_trace(go.Scatter(
-                x=[2315], y=[value['nuv']], name=f'Model {value["index"]} NUV',
+                x=[2315], y=[value['nuv']], name=f'Model {value["index"] + 1} NUV',
                 mode='markers', marker=dict(color=colors[value['index']], line=dict(color="DarkGrey", width=1), size=10)))
             fig.add_trace(go.Scatter(
-                x=[1542], y=[value['fuv']], name=f'Model {value["index"]} FUV',
+                x=[1542], y=[value['fuv']], name=f'Model {value["index"] + 1} FUV',
                 mode='markers', marker=dict(color=colors[value['index']], line=dict(color="DarkGrey", width=1), size=10)))
             fig.add_trace(go.Scatter(
-                x=[500], y=[value['euv']], name=f'Model {value["index"]} EUV',
+                x=[500], y=[value['euv']], name=f'Model {value["index"] + 1} EUV',
                 mode='markers', marker=dict(color=colors[value['index']], line=dict(color="DarkGrey", width=1), size=10)))
-            
-    for galex_flux in [files['galex_nuv'], files['galex_fuv']]:
-        # plot galex flux
-        if 'flag' in galex_flux and galex_flux['flag'] == 'saturated':
-            fig.add_trace(go.Scatter(
-                x=[galex_flux['wavelength']], y=[galex_flux['flux_density']], name=galex_flux['name'],
-                mode='markers', marker=dict(color='black', symbol='triangle-up', size=10)))
-        elif 'flag' in galex_flux and galex_flux['flag'] == 'upper_limit':
-            fig.add_trace(go.Scatter(
-                x=[galex_flux['wavelength']], y=[galex_flux['flux_density']], name=galex_flux['name'],
-                mode='markers', marker=dict(color='black', symbol='triangle-down', size=10)))
-        else:
-            fig.add_trace(go.Scatter(
-                x=[galex_flux['wavelength']], y=[galex_flux['flux_density']], name=galex_flux['name'],
-                error_y=dict(type='data', array=[galex_flux['flux_density_err']], visible=True), 
-                mode='markers', marker=dict(color='black', size=10)))
-    # while i <= len(files) - 1:
-    #     hst = fits.open(files[i])
-    #     data = hst[1].data
-    #     w_obs = data['WAVELENGTH'][0]
-    #     f_obs = data['FLUX'][0]
-    #     if i == 0:
-
-    #         fig.add_trace(go.Scatter(
-    #             x=w_obs, y=f_obs, name=f"<b>Model {i+1} Spectrum (Best Match)</b>", line=dict(color=colors[i], width=1)))
-    #     else:
-    #         fig.add_trace(go.Scatter(
-    #             x=w_obs, y=f_obs, name=f"<b>Model {i+1} Spectrum</b>", line=dict(color=colors[i], width=1)))
-    #     i += 1
+    for key, value in files.items():
+        if 'galex' in key:
+            # plot galex flux
+            if 'flag' in value and value['flag'] == 'saturated':
+                fig.add_trace(go.Scatter(
+                    x=[ value['wavelength']], y=[ value['flux_density']], name= value['name'],
+                    mode='markers', marker=dict(color='black', symbol='arrow-up', size=10)))
+            elif 'flag' in value and value['flag'] == 'upper_limit':
+                fig.add_trace(go.Scatter(
+                    x=[value['wavelength']], y=[value['flux_density']], name=value['name'],
+                    mode='markers', marker=dict(color='black', symbol='arrow-down', size=10)))
+            else:
+                fig.add_trace(go.Scatter(
+                    x=[value['wavelength']], y=[value['flux_density']], name=value['name'],
+                    error_y=dict(type='data', array=[value['flux_density_err']], visible=True), 
+                    mode='markers', marker=dict(color='black', size=10)))
     # STEP 3: Add additional styling
     fig.update_layout(xaxis=dict(title='Wavelength (Å)', range=[10, 3000]),
                       yaxis=dict(title='Flux Density (erg/cm2/s/Å)',
