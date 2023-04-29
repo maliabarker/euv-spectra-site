@@ -12,22 +12,6 @@ const nuvSatRadio = document.getElementById('nuv_flag-2')
 const nuvInput = document.getElementById('nuv');
 const nuvErrInput = document.getElementById('nuv_err');
 
-const jBandCont = document.getElementById('j_band');
-const jBandInput = jBandCont.querySelector('.form-control');
-const jBandSelect = jBandCont.querySelector('.form-select')
-
-function showJBandInput() {
-    if (fuvNullRadio.checked || nuvNullRadio.checked || fuvSatRadio.checked || nuvSatRadio.checked || fuvUpLimRadio.checked || nuvUpLimRadio.checked) {
-        jBandCont.style.display = '';
-        jBandInput.required = true;
-        jBandSelect.required = true;
-    } else {
-        jBandCont.style.display = 'none';
-        jBandInput.required = false;
-        jBandSelect.required = false;
-    }
-}
-
 function updateFuvRequired() {
     if (fuvNullRadio.checked) {
         console.log('FUV null radio button checked')
@@ -229,21 +213,14 @@ function runToolTips() {
 for (let i=0; i < fuvFlagRadioBtns.length; i++) {
     // adding change function on every radio in flags for FUV
     fuvFlagRadioBtns[i].addEventListener('change', updateFuvRequired);
-    // fuvFlagRadioBtns[i].addEventListener('change', updateSaturatedFuvRequired);
-    fuvFlagRadioBtns[i].addEventListener('change', showJBandInput);
 }
 
 for (let i=0; i < nuvFlagRadioBtns.length; i++) {
     // adding change function on every radio in flags for NUV
     nuvFlagRadioBtns[i].addEventListener('change', updateNuvRequired);
-    // nuvFlagRadioBtns[i].addEventListener('change', updateSaturatedNuvRequired);
-    nuvFlagRadioBtns[i].addEventListener('change', showJBandInput);
 }
 
  // initial calls to set required attributes based on initial state of radio button and instantiate tooltips
 updateFuvRequired();
-// updateSaturatedFuvRequired();
 updateNuvRequired();
-// updateSaturatedNuvRequired();
-showJBandInput();
 runToolTips();

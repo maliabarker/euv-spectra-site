@@ -1,4 +1,5 @@
 import json
+import math
 from astropy.io import fits
 import plotly.graph_objects as go
 from euv_spectra_app.extensions import *
@@ -136,3 +137,33 @@ def create_plotly_graph(files):
                                  type='log', range=[-4, 7], tickformat='.0e'),
                       showlegend=True)
     return fig
+
+
+def test_new_early_m_equation(flux_val, flux_err, flux_type):
+    """
+    FUV = 10 ^ ( 1.17 * log10(NUV) - 1.26 )
+    NUV = 10 ^ ( ( log10(FUV) + 1.26 ) / 1.17 )
+    """
+    pred_flux = None
+    if flux_type == 'fuv':
+        # predicting for NUV
+        pred_flux = pow(10, (( math.log10(flux_val) + 1.26 ) / 1.17 ))
+    elif flux_type == 'nuv':
+        # predicting for FUV
+        pred_flux = pow(10, ( 1.17 * math.log10(flux_val) - 1.26 ))
+    return pred_flux
+
+
+def test_new_late_m_equation(flux_val, flux_err, flux_type):
+    """
+    FUV = 10 ^ ( 0.98 * log10(NUV) - 0.47 )
+    NUV = 10 ^ ( ( log10(FUV) + 0.47 ) / 0.98 )
+    """
+    pred_flux = None
+    if flux_type == 'fuv':
+        # predicting for NUV
+        pred_flux = pow(10, (( math.log10(flux_val) + 0.47 ) / 0.98 ))
+    elif flux_type == 'nuv':
+        # predicting for FUV
+        pred_flux = pow(10, ( 0.98 * math.log10(flux_val) - 0.47 ))
+    return pred_flux

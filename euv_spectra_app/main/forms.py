@@ -94,9 +94,6 @@ class ManualForm(FlaskForm):
     nuv_err = DecimalField('NUV err (μJy)', validators=[NotRequiredIf(nuv_flag=['null', 'saturated', 'upper_limit'])])
     nuv_flag = RadioField('NUV Flag', validators=[Optional()], choices=[(
         'null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated'), ('none', 'None')])
-    j_band = DecimalField('2MASS J Band', validators=[RequiredIfOneOf({'fuv_flag':'null', 'nuv_flag':'null', 'fuv_flag':'saturated', 'nuv_flag':'saturated'})])
-    j_band_unit = SelectField('J Band Unit', validators=[RequiredIfOneOf({'fuv_flag':'null', 'nuv_flag':'null', 'fuv_flag':'saturated', 'nuv_flag':'saturated'})], 
-                              choices=[('mag', 'Magnitude (mag)'), ('flux', 'Flux Density (μJy)')])
     submit = SubmitField('Submit and Find EUV Spectrum')
 
 

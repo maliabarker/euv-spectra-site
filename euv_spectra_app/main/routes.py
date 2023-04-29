@@ -108,8 +108,8 @@ def submit_manual_form():
 
     form = ManualForm(request.form)
     stellar_object = StellarObject()
-    fields_not_to_include = ['dist_unit', 'fuv_flag', 'nuv_flag', 'j_band_unit', 'submit', 'csrf_token']
-    flux_data = ['fuv', 'fuv_err', 'nuv', 'nuv_err', 'j_band']
+    fields_not_to_include = ['dist_unit', 'fuv_flag', 'nuv_flag', 'submit', 'csrf_token']
+    flux_data = ['fuv', 'fuv_err', 'nuv', 'nuv_err']
 
     # iterate over each field in the form and set the attributes to the stellar object
     if form.validate_on_submit():
@@ -122,11 +122,6 @@ def submit_manual_form():
                     # CHECK DISTANCE UNIT: if distance unit is mas, convert to parsecs
                     # if the distance unit is milliarcseconds (mas) convert to parsecs
                     stellar_object.dist = int(1 / (form.dist.data / 1000))
-                elif fieldname == 'j_band_unit' and value == 'flux':
-                    # TODO convert flux density (ujy) to mag
-                    # CHECK J_BAND UNIT
-                    ZEROPOINT = 1594
-                    stellar_object.fluxes.j_band = -2.5 * ( math.log(form.j_band.data) - math.log(ZEROPOINT) )/ math.log(10.0)
                 elif 'flag' in fieldname:
                     flux = fieldname[:3]
                     flux_err = f'{flux}_err'
@@ -169,9 +164,12 @@ def submit_manual_form():
                         setattr(stellar_object, fieldname, float(value))
                     else:
                         setattr(stellar_object, fieldname, value)
+        print('SETTING STELLAR SUBTYPE')
+        stellar_object.get_stellar_subtype()
         # remove any objects within the stellar object and assign it to fluxes
         stellar_object.fluxes.stellar_obj = remove_objs_from_obj_dict(stellar_object.__dict__.copy())
         # run the check null, saturated, and upper limits fluxes
+        print('RUNNING NULL FLUX STUFF')
         stellar_object.fluxes.check_null_fluxes()
         stellar_object.fluxes.check_saturated_fluxes()
         stellar_object.fluxes.check_upper_limit_fluxes()
@@ -420,9 +418,9 @@ def return_results():
                 key = f'model_{model_index}'
                 plot_data[key] = {'index': model_index,
                                     'filepath': filepath,
-                                    'nuv': doc['nuv'],
-                                    'fuv': doc['fuv'],
-                                    'euv': doc['euv']}
+                                    'nuv': normal_models[0]['nuv'],
+                                    'fuv': normal_models[0]['fuv'],
+                                    'euv': normal_models[0]['euv']}
                 model_index += 1
                 if stellar_object.has_saturated_fluxes():
                     # STEP 9A.7: If there are saturated fluxes, this will be option B, add proper flag
