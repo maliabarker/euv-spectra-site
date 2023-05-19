@@ -48,7 +48,7 @@ def convert_ujy_to_flux(flux, wv):
 
 @api.route('/', methods=['GET', 'POST'])
 def load_api():
-    return render_template('load_api.html')
+    return render_template('load-api.html')
 
 
 @api.route('/get_galex_obs_time', methods=['GET', 'POST'])

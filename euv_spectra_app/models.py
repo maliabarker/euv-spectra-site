@@ -3,6 +3,7 @@ import numpy.ma as ma
 import math
 from astropy.time import Time
 import astropy.units as u
+from astroquery.exceptions import ResolverError
 from astropy.coordinates import SkyCoord, Distance
 from astroquery.mast import Catalogs
 from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
@@ -36,14 +37,27 @@ class ProperMotionData():
             tuple: A tuple containing two floats representing the corrected right ascension and declination coordinates.
 
         Raises:
-            Exception: If an error occurs during the API request or coordinate correction.
+            TypeError: If the target star name is not found in the GALEX obs time collection (cannot get t_min)
+            KeyError: If the target star name is not found in the GALEX obs time collection
+            ValueError: If the star name is not a valid string to search with
+            Exception: If an error occurs during coordinate correction or any other error occurs during galex search.
         """
         try:
             # STEP 1: Find a GALEX observation time from custom compiled dataset
             galex_time = db.mast_galex_times.find_one(
                 {'target': star_name})['t_min']
-        except:
-            return 'No GALEX observations found, unable to correct coordinates for proper motion. \nLook under question 3 on the FAQ page for more information.'
+        except TypeError as te:
+            print(f'Galex obs time in depth error: {te}')
+            return(f'Did not find matches in GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion. Look under question 3 on the FAQ page for more information.')
+        except KeyError as ke:
+            print(f'Galex obs time in depth error: {ke}')
+            return(f'Did not find matches in GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion. Look under question 3 on the FAQ page for more information.')
+        except ValueError as ve:
+            print(f'Galex obs time in depth error: {ve}')
+            return(f'Unable to search GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion. Please check your inputs or look under question 3 on the FAQ page for more information.')
+        except Exception as e:
+            print(f'Galex obs time in depth error: {e}')
+            return(f'No GALEX observations found for {star_name if star_name else coords}. Unable to correct for proper motion. Look under question 3 on the FAQ page for more information.')
         else:
             try:
                 # STEP 2: If observation time is found, start coordinate correction by initializing variables
@@ -67,7 +81,7 @@ class ProperMotionData():
                 # STEP 7: Add new coordinates to return data dict
                 return (skycoord_obj.ra.degree, skycoord_obj.dec.degree)
             except Exception as e:
-                return ("Unknown error during proper motion correction:" + str(e))
+                return (f'Unknown error during proper motion correction: {e}')
 
 
 class GalexFlux():
@@ -442,7 +456,7 @@ class GalexFluxes():
 class StellarObject():
     """Represents a stellar object."""
 
-    def __init__(self, star_name=None, position=None, coords=None, teff=None, logg=None, mass=None, dist=None, rad=None, pm_data=None, fluxes=None):
+    def __init__(self, star_name=None, position=None, coords=None, teff=None, logg=None, mass=None, dist=None, rad=None, pm_data=None, pm_corrected_coords=None, fluxes=None, stellar_subtype=None):
         self.star_name = star_name
         self.position = position
         self.coords = coords
@@ -452,39 +466,44 @@ class StellarObject():
         self.dist = dist
         self.rad = rad
         self.pm_data = pm_data
+        self.pm_corrected_coords = pm_corrected_coords
         self.fluxes = fluxes
-        self.modal_galex_error_msgs = []
+        self.stellar_subtype = stellar_subtype
+        self.modal_error_msgs = []
         if self.fluxes is None:
             self.fluxes = GalexFluxes()
 
     def has_all_stellar_parameters(self):
+        # Checks to see that all stellar intrinstic parameters exist.
         if self.teff is not None and self.logg is not None and self.mass is not None and self.dist is not None and self.rad is not None:
             return True
         else:
             return False
         
     def has_null_fluxes(self):
+        # Checks for any null fluxes.
         if self.fluxes.has_attr_val('processed_fuv') is False or self.fluxes.has_attr_val('processed_nuv') is False:
-        # if self.fluxes.processed_fuv is None or self.fluxes.processed_nuv is None:
             return True
         else:
             return False
         
     def has_saturated_fluxes(self):
+        # Checks for any fluxes flagged as saturated.
         if hasattr(self.fluxes, 'fuv_saturated') and self.fluxes.fuv_saturated or hasattr(self.fluxes, 'nuv_saturated') and self.fluxes.nuv_saturated:
             return True
         else:
             return False
         
     def has_upper_limit_fluxes(self):
+        # Checks for any fluxes flagged as upper limit.
         if hasattr(self.fluxes, 'fuv_upper_limit') and self.fluxes.fuv_upper_limit or hasattr(self.fluxes, 'nuv_upper_limit') and self.fluxes.nuv_upper_limit:
             return True
         else:
             return False
 
     def has_all_processed_fluxes(self):
+        # Checks to see that all GALEX fluxes have been converted, scaled, and photosphere subtracted.
         if self.fluxes.has_attr_val('processed_fuv') and self.fluxes.has_attr_val('processed_fuv_err') and self.fluxes.has_attr_val('processed_nuv') and self.fluxes.has_attr_val('processed_nuv_err'):
-        # if self.fluxes.processed_fuv is not None and self.fluxes.processed_fuv_err is not None and self.fluxes.processed_nuv is not None and self.fluxes.processed_nuv_err is not None:
             return True
         else:
             return False
@@ -494,98 +513,127 @@ class StellarObject():
 
         Searches SIMBAD, the NASA Exoplanet Archive, and MAST GALEX databases for 
         stellar data. Right ascension, declination, proper motion data, radial 
-        velocity, parallax, and J band 2MASS magnitude are pulled from SIMBAD. 
-        Effective temperature, surface gravity, mass, distance, and radius are pulled 
-        from the NASA Exoplanet Archive. GALEX FUV and NUV flux density and the 
-        respective errors are pulled from the MAST GALEX database. The data is used to 
-        populate the resulting modal form.
+        velocity, and parallax are pulled from SIMBAD. Effective temperature, 
+        surface gravity, mass, distance, and radius are pulled from the NASA 
+        Exoplanet Archive. GALEX FUV and NUV flux density and the respective errors 
+        are pulled from the MAST GALEX database. The data is used to populate the 
+        resulting modal form.
+
+        We check if each catalog/dataset search was successful by checking if the returned 
+        data is None or not. If the search goes well, the searched catalog will assign 
+        parameters in place and will return None. However, if the search does not run for 
+        any reason, an error will be returned as a string error message. So, we check each 
+        catalog search by checking if result of function call is None (search went well) or 
+        not (error message is returned and we add that to modal error messages to return 
+        on the user's front end.)
 
         Args:
             star_name OR position: The search term the user submitted in the search bar input.
             search_format: The format the search input is in, either name or position.
 
-        Returns:
-            Stellar parameters with cooresponding values to be passed to the modal form
+        Side Effects:
+            If every function runs without errors, will assign teff, logg, mass, dist, rad, 
+            fluxes, and stellar subtype.
+            If the search is by star name, will assign proper motion data and proper motion 
+            corrected coordinates.
+            If the search is by position, will assign coordinates converted to RA and DEC.
+            If an error occurs, will append to the modal galex error messages list.
 
         Raises:
-            No errors are raised but if an error is detected, the function returns None and
-            an error message is sent to the front end error page to be displayed.
+            No errors are raised but if an error is detected from within a catalog search, the 
+            function returns the error as a string and is sent to the front end error page to be displayed.
         """
         # STEP 1: Check for search type (position or name)
         if self.position:
-            # STEP P1: Change coordinates to ra and dec
-            converted_coords = self.convert_coords()
+            # STEP Pos1: Change coordinates to ra and dec
+            converted_coords = self.convert_coords(self.position)
             if converted_coords is not None:
                 # will stop function if coords were not converted into usable format
-                self.modal_error_msg = converted_coords
+                self.modal_page_error_msg = converted_coords
                 return
         elif self.star_name:
-            # STEP N1: Check if name is in the mast target database (meant to check for case & spacing errors)
+            # STEP Name1: Check if name is in the mast target database 
+            # (used to check for case & spacing errors in user input)
             data = NasaExoplanetArchive.query_criteria(
                 table="pscomppars", select="DISTINCT hostname")
             host_stars = data['hostname']
             for name in host_stars:
+                # take away all spaces and make every letter upper case
                 if self.star_name.upper().replace(' ', '') == name.upper().replace(' ', ''):
+                    # if there is a match, assign the input star name to the correct format from NEA
                     self.star_name = name
                     break
-            # STEP N2: Get coordinate and motion info from Simbad
-            simbad_data = self.query_simbad()
+            # STEP Name2: Get coordinate and proper motion info from Simbad
+            simbad_data = self.query_simbad(self.star_name)
             if simbad_data is not None:
                 # will stop function if no coords found in SIMBAD
-                self.modal_error_msg = simbad_data
+                self.modal_page_error_msg = simbad_data
                 return
-            # STEP N3: Put PM and Coord info into correction function
+            # STEP Name3: Put PM and Coord info into proper motion correction function
             pm_corrected_coords = self.pm_data.correct_pm(
                 self.star_name, self.coords)
+            # if the returned data is a tuple, this means it returned an RA and DEC, assign values as coords
             if isinstance(pm_corrected_coords, tuple):
-                self.coords = pm_corrected_coords
-            else:
+                print(f'PM CORRECTED COORDS: {pm_corrected_coords}')
+                self.pm_corrected_coords = pm_corrected_coords
+            # else, if the return data is not tuple and is string this means exception/error was thrown 
+            # and error message is returned. Append the error message as either a regular or galex modal 
+            # error message.
+            elif isinstance(pm_corrected_coords, str):
                 if 'GALEX' not in pm_corrected_coords:
-                    self.modal_error_msg = pm_corrected_coords
+                    # if it is a regular error message, this means something went wrong with the coordinates/object 
+                    # and the search needs to break because the same coords/object will not search on the NEA dataset
+                    self.modal_page_error_msg = pm_corrected_coords
                     return
                 else:
-                    self.modal_galex_error_msgs.append(pm_corrected_coords)
+                    # else if it is just a GALEX error, we can continue onto searching the NASA Exoplanet Archive 
+                    # for stellar intrinsic parameters
+                    self.modal_error_msgs.append(pm_corrected_coords)
         # STEP 2: Search NASA Exoplanet Archive with the search term & type
-        nea_data = self.query_nasa_exoplanet_archive()
+        nea_data = self.query_nasa_exoplanet_archive(self.star_name, self.coords)
         if nea_data is not None:
-            self.modal_error_msg = nea_data
+            # if the NEA search didn't return anything, then the object either doesn't exist or isn't an exoplanet 
+            # host star. Functionality is not built in yet for non-exoplanet host stars, so we break the function 
+            # and tell user to input parameters manually.
+            # self.modal_error_msgs.append(nea_data)
+            self.modal_page_error_msg = nea_data
             return
-        self.get_stellar_subtype()
-        # TODO check that NEA search was successful, allow to continue to galex if not
-        # STEP 3: Check if coordinate correction happened then search GALEX with
-            # corrected/converted coords
-        # if self.star_name is not None and self.pm_data is not None:
-            # coordinate correction happened which means GALEX data exists, execute galex query
-        galex_data = self.query_galex()
+        # STEP 3: Get the stellar subtype. Needed for GALEX flux predictions if a flux is null
+        self.get_stellar_subtype(self.teff, self.logg, self.mass)
+        # STEP 4: Check if coordinate correction happened then search GALEX with corrected/converted coords
+        galex_data = self.query_galex(self.star_name, self.position, self.pm_corrected_coords, self.coords)
         if galex_data is not None:
-            self.modal_galex_error_msgs.append(galex_data)
+            self.modal_error_msgs.append(galex_data)
             return
-        # TODO check that flux object was successfully created
 
-    def convert_coords(self):
-        """Converts the `position` attribute to equatorial coordinates (`coordinates` attribute) using the `SkyCoord` class from the `astropy.coordinates` module.
+    def convert_coords(self, position):
+        """Converts the position attribute to equatorial coordinates (coords attribute) using the SkyCoord class from the astropy.coordinates module.
+        Args:
+            position: The user's inputted position from search form.
 
         Side effects:
             Sets the coordinates of the stellar object.
 
         Raises:
-            ValueError: If the `position` attribute is not in the expected format.
-            TypeError: If the `position` attribute is not a string or a tuple of two strings.
+            ValueError: If the position attribute is not in the expected format.
+            TypeError: If the position attribute is not a string or a tuple of two strings.
             Exception: If an unknown error occurs during the coordinate conversion process.
         """
         try:
-            c = SkyCoord(self.position, unit=(u.hourangle, u.deg))
+            c = SkyCoord(position, unit=(u.hourangle, u.deg))
             self.coords = (c.ra.degree, c.dec.degree)
             return
-        except ValueError as e:
-            return ("Invalid `position` attribute: " + str(e))
-        except TypeError as e:
-            return ("Invalid `position` attribute: " + str(e))
+        except ValueError as ve:
+            return (f'Invalid position attribute: {ve}')
+        except TypeError as te:
+            return (f'Invalid position attribute: {te}')
         except Exception as e:
-            return ("Unknown error during coordinate conversion: " + str(e))
+            return (f'Unknown error during coordinate conversion: {e}')
 
-    def query_simbad(self):
+    def query_simbad(self, star_name):
         """Searches the SIMBAD astronomical database to retrieve data on a specified star.
+        Args:
+            star_name: The user's inputted star name from the search form.
 
         Side effects:
             Sets the coordinates and proper motion data of the stellar object.
@@ -594,7 +642,7 @@ class StellarObject():
             Exception: If an error occurs during the SIMBAD search, or if no data is found for the specified star.
         """
         try:
-            result_table = customSimbad.query_object(self.star_name)
+            result_table = customSimbad.query_object(star_name)
             if result_table and len(result_table) > 0:
                 data = result_table[0]
                 self.coords = (data['RA'], data['DEC'])
@@ -605,39 +653,42 @@ class StellarObject():
                     self.pm_data.rad_vel = data['RV_VALUE']
                 return
             else:
-                return (f"No results found in SIMBAD for {self.star_name}. Please check spelling, spacing, and or capitalization and try again.")
+                return (f'No results found in SIMBAD for {star_name}. Please check spelling, spacing, and or capitalization and try again.')
         except Exception as e:
-            return ("Unknown error during SIMBAD search:" + str(e))
+            return (f'Unknown error during SIMBAD search: {e}')
 
-    def query_nasa_exoplanet_archive(self):
+    def query_nasa_exoplanet_archive(self, star_name, coords):
         """Searches the NASA Exoplanet Archive for stellar parameters.
 
         Queries the NASA Exoplanet Archive (NExSci) for data on a given star_name or position and sets the attributes
         of the object to the retrieved data. Raises an exception if no results are found in the NExSci database
         for the given input parameters or if the spectral type of the star is not M or K.
 
+        Args:
+            star_name: The user's inputted star name from the search form.
+            coords: The user's inputted coordinates from the search from, converted to RA and DEC.
+
         Side effects:
             Sets effective temperature (teff), surface gravity (logg), mass, distance (dist), and radius (rad)
             of the stellar object.
-            Sets 2MASS J band magitude of GalexFluxes object.
 
         Raises:
             Sends a string error message to the front end custom error page if no results
             are found or if the target is not a M or K type star.
         """
-        error_var = ''
-        if self.star_name:
-            error_var = self.star_name
-            corrected_star_name = self.star_name.replace("'", "''")
+        # error_var = ''
+        if star_name:
+            # error_var = self.star_name
+            corrected_star_name = star_name.replace("'", "''")
             nea_data = NasaExoplanetArchive.query_criteria(
                 table="pscomppars", 
                 select="top 5 disc_refname, st_spectype, st_teff, st_logg, st_mass, st_rad, sy_dist, sy_jmag", 
                 where=f"hostname like '%{corrected_star_name}%'", 
                 order="hostname")
-        elif self.position:
-            error_var = self.position
+        elif coords:
+            # error_var = self.position
             nea_data = NasaExoplanetArchive.query_region(table="pscomppars", coordinates=SkyCoord(
-                ra=self.coords[0] * u.deg, dec=self.coords[1] * u.deg), radius=1.0 * u.deg)
+                ra=coords[0] * u.deg, dec=coords[1] * u.deg), radius=1.0 * u.deg)
         if len(nea_data) > 0:
             data = nea_data[0]
             if 2400 < data['st_teff'].unmasked.value < 5500:
@@ -648,11 +699,11 @@ class StellarObject():
                 self.dist = data['sy_dist'].unmasked.value
                 return
             else:
-                return (f'{error_var} is not an M or K type star. Data is currently only available for these spectral sybtypes.')
+                return (f'{star_name if star_name else coords} is not an M or K type star. Data is currently only available for these spectral sybtypes.')
         else:
-            return f'Nothing found for {error_var} in the NExSci database.'
+            return (f'Nothing found for {star_name if star_name else coords} in the NExSci database.')
 
-    def query_galex(self):
+    def query_galex(self, star_name, position, pm_corrected_coords, coords):
         """Searches the MAST GALEX database by coordinates for flux densities.
 
         Queries the MAST GALEX database for FUV and NUV flux densities and respective
@@ -660,11 +711,18 @@ class StellarObject():
         predict_fluxes() method below.
 
         Args:
-            coordinates: RA and Dec to query the database.
+            star_name: The original star name user input from the search bar. Used to see if we should 
+                query GALEX with pm_corrected_coords.
+            position: The original position user input from the search bar. Used to see if we should 
+                query GALEX with coords
+            pm_corrected_coords: The proper motion corrected coordinates (RA and DEC) for a given star name.
+            coords: RA and Dec to query the database.
 
-        Returns:
-            GALEX FUV flux density, NUV flux density, FUV flux density error, and NUV flux
-            density error.
+        Side Effects:
+            Sets GALEX FUV flux density, NUV flux density, FUV flux density error, and NUV flux
+            density error for the stellar object's GalexFlux object.
+            Will also set saturated and/or upper limits flags and fluxes for the stellar object's 
+            GalexFlux object if they exist.
 
         Raises:
             Sends a string error message if no results are found to be displayed on the
@@ -673,58 +731,101 @@ class StellarObject():
         """
         # STEP 1: Query the MAST catalogs object by GALEX catalog & given ra and dec
         try:
-            galex_data = Catalogs.query_object(
-                f'{self.coords[0]} {self.coords[1]}', catalog="GALEX")
+            galex_data = None
+            if star_name and pm_corrected_coords:
+                # if the original query was by star name and the proper motion corrected coords exist
+                galex_data = Catalogs.query_object(
+                    f'{pm_corrected_coords[0]} {pm_corrected_coords[1]}', catalog="GALEX")
+            elif position and coords:
+                # elif the original query was by position and the coords exist
+                galex_data = Catalogs.query_object(
+                    f'{coords[0]} {coords[1]}', catalog="GALEX")
             # STEP 2: If there are results returned and results within 0.167 arcmins, then start processing the data.
-            if len(galex_data) > 0:
-                # Set minimum distance between target coordinates and actual coordinates of object.
-                MIN_DIST = galex_data['distance_arcmin'] < 0.167
-                if len(galex_data[MIN_DIST]) > 0:
-                    filtered_data = galex_data[MIN_DIST][0]
-                    print(filtered_data)
-                    if self.fluxes is None:
-                        self.fluxes = GalexFluxes()
-                    fluxes_stell_obj = self.__dict__.copy()
-                    del fluxes_stell_obj['fluxes']
-                    del fluxes_stell_obj['pm_data']
-                    self.fluxes.stellar_obj = fluxes_stell_obj
-                    self.fluxes.fuv = filtered_data['fuv_flux']
-                    self.fluxes.nuv = filtered_data['nuv_flux']
-                    self.fluxes.fuv_err = filtered_data['fuv_fluxerr']
-                    self.fluxes.nuv_err = filtered_data['nuv_fluxerr']
-                    print('Testing masked return data:', ma.is_masked(filtered_data['fuv_flux_aper_7']))
-                    if not ma.is_masked(filtered_data['fuv_flux_aper_7']) and filtered_data['fuv_flux_aper_7'] > 34:
-                        self.fluxes.fuv_is_saturated = True
-                        self.fluxes.fuv_saturated = filtered_data['fuv_flux']
+            if galex_data is not None:
+                if len(galex_data) > 0:
+                    # Set minimum distance between target coordinates and actual coordinates of object.
+                    MIN_DIST = galex_data['distance_arcmin'] < 0.167
+                    if len(galex_data[MIN_DIST]) > 0:
+                        filtered_data = galex_data[MIN_DIST][0]
+                        # create new fluxes object to store data in if there isn't one yet
+                        if self.fluxes is None:
+                            self.fluxes = GalexFluxes()
+                        # STEP 3: Assign the edited stellar object to the flux object
+                        # delete any objects within stellar object and assign this to the flux object's stellar object
+                        # this is done so the flux object can access attributes from the stellar object such as teff, logg, and mass
+                        fluxes_stell_obj = self.__dict__.copy()
+                        del fluxes_stell_obj['fluxes']
+                        del fluxes_stell_obj['pm_data']
+                        self.fluxes.stellar_obj = fluxes_stell_obj
+                        # STEP 4: Assign fuv, nuv, and error to flux object
+                        self.fluxes.fuv = filtered_data['fuv_flux']
+                        self.fluxes.nuv = filtered_data['nuv_flux']
+                        self.fluxes.fuv_err = filtered_data['fuv_fluxerr']
+                        self.fluxes.nuv_err = filtered_data['nuv_fluxerr']
+                        # STEP 5: Check for saturated fluxes
+                        if not ma.is_masked(filtered_data['fuv_flux_aper_7']) and filtered_data['fuv_flux_aper_7'] > 34:
+                            self.fluxes.fuv_is_saturated = True
+                            self.fluxes.fuv_saturated = filtered_data['fuv_flux']
+                        else:
+                            self.fluxes.fuv_is_saturated = False
+                        if not ma.is_masked(filtered_data['nuv_flux_aper_7']) and filtered_data['nuv_flux_aper_7'] > 108:
+                            self.fluxes.nuv_is_saturated = True
+                            self.fluxes.nuv_saturated = filtered_data['nuv_flux']
+                        else:
+                            self.fluxes.nuv_is_saturated = False
+                        # STEP 6: Check if there are any masked values (these will be null values)
+                        null_fluxes = self.fluxes.check_null_fluxes()
+                        if null_fluxes is not None:
+                            self.modal_error_msgs.append(null_fluxes)
+                        saturated_fluxes = self.fluxes.check_saturated_fluxes()
+                        if saturated_fluxes is not None:
+                            self.modal_error_msgs.append(saturated_fluxes)
+                        return
                     else:
-                        self.fluxes.fuv_is_saturated = False
-
-                    if not ma.is_masked(filtered_data['nuv_flux_aper_7']) and filtered_data['nuv_flux_aper_7'] > 108:
-                        self.fluxes.nuv_is_saturated = True
-                        self.fluxes.nuv_saturated = filtered_data['nuv_flux']
-                    else:
-                        self.fluxes.nuv_is_saturated = False
-
-                    # STEP 3: Check if there are any masked values (these will be null values) and change accordingly
-                    null_fluxes = self.fluxes.check_null_fluxes()
-                    if null_fluxes is not None:
-                        self.modal_galex_error_msgs.append(null_fluxes)
-                    saturated_fluxes = self.fluxes.check_saturated_fluxes()
-                    if saturated_fluxes is not None:
-                        self.modal_galex_error_msgs.append(saturated_fluxes)
-                    return
+                        # No results within 0.167 arc minutes
+                        return 'No detection in GALEX FUV and NUV. Look under question 3 on the FAQ page for more information.'
                 else:
-                    return 'No detection in GALEX FUV and NUV. \nLook under question 3 on the FAQ page for more information.'
+                    # No results found for the GALEX catalog query
+                    return (f'No GALEX observations found. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')
             else:
-                return 'No GALEX observations found.'
+                # No results found because proper info was not given for example, will happen if 
+                # proper motion correction did not occur and is therefore not given
+                return (f'Missing data to query GALEX {"because coordinates were not corrected for proper motion" if star_name else f"for {coords}"}. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')
+        except ResolverError as re:
+            print(f'Galex search in depth error: {re}')
+            return (f'Could not search GALEX catalog with object {coords if position else pm_corrected_coords}. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')
+        except ValueError as ve:
+            print(f'Galex search in depth error: {ve}')
+            return (f'Could not search GALEX catalog with object {coords if position else pm_corrected_coords}. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')
         except Exception as e:
-            return ('Unknown error during GALEX search:' + str(e))
+            print(f'Galex search in depth error: {e}')
+            return (f'Unknown error during GALEX search: {e}')
     
-    def get_stellar_subtype(self):
-        matching_subtype = find_matching_subtype(
-            self.teff, self.logg, self.mass)
-        print('MATCHING SUBTYPE:', matching_subtype['model'])
-        self.stellar_subtype = matching_subtype['model']
+    def get_stellar_subtype(self, teff, logg, mass):
+        """Assigns the matching PEGASUS grid stellar subtype to object.
+
+        Args:
+            teff: The stellar effective temp (K) of the current stellar object.
+            logg: The surface gravity of the current stellar object.
+            mass: The mass (in solar masses) of the current stellar object.
+        
+        Side Effects:
+            Sets the object's stellar_subtype attribute.
+
+        Raises:
+            TypeError if no subtype was returned from query.
+            Exception if any unknown error occurs.
+        """
+        try:
+            matching_subtype = find_matching_subtype(teff, logg, mass)
+            try:
+                self.stellar_subtype = matching_subtype['model']
+            except TypeError as te:
+                print(f'In depth stellar subtype search error:', te)
+                return(f'No PEGASUS subtype found with inputs: teff={teff}, logg={logg}, and mass={mass}. Please check your input(s) and try again, or manually input your values on the home page manual form.')
+        except Exception as e:
+            print(f'In depth stellar subtype search error:', e)
+            return(f'Unable to find stellar subtype with inputs: teff={teff}, logg={logg}, and mass={mass}. Please check your input and try again, or manually input your values on the home page manual form.')
 
 
 class PegasusGrid():

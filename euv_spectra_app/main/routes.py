@@ -52,10 +52,10 @@ def homepage():
             stellar_object.star_name = name_form.star_name.data
             stellar_object.get_stellar_parameters()
 
-        if hasattr(stellar_object, 'modal_error_msg'):
+        if hasattr(stellar_object, 'modal_page_error_msg'):
             # check if there were any errors returned from searching databases
-            return redirect(url_for('main.error', msg=stellar_object.modal_error_msg))
-        for msg in stellar_object.modal_galex_error_msgs:
+            return redirect(url_for('main.error', msg=stellar_object.modal_page_error_msg))
+        for msg in stellar_object.modal_error_msgs:
             flash(msg, 'warning')
         insert_data_into_form(stellar_object, modal_form)
 
