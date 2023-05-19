@@ -164,12 +164,10 @@ def submit_manual_form():
                         setattr(stellar_object, fieldname, float(value))
                     else:
                         setattr(stellar_object, fieldname, value)
-        print('SETTING STELLAR SUBTYPE')
-        stellar_object.get_stellar_subtype()
+        stellar_object.get_stellar_subtype(stellar_object.teff, stellar_object.logg, stellar_object.mass)
         # remove any objects within the stellar object and assign it to fluxes
         stellar_object.fluxes.stellar_obj = remove_objs_from_obj_dict(stellar_object.__dict__.copy())
         # run the check null, saturated, and upper limits fluxes
-        print('RUNNING NULL FLUX STUFF')
         stellar_object.fluxes.check_null_fluxes()
         stellar_object.fluxes.check_saturated_fluxes()
         stellar_object.fluxes.check_upper_limit_fluxes()
@@ -245,37 +243,44 @@ def return_results():
         if model_collection not in db.list_collection_names():
             return redirect(url_for('main.error', msg=f'The grid for model subtype {stellar_object.model_subtype} is currently unavailable. Currently available subtypes: M0, M3, M4, M6. \nPlease contact us with your stellar parameters and returned subtype if you think this is incorrect.'))
 
-        saturated_models = []
-        upper_limit_models = []
-        normal_models = []
-        plot_data = {}
-        filepaths = []
-        using_test_data = False
-        model_index = 0
+        saturated_models = [] # will hold our saturated models
+        upper_limit_models = [] # will hold our upper limit models
+        normal_models = [] # will hold our normal models
+        plot_data = {} # dict to hold all data to plot
+        filepaths = [] # list of filepaths for download buttons
+        using_test_data = False # Boolean to determine if we are using test data or not and throw flash if we are
+        model_index = 0 # Instantiating model index
 
         # STEP 5: Check for saturated fluxes and do special saturated grid search w/ flags
         if stellar_object.has_saturated_fluxes():
+            # This search will find anything between the limits of the non-saturated flux and anything above 
+            # the saturated flux values. if nothing is found within these limits, the non-saturated flux errors 
+            # are multiplied by 3, then again if nothing is found, by 5.
             print('HAS SATURATED VALUES, CONTINUING')
             # run special saturated flux search and flag with option a, don't run normal search
             if stellar_object.fluxes.fuv_is_saturated:
-                # add the saturated fuv value to be plotted
-                plot_data['galex_fuv_saturated'] = {'name': 'GALEX Processed FUV (Saturated)',
+                # add the saturated fuv GALEX flux to be plotted
+                plot_data['galex_fuv'] = {'name': 'GALEX Processed FUV (Saturated)',
                                                     'flux_density': stellar_object.fluxes.processed_fuv_saturated,
                                                     'wavelength': 1542,
                                                     'flag': 'saturated'}
                 # keep track of nuv_err for multiplying error bars if needed
                 nuv_err = stellar_object.fluxes.processed_nuv_err
+                # run query
                 saturated_models = pegasus.query_pegasus_saturated_fuv()
+                # if nothing is found, multiply non-saturated error bars by 3
                 if len(saturated_models) == 0:
                     # if nothing found in the first query, grow NUV error bars by 3 and try again
                     stellar_object.fluxes.processed_nuv_err = nuv_err * 3
                     saturated_models = pegasus.query_pegasus_saturated_fuv()
+                # if nothing is found again, multiply non-saturated error bars by 5
                 if len(saturated_models) == 0:
                     # if nothing found in the first query, grow NUV error bars by 5 and try again
                     stellar_object.fluxes.processed_nuv_err = nuv_err * 5
                     saturated_models = pegasus.query_pegasus_saturated_fuv()
             elif stellar_object.fluxes.nuv_is_saturated:
-                plot_data['galex_nuv_saturated'] = {'name': 'GALEX Processed NUV (Saturated)',
+                # Do the same but with NUV as saturated and FUV as normal flux
+                plot_data['galex_nuv'] = {'name': 'GALEX Processed NUV (Saturated)',
                                                     'flux_density': stellar_object.fluxes.processed_nuv_saturated,
                                                     'wavelength': 2315,
                                                     'flag': 'saturated'}
@@ -287,7 +292,7 @@ def return_results():
                     stellar_object.fluxes.processed_fuv_err = fuv_err * 3
                     saturated_models = pegasus.query_pegasus_saturated_nuv()
                 if len(saturated_models) == 0:
-                    # if nothing found in the first query, grow NUV error bars by 5 and try again
+                    # if nothing found in the second query, grow NUV error bars by 5 and try again
                     stellar_object.fluxes.processed_fuv_err = fuv_err * 5
                     saturated_models = pegasus.query_pegasus_saturated_nuv()
             
@@ -321,7 +326,7 @@ def return_results():
             # run special upper limit flux search and flag with option a, don't run normal search
             if stellar_object.fluxes.fuv_is_upper_limit:
                 # add the upper limit fuv value to be plotted
-                plot_data['galex_fuv_upper_limit'] = {'name': 'GALEX Processed FUV (Upper Limit)',
+                plot_data['galex_fuv'] = {'name': 'GALEX Processed FUV (Upper Limit)',
                                                       'flux_density': stellar_object.fluxes.processed_fuv_upper_limit,
                                                       'wavelength': 1542,
                                                       'flag': 'upper_limit'}
@@ -339,15 +344,13 @@ def return_results():
                     stellar_object.fluxes.processed_nuv_err = nuv_err * 5
                     upper_limit_models = pegasus.query_pegasus_upper_limit_fuv()
             elif stellar_object.fluxes.nuv_is_upper_limit:
-                plot_data['galex_nuv_upper_limit'] = {'name': 'GALEX Processed NUV (Upper Limit)',
+                plot_data['galex_nuv'] = {'name': 'GALEX Processed NUV (Upper Limit)',
                                                       'flux_density': stellar_object.fluxes.processed_nuv_upper_limit,
                                                       'wavelength': 2315,
                                                       'flag': 'upper_limit'}
                 # keep track of fuv_err for multiplying error bars if needed
                 fuv_err = stellar_object.fluxes.processed_fuv_err
                 upper_limit_models = pegasus.query_pegasus_upper_limit_nuv()
-                print('widyqgoefuyqeofyiughq 4pnirulhn1pci4rnxh43o;')
-                print('BEEP BOOP')
                 print(len(upper_limit_models))
                 print(upper_limit_models)
                 if len(upper_limit_models) == 0:
@@ -461,19 +464,17 @@ def return_results():
                         filepaths.append(test_filepaths[i])
                         plot_data[key]['filepath'] = test_filepaths[i]
                         using_test_data = True
-            # STEP 10: Add the GALEX fuv and nuv flux densities to the plot data
-            if 'galex_fuv' not in plot_data:
-                plot_data['galex_fuv'] = {'name': 'GALEX Processed FUV',
-                                        'flux_density': stellar_object.fluxes.processed_fuv,
-                                        'flux_density_err': stellar_object.fluxes.processed_fuv_err,
-                                        'wavelength': 1542}
-            if 'galex_nuv' not in plot_data:
-                plot_data['galex_nuv'] = {'name': 'GALEX Processed NUV',
-                                        'flux_density': stellar_object.fluxes.processed_nuv,
-                                        'flux_density_err': stellar_object.fluxes.processed_nuv_err,
-                                        'wavelength': 2315}
-        # print('PLOT DATA:', plot_data)
-        # print(plot_data)
+        # STEP 10: Add the GALEX fuv and nuv flux densities to the plot data if they have not been added
+        if 'galex_fuv' not in plot_data:
+            plot_data['galex_fuv'] = {'name': 'GALEX Processed FUV',
+                                    'flux_density': stellar_object.fluxes.processed_fuv,
+                                    'flux_density_err': stellar_object.fluxes.processed_fuv_err,
+                                    'wavelength': 1542}
+        if 'galex_nuv' not in plot_data:
+            plot_data['galex_nuv'] = {'name': 'GALEX Processed NUV',
+                                    'flux_density': stellar_object.fluxes.processed_nuv,
+                                    'flux_density_err': stellar_object.fluxes.processed_nuv_err,
+                                    'wavelength': 2315}
         plotly_fig = create_plotly_graph(plot_data)
         graphJSON = json.dumps(
             plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)

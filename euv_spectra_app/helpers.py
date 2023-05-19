@@ -86,56 +86,100 @@ def create_plotly_graph(files):
     """
     # STEP 1: initialize figure
     fig = go.Figure()
-    colors = ['#2E42FC', "#7139F1", "#9A33EA", "#C32DE3",
-              "#EE26DB", "#FE63A0", "#FE8F77", "#FDAE5A"]
+    # colors = ['#2E42FC', "#7139F1", "#9A33EA", "#C32DE3",
+    #           "#EE26DB", "#FE63A0", "#FE8F77", "#FDAE5A"]
+    colors = ['#2E42FC', '#EE26DB', '#FF79AE', '#FE6201', '#FFBC28', '#DB2681', '#BBBBBB', '#00E4B0', '#7FFF1D']
+    galex_x = [value['wavelength'] for key, value in files.items() if 'galex' in key]
+    galex_y = [value['flux_density'] for key, value in files.items() if 'galex' in key]
+    galex_names = [value['name'] for key, value in files.items() if 'galex' in key]
+    galex_symbols = []
+    all_buttons = []
+    model_buttons = []
+    flux_buttons = []
     # STEP 2: for each file, add new trace with data
     for key, value in files.items():
         if 'model' in key:
+            # get model data from fits file
             hst = fits.open(value['filepath'])
             data = hst[1].data
             w_obs = data['WAVELENGTH'][0]
             f_obs = data['FLUX'][0]
+            # get final model name by checking for flags or index #
+            model_name = f"<b>Model {value['index'] + 1} Spectrum</b>"
             if value['index'] == 0:
                 if 'flag' in value:
-                    value['flag'] = f'{value["flag"]} (Best Match)'
+                    value['flag'] = f'{value["flag"]}, Best Match'
                 else:
                     value['flag'] = '(Best Match)'
             if 'flag' in value:
-                fig.add_trace(go.Scatter(
-                    x=w_obs, y=f_obs, name=f"<b>Model {value['index'] + 1} Spectrum: {value['flag']}</b>", line=dict(color=colors[value['index']], width=1)))
-            else:
-                fig.add_trace(go.Scatter(
-                    x=w_obs, y=f_obs, name=f"<b>Model {value['index'] + 1} Spectrum</b>", line=dict(color=colors[value['index']], width=1)))
+                model_name = f"<b>Model {value['index'] + 1} Spectrum ({value['flag']})</b>"
+            # Plot model
             fig.add_trace(go.Scatter(
-                x=[2315], y=[value['nuv']], name=f'Model {value["index"] + 1} NUV',
-                mode='markers', marker=dict(color=colors[value['index']], line=dict(color="DarkGrey", width=1), size=10)))
+                x=w_obs, y=f_obs, name=model_name, line=dict(color=colors[value['index']], width=1)))
+            all_buttons.append(True)
+            model_buttons.append(True)
+            flux_buttons.append(False)
+            # Group NUV, FUV, and EUV data points
             fig.add_trace(go.Scatter(
-                x=[1542], y=[value['fuv']], name=f'Model {value["index"] + 1} FUV',
-                mode='markers', marker=dict(color=colors[value['index']], line=dict(color="DarkGrey", width=1), size=10)))
-            fig.add_trace(go.Scatter(
-                x=[500], y=[value['euv']], name=f'Model {value["index"] + 1} EUV',
-                mode='markers', marker=dict(color=colors[value['index']], line=dict(color="DarkGrey", width=1), size=10)))
-    for key, value in files.items():
-        if 'galex' in key:
-            # plot galex flux
+                x=[2315, 1542, 500], 
+                y=[value['nuv'], value['fuv'], value['euv']],
+                name=f'Model {value["index"] + 1} Fluxes',
+                mode='markers',
+                marker=dict(color=colors[value['index']], line=dict(color="Black", width=2), size=12),
+                hovertemplate='<b>%{text}</b>: %{y:.2f}<extra></extra>',
+                text=['NUV', 'FUV', 'EUV'],
+                legendgroup=f'Model {value["index"] + 1} Fluxes',
+            ))
+            all_buttons.append(True)
+            model_buttons.append(False)
+            flux_buttons.append(True)
+            
+        # get symbol of each galex flux and append to galex data
+        elif 'galex' in key:
             if 'flag' in value and value['flag'] == 'saturated':
-                fig.add_trace(go.Scatter(
-                    x=[ value['wavelength']], y=[ value['flux_density']], name= value['name'],
-                    mode='markers', marker=dict(color='black', symbol='arrow-up', size=10)))
+                galex_symbols.append('arrow-up')
             elif 'flag' in value and value['flag'] == 'upper_limit':
-                fig.add_trace(go.Scatter(
-                    x=[value['wavelength']], y=[value['flux_density']], name=value['name'],
-                    mode='markers', marker=dict(color='black', symbol='arrow-down', size=10)))
+                galex_symbols.append('arrow-down')
             else:
-                fig.add_trace(go.Scatter(
-                    x=[value['wavelength']], y=[value['flux_density']], name=value['name'],
-                    error_y=dict(type='data', array=[value['flux_density_err']], visible=True), 
-                    mode='markers', marker=dict(color='black', size=10)))
+                galex_symbols.append('circle')
+    # plot the GALEX data points
+    fig.add_trace(go.Scatter(
+        x=galex_x, y=galex_y, name='GALEX Processed Fluxes',
+        mode='markers', marker=dict(color='Black', symbol=galex_symbols, size=10),
+        hovertemplate='<b>%{text}</b>: %{y:.2f}<extra></extra>',
+        text=galex_names,
+        legendgroup='GALEX Processed Fluxes'
+    ))
+    all_buttons.append(True)
+    model_buttons.append(False)
+    flux_buttons.append(True)
+
+    # Generate the menu buttons dynamically
+    buttons = list([
+        dict(label="View All", method="update", args=[{"visible": all_buttons}, {"title": "All"}]),
+        dict(label="View All Models", method="update", args=[{"visible": model_buttons}, {"title": "All Models"}]),
+        dict(label="View All Fluxes", method="update", args=[{"visible": flux_buttons}, {"title": "All Fluxes"}])
+    ])
+
     # STEP 3: Add additional styling
-    fig.update_layout(xaxis=dict(title='Wavelength (Å)', range=[10, 3000]),
-                      yaxis=dict(title='Flux Density (erg/cm2/s/Å)',
-                                 type='log', range=[-4, 7], tickformat='.0e'),
-                      showlegend=True)
+    fig.update_layout(
+        xaxis=dict(title='Wavelength (Å)', range=[10, 3000]), # Set x axis constraints for first load
+        yaxis=dict(title='Flux Density (erg/cm2/s/Å)', type='log', range=[-4, 7], tickformat='.0e'), # Set y axis constraints for first load and scale logarithmically
+        showlegend=True, # Show the legend
+        # hovermode="x unified",
+        updatemenus=[
+            go.layout.Updatemenu(
+                buttons=buttons, # Add true false button dicts for each menu option
+                direction="down", # Set to a dropdown menu
+                pad={"r": 10, "t": 10},
+                showactive=True, # Show the active menu option
+                x=0.5,  # Set x value to 0.5 for center alignment
+                xanchor="center",  # Set xanchor to "center" for center alignment
+                y=1.1,
+                yanchor="top"
+            ),
+        ]
+    )
     return fig
 
 

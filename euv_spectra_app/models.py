@@ -372,7 +372,7 @@ class GalexFluxes():
         try:
             matching_photosphere_model = find_matching_photosphere(
                 self.stellar_obj['teff'], self.stellar_obj['logg'], self.stellar_obj['mass'])
-            print('PHOTOSPHERE MODEL', matching_photosphere_model)
+            # print('PHOTOSPHERE MODEL', matching_photosphere_model)
             return matching_photosphere_model
         except Exception:
             return ('Cannot find a photosphere model. Please try again.')
