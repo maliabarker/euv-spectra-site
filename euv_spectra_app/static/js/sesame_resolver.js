@@ -15,6 +15,19 @@ function runPopovers() {
 
 function checkName() {
     const name = nameInput.value;
+    popover = bootstrap.Popover.getInstance(searchNameInput);
+    if (popover) {
+        popover.dispose()
+    } 
+    console.log(searchNameInput.value.length !== 0)
+    if (searchNameInput.value.length !== 0) {
+        searchNameInput.setAttribute('data-bs-toggle', 'popover');
+        searchNameInput.setAttribute('data-bs-trigger', 'manual');
+        searchNameInput.setAttribute('data-bs-placement', 'top');
+        searchNameInput.setAttribute('data-bs-content', 'Loading...')
+    } else {
+        popover.dispose();
+    }
     fetch(`https://cds.unistra.fr/cgi-bin/nph-sesame/-oIx/~S?${name}`)
         .then(response => response.text())
             .then(xmlString => {
@@ -22,7 +35,6 @@ function checkName() {
                 const xmlDoc = parser.parseFromString(xmlString, "text/xml");
                 const resolver = xmlDoc.querySelector("Resolver");
                 if (resolver) {
-                    console.log("Resolver exists");
                     console.log(resolver);
                     searchBtn.removeAttribute('disabled');
                     searchNameInput.classList.remove('not-found');
@@ -42,7 +54,6 @@ function checkName() {
                         popover.dispose();
                     }
                 } else {
-                    console.log("Resolver does not exist");
                     searchBtn.setAttribute('disabled', '');
                     searchNameInput.classList.remove('found');
                     searchNameInput.classList.add('not-found');
@@ -63,4 +74,5 @@ function checkName() {
                 }
                 runPopovers();
             })
+    runPopovers();
 }
