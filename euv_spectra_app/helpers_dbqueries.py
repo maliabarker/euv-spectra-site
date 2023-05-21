@@ -270,8 +270,8 @@ def get_models_within_limits_upper_limit_fuv(corrected_upper_limit_fuv, correcte
     """
     nuv_lower_lim = corrected_nuv - corrected_nuv_err
     nuv_upper_lim = corrected_nuv + corrected_nuv_err
-    print('NUV UPPER LIM:', nuv_upper_lim, 'NUV LOWER LIM:', nuv_lower_lim)
-    print('FUV LESS THAN:', corrected_upper_limit_fuv)
+    # print('NUV UPPER LIM:', nuv_upper_lim, 'NUV LOWER LIM:', nuv_lower_lim)
+    # print('FUV LESS THAN:', corrected_upper_limit_fuv)
     models_within_limits = db.get_collection(model_collection).aggregate([
         {
             '$match': {

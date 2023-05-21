@@ -203,14 +203,14 @@ class GalexFluxes():
             elif self.fuv_is_saturated:
                 # Option A: Predict
                 self.predict_fluxes(self.nuv, self.nuv_err, 'nuv')
-                print('Testing resulting saturated fluxes to compare:', self.fuv, self.fuv_saturated)
+                # print('Testing resulting saturated fluxes to compare:', self.fuv, self.fuv_saturated)
                 if self.fuv < self.fuv_saturated:
                     # if predicted flux is not greater than saturated flux, change flux and err to None
                     self.fuv = None
                     self.fuv_err = None
             elif self.nuv_is_saturated:
                 self.predict_fluxes(self.fuv, self.fuv_err, 'fuv')
-                print('Testing resulting saturated fluxes to compare:', self.nuv, self.nuv_saturated)
+                # print('Testing resulting saturated fluxes to compare:', self.nuv, self.nuv_saturated)
                 if self.nuv < self.nuv_saturated:
                     self.nuv = None
                     self.nuv_err = None
@@ -226,14 +226,14 @@ class GalexFluxes():
             elif self.fuv_is_upper_limit:
                 # Option A: Predict
                 self.predict_fluxes(self.nuv, self.nuv_err, 'nuv')
-                print('Testing resulting upper limit fluxes to compare:', self.fuv, self.fuv_upper_limit)
+                # print('Testing resulting upper limit fluxes to compare:', self.fuv, self.fuv_upper_limit)
                 if self.fuv > self.fuv_upper_limit:
                     # if predicted flux is not less than saturated flux, change flux and err to None
                     self.fuv = None
                     self.fuv_err = None
             elif self.nuv_is_upper_limit:
                 self.predict_fluxes(self.fuv, self.fuv_err, 'fuv')
-                print('Testing resulting upper limit fluxes to compare:', self.nuv, self.nuv_upper_limit)
+                # print('Testing resulting upper limit fluxes to compare:', self.nuv, self.nuv_upper_limit)
                 if self.nuv > self.nuv_upper_limit:
                     self.nuv = None
                     self.nuv_err = None
@@ -576,7 +576,6 @@ class StellarObject():
                     self.star_name, self.coords)
             # if the returned data is a tuple, this means it returned an RA and DEC, assign values as coords
             if isinstance(pm_corrected_coords, tuple):
-                print(f'PM CORRECTED COORDS: {pm_corrected_coords}')
                 self.pm_corrected_coords = pm_corrected_coords
             # else, if the return data is not tuple and is string this means exception/error was thrown 
             # and error message is returned. Append the error message as either a regular or galex modal 
@@ -720,7 +719,7 @@ class StellarObject():
             else:
                 return (f'Nothing found for {star_name if star_name else coords} in the NExSci database.')
         except requests.exceptions.RequestException as rqe:
-            print(f'NEA data search in depth error: {rqe}')
+            print(f'In depth NEA error: {rqe}')
             return "Error connecting to the NASA Exoplanet Archive. Please enter stellar parameters manually or try again later."
         except Exception as e:
             return f"Unknown error occured when searching the NASA Exoplanet Archive: {e}"

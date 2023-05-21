@@ -90,7 +90,6 @@ def submit_modal_form():
                 # ignoring all manual parameters, submit, csrf token, and catalog names
                 if 'manual' in field.name and field.data is not None:
                     # if a manual parameter is submitted, add that data to the object
-                    print('MANUAL DETECTED')
                     unmanual_field = field.name.replace('manual_', '')
                     setattr(stellar_object, unmanual_field, float(field.data))
             session['stellar_object'] = json.dumps(to_json(stellar_object))
@@ -128,14 +127,12 @@ def submit_manual_form():
                     if value == 'null':
                         # if one flag is null, set fluxes to None so they can be 
                         # predicted when predict function is run later
-                        print(fieldname, 'is null')
                         setattr(stellar_object.fluxes, flux, None)
                         setattr(stellar_object.fluxes, flux_err, None)
                     elif value == 'saturated':
                         # if the flag is saturated, set flux_is_saturated to True 
                         # and assign the saturated flux value so they can be dealt 
                         # with in check saturated flux function later on
-                        print(fieldname, 'is saturated')
                         flux_saturated = f'{flux}_saturated'
                         flux_is_saturated = f'{flux}_is_saturated'
                         form_attr = getattr(form, flux)
@@ -145,7 +142,6 @@ def submit_manual_form():
                         # if the flag is upper limit, set flux_is_upper_limit to True 
                         # and assign the upper limit flux value so they can be dealt 
                         # with in check upper limit fluxes function later on
-                        print(fieldname, 'is upper limit')
                         flux_upper_limit = f'{flux}_upper_limit'
                         flux_is_upper_limit = f'{flux}_is_upper_limit'
                         form_attr = getattr(form, flux)
@@ -351,8 +347,6 @@ def return_results():
                 # keep track of fuv_err for multiplying error bars if needed
                 fuv_err = stellar_object.fluxes.processed_fuv_err
                 upper_limit_models = pegasus.query_pegasus_upper_limit_nuv()
-                print(len(upper_limit_models))
-                print(upper_limit_models)
                 if len(upper_limit_models) == 0:
                     # if nothing found in the first query, grow FUV error bars by 3 and try again
                     stellar_object.fluxes.processed_fuv_err = fuv_err * 3
@@ -482,7 +476,6 @@ def return_results():
         if using_test_data == True:
             flash('EUV data not available yet, using test data for viewing purposes.\
                    Please contact us for more information.', 'danger')
-        # print('NORMAL MODELS:', normal_models, 'SATURATED_MODLES:', saturated_models, 'UPPER LIMIT MODELS:', upper_limit_models)
         return_models = normal_models + saturated_models + upper_limit_models
         return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_obj=stellar_object, matching_models=return_models)
     else:

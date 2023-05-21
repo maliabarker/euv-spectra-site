@@ -136,9 +136,5 @@
 </form>
 
 {% if modal_form.errors %}
-    <script>
-        var myModalEl = document.getElementById('myModal');
-        var modal = new bootstrap.Modal(myModalEl);
-        modal.show();
-    </script>
+    <script src="{{ url_for('static', filename='js/show_modal.js') }}"></script>
 {% endif %}

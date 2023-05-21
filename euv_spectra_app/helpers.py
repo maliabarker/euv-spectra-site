@@ -17,7 +17,6 @@ def insert_data_into_form(obj, form):
     for attr_name, attr_value in attrs.items():
         if attr_name is 'fluxes':
             # is an object, go again
-            print(f'{attr_name} is an object')
             insert_data_into_form(attr_value, form)
         elif hasattr(form, attr_name):
             # is not an object, check if it exists in form and if True, add to form data
@@ -58,16 +57,13 @@ def from_json(json_str):
     proper_motion_obj = ProperMotionData()
     galex_fluxes_obj = GalexFluxes()
     for key, value in data.items():
-        print(key, value)
         if key == 'pm_data' and value is not None:
             proper_motion_dict = value
             for pm_key, pm_value in proper_motion_dict.items():
-                print(pm_key, pm_value)
                 setattr(proper_motion_obj, pm_key, pm_value)
         elif key == 'fluxes' and value is not None:
             galex_fluxes_dict = value
             for flux_key, flux_value in galex_fluxes_dict.items():
-                print(flux_key, flux_value)
                 setattr(galex_fluxes_obj, flux_key, flux_value)
         setattr(stellar_target_obj, key, value)
     stellar_target_obj.pm_data = proper_motion_obj

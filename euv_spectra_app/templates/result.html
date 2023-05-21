@@ -116,7 +116,6 @@
     <div class="chart" id="linegraph">
         <script>
             var graphs = JSON.parse('{{graphJSON | safe}}');
-            console.log(graphs)
             var config = {responsive: true};
             Plotly.plot('linegraph', graphs, config);
         </script>

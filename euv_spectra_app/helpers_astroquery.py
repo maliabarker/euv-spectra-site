@@ -104,8 +104,6 @@ class StellarTarget():
         self.search_galex()
 
     def test_tic(self):
-        print('SEARCHING VIZIER ....')
-
         # names = Simbad.query_objectids(self.search_input)
         # for name in names:
         #     print(name)
@@ -135,6 +133,7 @@ class StellarTarget():
         #     'rad': star_table[0]['Rad']
         # }
         # print(data)
+        pass
 
     def convert_coords(self):
         """Converts coordinates to right ascension and declination.

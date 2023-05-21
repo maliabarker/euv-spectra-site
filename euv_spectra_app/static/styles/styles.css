@@ -1,13 +1,7 @@
-/* html, body {
-    max-width: 100%;
-    overflow-x: hidden;
-    height: 100%;
-} */
-
+/* ———————————FOR ALL PAGES (ACCOUNT FOR STICKY NAVBAR)——————————— */
 body {
     padding-top: 66px; /* This should be equal to the height of your header, helps with overlap of sticky navbar */
 }
-
 
 /* ———————————FOR HOMEPAGE BACKGROUND——————————— */
     #bg {
@@ -82,6 +76,7 @@ body {
         }
         /* Firefox */
         input[type=number] {
+            appearance: none;
             -moz-appearance: textfield;
         }
 
@@ -157,7 +152,6 @@ body {
     }
 
 
-
 /* ————————————FOR MODAL——————————— */
     td {
         vertical-align: middle;
@@ -165,8 +159,6 @@ body {
     th {
         text-align: center;
     }
-
-
 
 
 /* ——————————FOR BUTTON STYLES————————— */
@@ -203,34 +195,6 @@ body {
     }
 
 
-/* ——————————OTHER——————————— */
-    #contact-header {
-        background-image: linear-gradient(to left, #fdac59 0%, #f729d9 51%, #9c36e8 100%) !important;
-        color: white;
-    }
-
-    /* Full width class to break elements out of parent container */
-    .full-width {
-        left: 50%;
-        margin-left: -50vw;
-        margin-right: -50vw;
-        max-width: 100vw;
-        position: relative;
-        right: 50%;
-        width: 100vw;
-    }
-
-    /* Getting rid of text decoration on links (a tags) */ 
-    a:link { text-decoration: none; }
-    a:visited { text-decoration: none; }
-    a:hover { text-decoration: none; cursor: pointer; }
-    a:active { text-decoration: none; }
-
-    /* .mpld3-figure {
-        width: 800px !important;
-    } */
-
-
 /* ————————————FOR SEARCH BAR————————————— */
     #search-bar {
         filter: drop-shadow(0 3px 10px rgb(0 0 0 / 0.2));
@@ -244,24 +208,9 @@ body {
         width: 80px;
     }
 
-    /* select {
-        background-image:
-        linear-gradient(45deg, transparent 50%, white 60%),
-        linear-gradient(135deg, white 40%, transparent 50%) !important;
-        background-position:
-        calc(100% - 30px) 14px,
-        calc(100% - 20px) 14px,
-        100% 0;
-        background-size:
-        10px 10px,
-        10px 10px;
-        background-repeat: no-repeat;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-    } */
-
     #name-form-cont .form-control {
         outline:0px !important;
+        appearance: none;
         -webkit-appearance:none;
         box-shadow: none !important;
         border-radius: 20px; 
@@ -270,6 +219,7 @@ body {
 
     #position-form-cont .form-control {
         outline:0px !important;
+        appearance: none;
         -webkit-appearance:none;
         box-shadow: none !important;
         border-radius: 20px; 
@@ -417,21 +367,26 @@ body {
     color: #9fa3b1;
 }
 
-/* Autocomplete */
 
-.autocomplete-items {
-    background-color: white;
-    padding: 10px;
-    width: 60%;
-    overflow-y: auto;
-    max-height: 200px;
-    padding-top: 10px;
+/* ——————————OTHER——————————— */
+#contact-header {
+    background-image: linear-gradient(to left, #fdac59 0%, #f729d9 51%, #9c36e8 100%) !important;
+    color: white;
 }
 
-.autocomplete-items div {
-    cursor: pointer;
+/* Full width class to break elements out of parent container */
+.full-width {
+    left: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    max-width: 100vw;
+    position: relative;
+    right: 50%;
+    width: 100vw;
 }
 
-.autocomplete-items div:hover {
-    color: #9c36e8;
-}
+/* Getting rid of text decoration on links (a tags) */ 
+a:link { text-decoration: none; }
+a:visited { text-decoration: none; }
+a:hover { text-decoration: none; cursor: pointer; }
+a:active { text-decoration: none; }

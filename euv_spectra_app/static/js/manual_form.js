@@ -14,7 +14,6 @@ const nuvErrInput = document.getElementById('nuv_err');
 
 function updateFuvRequired() {
     if (fuvNullRadio.checked) {
-        console.log('FUV null radio button checked')
         // if the fuv null flag is checked make fuv inputs not required
         // disable nuv null flag radio btn and add tooltip to give more info
         // set input states
@@ -37,7 +36,6 @@ function updateFuvRequired() {
         nuvNullRadio.parentElement.setAttribute('data-bs-placement', 'top');
         nuvNullRadio.parentElement.setAttribute('title', 'Cannot have both flux densities be null. Please see question 3 on the FAQs page for more information.');
     } else if (fuvUpLimRadio.checked) {
-        console.log('FUV upper limit radio button checked')
         // set input states
         fuvInput.required = true;
         fuvErrInput.required = false;
@@ -58,7 +56,6 @@ function updateFuvRequired() {
         nuvUpLimRadio.parentElement.setAttribute('data-bs-placement', 'top');
         nuvUpLimRadio.parentElement.setAttribute('title', 'Cannot have both flux densities be upper limits. Please see question 3 on the FAQs page for more information.');
     } else if (fuvSatRadio.checked) {
-        console.log('FUV saturated radio button checked')
         // set input states
         fuvInput.required = true;
         fuvErrInput.required = false;

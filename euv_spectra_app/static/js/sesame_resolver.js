@@ -19,7 +19,6 @@ function checkName() {
     if (popover) {
         popover.dispose()
     } 
-    console.log(searchNameInput.value.length !== 0)
     if (searchNameInput.value.length !== 0) {
         searchNameInput.setAttribute('data-bs-toggle', 'popover');
         searchNameInput.setAttribute('data-bs-trigger', 'manual');
