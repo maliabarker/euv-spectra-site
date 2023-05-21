@@ -1,14 +1,15 @@
-function checkDirectory(filename){
+function checkDirectory(filename, model){
     fetch(`/check-directory/${filename}`)
         .then(response => response.json())
         .then(data => {
             if (data.exists) {
                 // Do something if the directory exists
-                console.log('file exists')
-                window.location = `/download/${filename}`
+                console.log(`${filename} exists`)
+                console.log(filename)
+                window.location = `/download/${filename}/${model}`
             } else {
                 // Do something if the directory does not exist
-                console.log('file does not exist')
+                console.log(`${filename} does not exist`)
                 errorBox = document.getElementById(`${filename}-errorbox`)
                 if (errorBox.style.display = 'none') {
                     errorBox.style.display = 'block';

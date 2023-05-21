@@ -97,11 +97,20 @@
                         <td>N/A</td>
                         {% for model in matching_models %}
                             <td>
-                                <button class="btn btn-primary mb-2 small" id="flux-continue-btn" onclick="checkDirectory('{{ model.fits_filename }}')">
+                                <button class="btn btn-primary mb-2 small" id="flux-continue-btn" onclick="checkDirectory('{{ model.fits_filename }}', 'Model {{ loop.index }}')">
                                     <i class="fa-solid fa-file-arrow-down"></i>
                                     <small>Download Spectrum {{ loop.index }}</small>
                                 </button>
                                 <div id="{{ model.fits_filename }}-errorbox" style="color: tomato;"></div>
+                            </td>
+                            <td>
+                                {#
+                                <!-- <button class="btn btn-primary mb-2 small" id="flux-continue-btn" onclick="checkDirectory('{{ test_filepaths[loop.index] }}', 'Model {{ loop.index }}')">
+                                    <i class="fa-solid fa-file-arrow-down"></i>
+                                    <small>Download Spectrum {{ loop.index }} TEST</small>
+                                    <small>{{ test_filepaths[loop.index] }}</small>
+                                </button>
+                                <div id="{{ test_filepaths[loop.index] }}-errorbox" style="color: tomato;"></div> --> #}
                             </td>
                         {% endfor %}
                     </tr>

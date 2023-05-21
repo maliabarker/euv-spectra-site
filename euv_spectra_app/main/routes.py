@@ -1,10 +1,11 @@
-from flask import Blueprint, request, render_template, redirect, url_for, session, flash, current_app, send_from_directory, jsonify
-from flask_mail import Message
-from datetime import timedelta
 import json
 import plotly
 import os
-import math
+import zipfile
+import io
+from flask import Blueprint, request, render_template, redirect, url_for, session, flash, current_app, send_from_directory, jsonify, send_file
+from flask_mail import Message
+from datetime import timedelta
 from euv_spectra_app.extensions import *
 from euv_spectra_app.main.forms import ManualForm, StarNameForm, PositionForm, ModalForm, ContactForm
 from euv_spectra_app.models import StellarObject, PegasusGrid
@@ -224,6 +225,18 @@ def return_results():
                 f"euv_spectra_app/fits_files/test/new_test_6.fits"),
             os.path.abspath(
                 f"euv_spectra_app/fits_files/test/new_test_7.fits")
+        ]
+        test_filepath_names = [
+            "original_test.fits",
+            "new_test.fits",
+            "new_test_0.fits",
+            "new_test_1.fits",
+            "new_test_2.fits",
+            "new_test_3.fits",
+            "new_test_4.fits",
+            "new_test_5.fits",
+            "new_test_6.fits",
+            "new_test_7.fits"
         ]
         """———————————END TEST FILE DATA——————————"""
         # STEP 2: Create new PegasusGrid object and insert the stellar object with corrected fluxes
@@ -477,7 +490,8 @@ def return_results():
             flash('EUV data not available yet, using test data for viewing purposes.\
                    Please contact us for more information.', 'danger')
         return_models = normal_models + saturated_models + upper_limit_models
-        return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_obj=stellar_object, matching_models=return_models)
+        print(test_filepaths)
+        return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_obj=stellar_object, matching_models=return_models, test_filepaths=test_filepath_names)
     else:
         flash('Missing required stellar parameters. Submit the required data to view this page.', 'danger')
         return redirect(url_for('main.homepage'))
@@ -502,8 +516,8 @@ def check_directory(filename):
         return jsonify({'exists': False})
 
 
-@main.route('/download/<filename>', methods=['GET', 'POST'])
-def download(filename):
+@main.route('/download/<filename>/<model>', methods=['GET', 'POST'])
+def download(filename, model):
     """Downloading FITS file on button click."""
     if 'test' in filename:
         downloads = os.path.join(
@@ -515,9 +529,24 @@ def download(filename):
         stellar_target = from_json(target_json)
         downloads = os.path.join(
             current_app.root_path, app.config['FITS_FOLDER'], stellar_target.model_subtype)
-    if not os.path.exists(os.path.join(downloads, filename)):
+    file_path = os.path.join(downloads, filename)
+    if not os.path.exists(file_path):
         flash('File is not available to download because it does not exist yet!')
-    return send_from_directory(downloads, filename, as_attachment=True, download_name=filename)
+    
+    # Create the zip file in memory
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, 'w') as zipf:
+        # Add the requested file to the zip
+        zipf.write(file_path, filename)
+        
+        # Add the README file to the zip
+        readme_path = os.path.join(current_app.root_path, app.config['FITS_FOLDER'], 'README.md')
+        zipf.write(readme_path, 'README.txt')
+    
+    # Set the file pointer to the beginning of the file
+    memory_file.seek(0)
+    # Create a Flask response with the zip file
+    return send_file(memory_file, mimetype='application/zip', as_attachment=True, download_name=f'{model}.zip')
 
 
 @main.route('/about', methods=['GET'])
