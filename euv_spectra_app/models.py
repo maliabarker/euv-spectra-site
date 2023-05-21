@@ -1,6 +1,7 @@
 # FOR ASTROQUERY/GALEX DATA
 import numpy.ma as ma
 import math
+import requests
 from astropy.time import Time
 import astropy.units as u
 from astroquery.exceptions import ResolverError
@@ -567,11 +568,12 @@ class StellarObject():
             simbad_data = self.query_simbad(self.star_name)
             if simbad_data is not None:
                 # will stop function if no coords found in SIMBAD
-                self.modal_page_error_msg = simbad_data
-                return
+                self.modal_error_msgs.append(simbad_data)
             # STEP Name3: Put PM and Coord info into proper motion correction function
-            pm_corrected_coords = self.pm_data.correct_pm(
-                self.star_name, self.coords)
+            pm_corrected_coords = None
+            if self.pm_data is not None:
+                pm_corrected_coords = self.pm_data.correct_pm(
+                    self.star_name, self.coords)
             # if the returned data is a tuple, this means it returned an RA and DEC, assign values as coords
             if isinstance(pm_corrected_coords, tuple):
                 print(f'PM CORRECTED COORDS: {pm_corrected_coords}')
@@ -595,9 +597,10 @@ class StellarObject():
             # if the NEA search didn't return anything, then the object either doesn't exist or isn't an exoplanet 
             # host star. Functionality is not built in yet for non-exoplanet host stars, so we break the function 
             # and tell user to input parameters manually.
-            # self.modal_error_msgs.append(nea_data)
-            self.modal_page_error_msg = nea_data
-            return
+
+            # self.modal_page_error_msg = nea_data
+            self.modal_error_msgs.append(nea_data)
+            # return
         # STEP 3: Get the stellar subtype. Needed for GALEX flux predictions if a flux is null
         self.get_stellar_subtype(self.teff, self.logg, self.mass)
         # STEP 4: Check if coordinate correction happened then search GALEX with corrected/converted coords
@@ -639,9 +642,15 @@ class StellarObject():
             Sets the coordinates and proper motion data of the stellar object.
 
         Raises:
+            Request Exception: If SIMBAD is down, will throw flash error on modal telling user SIMBAD is down.
             Exception: If an error occurs during the SIMBAD search, or if no data is found for the specified star.
         """
         try:
+            # Check if SIMBAD is accessible
+            simbad_response = requests.get("http://simbad.cds.unistra.fr/simbad/")
+            if simbad_response.status_code != 200:
+                return "SIMBAD is currently down. Cannot get data to correct for proper motion. Please enter GALEX flux values manually or try again later."
+            
             result_table = customSimbad.query_object(star_name)
             if result_table and len(result_table) > 0:
                 data = result_table[0]
@@ -654,7 +663,11 @@ class StellarObject():
                 return
             else:
                 return (f'No results found in SIMBAD for {star_name}. Please check spelling, spacing, and or capitalization and try again.')
+        except requests.exceptions.RequestException as rqe:
+            print(f'In depth SIMBAD error: {rqe}')
+            return f"Error connecting to SIMBAD. Cannot get data to correct for proper motion. Please enter GALEX flux values manually or try again later."
         except Exception as e:
+            print(f'In depth SIMBAD error: {e}')
             return (f'Unknown error during SIMBAD search: {e}')
 
     def query_nasa_exoplanet_archive(self, star_name, coords):
@@ -675,33 +688,42 @@ class StellarObject():
         Raises:
             Sends a string error message to the front end custom error page if no results
             are found or if the target is not a M or K type star.
+            Request Exception: If the NASA Exoplanet Archive homepage is down.
+            Exception: If any unknown error occurs during search.
         """
-        # error_var = ''
-        if star_name:
-            # error_var = self.star_name
-            corrected_star_name = star_name.replace("'", "''")
-            nea_data = NasaExoplanetArchive.query_criteria(
-                table="pscomppars", 
-                select="top 5 disc_refname, st_spectype, st_teff, st_logg, st_mass, st_rad, sy_dist, sy_jmag", 
-                where=f"hostname like '%{corrected_star_name}%'", 
-                order="hostname")
-        elif coords:
-            # error_var = self.position
-            nea_data = NasaExoplanetArchive.query_region(table="pscomppars", coordinates=SkyCoord(
-                ra=coords[0] * u.deg, dec=coords[1] * u.deg), radius=1.0 * u.deg)
-        if len(nea_data) > 0:
-            data = nea_data[0]
-            if 2400 < data['st_teff'].unmasked.value < 5500:
-                self.teff = data['st_teff'].unmasked.value
-                self.logg = data['st_logg']
-                self.mass = data['st_mass'].unmasked.value
-                self.rad = data['st_rad'].unmasked.value
-                self.dist = data['sy_dist'].unmasked.value
-                return
+        try:
+            nea_response = requests.get("https://exoplanetarchive.ipac.caltech.edu/")
+            if nea_response.status_code != 200:
+                return "The NASA Exoplanet Archive is currently down. Please enter stellar parameters manually or try again later."
+            
+            if star_name:
+                corrected_star_name = star_name.replace("'", "''")
+                nea_data = NasaExoplanetArchive.query_criteria(
+                    table="pscomppars", 
+                    select="top 5 disc_refname, st_spectype, st_teff, st_logg, st_mass, st_rad, sy_dist, sy_jmag", 
+                    where=f"hostname like '%{corrected_star_name}%'", 
+                    order="hostname")
+            elif coords:
+                nea_data = NasaExoplanetArchive.query_region(table="pscomppars", coordinates=SkyCoord(
+                    ra=coords[0] * u.deg, dec=coords[1] * u.deg), radius=1.0 * u.deg)
+            if len(nea_data) > 0:
+                data = nea_data[0]
+                if 2400 < data['st_teff'].unmasked.value < 5500:
+                    self.teff = data['st_teff'].unmasked.value
+                    self.logg = data['st_logg']
+                    self.mass = data['st_mass'].unmasked.value
+                    self.rad = data['st_rad'].unmasked.value
+                    self.dist = data['sy_dist'].unmasked.value
+                    return
+                else:
+                    return (f'{star_name if star_name else coords} is not an M or K type star. Data is currently only available for these spectral sybtypes.')
             else:
-                return (f'{star_name if star_name else coords} is not an M or K type star. Data is currently only available for these spectral sybtypes.')
-        else:
-            return (f'Nothing found for {star_name if star_name else coords} in the NExSci database.')
+                return (f'Nothing found for {star_name if star_name else coords} in the NExSci database.')
+        except requests.exceptions.RequestException as rqe:
+            print(f'NEA data search in depth error: {rqe}')
+            return "Error connecting to the NASA Exoplanet Archive. Please enter stellar parameters manually or try again later."
+        except Exception as e:
+            return f"Unknown error occured when searching the NASA Exoplanet Archive: {e}"
 
     def query_galex(self, star_name, position, pm_corrected_coords, coords):
         """Searches the MAST GALEX database by coordinates for flux densities.
@@ -731,6 +753,12 @@ class StellarObject():
         """
         # STEP 1: Query the MAST catalogs object by GALEX catalog & given ra and dec
         try:
+            # https://galex.stsci.edu/GR6/?page=mastform
+            # Check if SIMBAD is accessible
+            mast_response = requests.get("https://galex.stsci.edu/GR6/?page=mastform")
+            if mast_response.status_code != 200:
+                return "MAST is currently down. Please enter GALEX flux values manually or try again later."
+            
             galex_data = None
             if star_name and pm_corrected_coords:
                 # if the original query was by star name and the proper motion corrected coords exist
@@ -791,6 +819,9 @@ class StellarObject():
                 # No results found because proper info was not given for example, will happen if 
                 # proper motion correction did not occur and is therefore not given
                 return (f'Missing data to query GALEX {"because coordinates were not corrected for proper motion" if star_name else f"for {coords}"}. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')
+        except requests.exceptions.RequestException as rqe:
+            print(f'Galex search in depth error: {rqe}')
+            return f"Error connecting to MAST. Please enter GALEX flux values manually or try again later."
         except ResolverError as re:
             print(f'Galex search in depth error: {re}')
             return (f'Could not search GALEX catalog with object {coords if position else pm_corrected_coords}. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')

@@ -37,7 +37,7 @@
         
         <div class="container">
             {% for category, message in get_flashed_messages(with_categories=true) %}
-                {% if 'GALEX' not in message %}
+                {% if 'GALEX' not in message and 'Error connecting to the NASA Exoplanet Archive' not in message %}
                     <div class="alert alert-{{category}} mt-2" role="alert">
                         {{ message }}
                     </div>
