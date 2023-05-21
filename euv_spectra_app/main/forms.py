@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, SubmitField, DecimalField, RadioField, TextAreaField
-from wtforms.validators import DataRequired, Email, Optional
+from wtforms.validators import DataRequired, Email, Optional, NumberRange
 from flask import Markup
 
 class NotRequiredIf(Optional):
@@ -76,22 +76,22 @@ rad_label = Markup('Radius (R<sub>sun</sub>)')
 
 class ManualForm(FlaskForm):
     teff = DecimalField(
-        'T𝘦𝘧𝘧 — Stellar Effective Temperature (K)', validators=[DataRequired()])
+        'T𝘦𝘧𝘧 — Stellar Effective Temperature (K)', validators=[DataRequired(), NumberRange(min=0, message='Cannot enter negative values.')])
     logg = DecimalField('log(g) — Surface Gravity (cm/s²)',
-                        validators=[DataRequired()])
+                        validators=[DataRequired(), NumberRange(min=0, message='Cannot enter negative values.')])
     mass = DecimalField('M ☉ - Mass (Solar Masses)',
-                        validators=[DataRequired()])
+                        validators=[DataRequired(), NumberRange(min=0, message='Cannot enter negative values.')])
     rad = DecimalField('R ☉ — Stellar Radius (Solar Radii)',
-                       validators=[DataRequired()])
-    dist = DecimalField('d — Distance', validators=[DataRequired()])
+                       validators=[DataRequired(), NumberRange(min=0, message='Cannot enter negative values.')])
+    dist = DecimalField('d — Distance', validators=[DataRequired(), NumberRange(min=0, message='Cannot enter negative values.')])
     dist_unit = SelectField('d Unit', validators=[DataRequired()], choices=[
                             ('pc', 'Parsecs (pc)'), ('mas', 'Milliarcseconds (mas)')])
-    fuv = DecimalField('FUV (μJy)', validators=[NotRequiredIf(fuv_flag=['null'])])
-    fuv_err = DecimalField('FUV err (μJy)', validators=[NotRequiredIf(fuv_flag=['null', 'saturated', 'upper_limit'])])
+    fuv = DecimalField('FUV (μJy)', validators=[NotRequiredIf(fuv_flag=['null']), NumberRange(min=0, message='Cannot enter negative values.')])
+    fuv_err = DecimalField('FUV err (μJy)', validators=[NotRequiredIf(fuv_flag=['null', 'saturated', 'upper_limit']), NumberRange(min=0, message='Cannot enter negative values.')])
     fuv_flag = RadioField('FUV Flag', validators=[Optional()], choices=[(
         'null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated'), ('none', 'None')])
-    nuv = DecimalField('NUV (μJy)', validators=[NotRequiredIf(nuv_flag=['null'])])
-    nuv_err = DecimalField('NUV err (μJy)', validators=[NotRequiredIf(nuv_flag=['null', 'saturated', 'upper_limit'])])
+    nuv = DecimalField('NUV (μJy)', validators=[NotRequiredIf(nuv_flag=['null']), NumberRange(min=0, message='Cannot enter negative values.')])
+    nuv_err = DecimalField('NUV err (μJy)', validators=[NotRequiredIf(nuv_flag=['null', 'saturated', 'upper_limit']), NumberRange(min=0, message='Cannot enter negative values.')])
     nuv_flag = RadioField('NUV Flag', validators=[Optional()], choices=[(
         'null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated'), ('none', 'None')])
     submit = SubmitField('Submit and Find EUV Spectrum')
