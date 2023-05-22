@@ -12,12 +12,12 @@
         <div class="accordion accordion-flush" id="accordionFlushExample">
 
             <div class="accordion-item">
-                <h2 class="accordion-header" id="header-Q0">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q0" aria-expanded="false" aria-controls="Q0">
+                <h2 class="accordion-header" id="header-Q1">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q1" aria-expanded="false" aria-controls="Q1">
                         <b>Q1. </b> &nbsp; Can I search for non-exoplanet host stars?
                     </button>
                 </h2>
-                <div id="Q0" class="accordion-collapse collapse" aria-labelledby="header-Q0" data-bs-parent="#accordionFlushExample">
+                <div id="Q1" class="accordion-collapse collapse" aria-labelledby="header-Q1" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
                         Yes, but the required inputs (T<sub>eff</sub>, log(g), mass, radius, distance, and GALEX FUV and NUV flux densities) must be entered manually via <a href="{{ url_for('main.homepage', form='extended') }}">this form</a> on the home page. <br>
                         This is because we query the NExSci archive for these parameters, which only contains information regarding exoplanet host stars.
@@ -26,12 +26,12 @@
             </div>
                 
             <div class="accordion-item">
-                <h2 class="accordion-header" id="header-Q1">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q1" aria-expanded="false" aria-controls="Q1">
+                <h2 class="accordion-header" id="header-Q2">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q2" aria-expanded="false" aria-controls="Q2">
                         <b>Q2. </b> &nbsp; Why are GALEX flux densities used to identify the representative PHOENIX EUV spectrum?
                     </button>
                 </h2>
-                <div id="Q1" class="accordion-collapse collapse" aria-labelledby="header-Q1" data-bs-parent="#accordionFlushExample">
+                <div id="Q2" class="accordion-collapse collapse" aria-labelledby="header-Q2" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
                         GALEX was an all sky survey that measured FUV and NUV photometry for stars of all ages and masses and therefore many M and K stars have this data available. 
                         Further, stellar FUV and NUV flux originates in the chromosphere and transition region, overlapping heavily with the formation temperatures of the EUV. <br><br>
@@ -43,12 +43,12 @@
             </div>
 
             <div class="accordion-item">
-                <h2 class="accordion-header" id="header-Q2">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q2" aria-expanded="false" aria-controls="Q2">
+                <h2 class="accordion-header" id="header-Q3">
+                    <button class="accordion-button {% if question_id != 'Q3' %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#Q3" aria-expanded="{% if question_id == 'Q3' %}true{% else %}false{% endif %}" aria-controls="Q3">
                         <b>Q3. </b> &nbsp; What if my star doesn't have GALEX measurements, only has a GALEX detection in one band, or has a detection that is an upper/lower limit?
                     </button>
                 </h2>
-                <div id="Q2" class="accordion-collapse collapse" aria-labelledby="header-Q2" data-bs-parent="#accordionFlushExample">
+                <div id="Q3" class="accordion-collapse collapse {% if question_id == 'Q3' %}show{% endif %}" aria-labelledby="header-Q3" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
                         <i>If your star has no GALEX measurement:</i> A proxy can be identified from this table [INSERT TABLE] <br><br>
                         <i>If your star only has a GALEX detection in one band:</i> We will estimate the flux density in the missing band with the following relations (F<sub>NUV</sub> / F<sub>J</sub>) = (F<sub>FUV</sub> / F<sub>J</sub>)<sup>1.11</sup> <a href="https://ui.adsabs.harvard.edu/abs/2014AJ....148...64S/abstract">(Shkolnik & Barman 2014)</a>. <br><br>
@@ -58,12 +58,12 @@
             </div>
 
             <div class="accordion-item">
-                <h2 class="accordion-header" id="header-Q3">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q3" aria-expanded="false" aria-controls="Q3">
+                <h2 class="accordion-header" id="header-Q4">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q4" aria-expanded="false" aria-controls="Q4">
                         <b>Q4. </b> &nbsp; What do I do if my star name is not recognized by the search function?
                     </button>
                 </h2>
-                <div id="Q3" class="accordion-collapse collapse" aria-labelledby="header-Q3" data-bs-parent="#accordionFlushExample">
+                <div id="Q4" class="accordion-collapse collapse" aria-labelledby="header-Q4" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
                         Try searching by ICRS coordinates OR enter the parameters manually through the drop-down link on the <a href="{{ url_for('main.homepage', form='extended') }}">Home</a> page.
                     </div>
@@ -71,12 +71,12 @@
             </div>
 
             <div class="accordion-item">
-                <h2 class="accordion-header" id="header-Q4">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q4" aria-expanded="false" aria-controls="Q4">
+                <h2 class="accordion-header" id="header-Q5">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q5" aria-expanded="false" aria-controls="Q5">
                         <b>Q5. </b> &nbsp; Why is the search taking so long (>5 minutes)?
                     </button>
                 </h2>
-                <div id="Q4" class="accordion-collapse collapse" aria-labelledby="header-Q4" data-bs-parent="#accordionFlushExample">
+                <div id="Q5" class="accordion-collapse collapse" aria-labelledby="header-Q5" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
                         Our search function queries multiple databases, and one of these resources may be down temporarily. You may enter the parameters manually or try again at a later time.
                     </div>
@@ -84,12 +84,12 @@
             </div>
 
             <div class="accordion-item">
-                <h2 class="accordion-header" id="header-Q5">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q5" aria-expanded="false" aria-controls="Q5">
+                <h2 class="accordion-header" id="header-Q6">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q6" aria-expanded="false" aria-controls="Q6">
                         <b>Q6. </b> &nbsp; What are the units of the downloaded data products?
                     </button>
                 </h2>
-                <div id="Q5" class="accordion-collapse collapse" aria-labelledby="header-Q5" data-bs-parent="#accordionFlushExample">
+                <div id="Q6" class="accordion-collapse collapse" aria-labelledby="header-Q6" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
                         Wavelengths are given in Angstroms and are in vacuum. Please note that the wavelength grid is not uniformly spaced. The flux densities are given in ergs/cm<sup>2</sup>/s/Å and are scaled to the stellar surface. 
                     </div>
@@ -97,12 +97,12 @@
             </div>
 
             <div class="accordion-item">
-                <h2 class="accordion-header" id="header-Q6">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q6" aria-expanded="false" aria-controls="Q6">
+                <h2 class="accordion-header" id="header-Q7">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q7" aria-expanded="false" aria-controls="Q7">
                         <b>Q7. </b> &nbsp; Why is the wavelength grid not uniformly spaced?
                     </button>
                 </h2>
-                <div id="Q6" class="accordion-collapse collapse" aria-labelledby="header-Q6" data-bs-parent="#accordionFlushExample">
+                <div id="Q7" class="accordion-collapse collapse" aria-labelledby="header-Q7" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
                         The models are computed with high wavelength sampling (Δλ = 0.01 Å) at wavelengths below 6000 Å and lower wavelength sampling above 6000 Å (Δλ ≥ 3 Å). Additional wavelength points are added to each non-LTE emission line.
                     </div>
@@ -110,12 +110,12 @@
             </div>
 
             <div class="accordion-item">
-                <h2 class="accordion-header" id="header-Q7">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q7" aria-expanded="false" aria-controls="Q7">
+                <h2 class="accordion-header" id="header-Q8">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#Q8" aria-expanded="false" aria-controls="Q8">
                         <b>Q8. </b> &nbsp; Why do the spectra look noisy?
                     </button>
                 </h2>
-                <div id="Q7" class="accordion-collapse collapse" aria-labelledby="header-Q7" data-bs-parent="#accordionFlushExample">
+                <div id="Q8" class="accordion-collapse collapse" aria-labelledby="header-Q8" data-bs-parent="#accordionFlushExample">
                     <div class="accordion-body">
                         There is no added noise to the models. The apparent noisiness is the result of thousands of emission lines that are included in our models.
                     </div>

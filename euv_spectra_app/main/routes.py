@@ -558,7 +558,8 @@ def about():
 @main.route('/faqs', methods=['GET'])
 def faqs():
     """FAQs page."""
-    return render_template('faqs.html')
+    question_id = request.args.get('question_id')
+    return render_template('faqs.html', question_id=question_id)
 
 
 @main.route('/all-spectra', methods=['GET'])

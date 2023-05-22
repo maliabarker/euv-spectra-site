@@ -37,9 +37,17 @@
                 {% endif %}
                 {% for category, message in get_flashed_messages(with_categories=true) %}
                     {% if 'GALEX' in message or 'Error connecting to the NASA Exoplanet Archive' in message %}
-                        <div class="alert alert-{{category}} mt-2" role="alert">
-                            {{ message }}
-                        </div>
+                        {% if 'FAQ page' in message %}
+                            <div class="alert alert-{{category}} mt-2" role="alert">
+                                <!-- somehow add the  -->
+                                {{ message }}
+                                {% include 'partials/modal_faq_error.html' %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-{{category}} mt-2" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endif %}
                     {% endif %}
                 {% endfor %}
                 

@@ -17,6 +17,7 @@ customSimbad.remove_votable_fields('coordinates')
 customSimbad.add_votable_fields(
     'ra', 'dec', 'pmra', 'pmdec', 'plx', 'rv_value', 'typed_id')
 
+"""——————————————————————————————PROPER MOTION OBJECT——————————————————————————————"""   
 
 class ProperMotionData():
     """Represents proper motion data of a stellar object."""
@@ -49,16 +50,16 @@ class ProperMotionData():
                 {'target': star_name})['t_min']
         except TypeError as te:
             print(f'Galex obs time in depth error: {te}')
-            return(f'Did not find matches in GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion. Look under question 3 on the FAQ page for more information.')
+            return(f'Did not find matches in GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion.')
         except KeyError as ke:
             print(f'Galex obs time in depth error: {ke}')
-            return(f'Did not find matches in GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion. Look under question 3 on the FAQ page for more information.')
+            return(f'Did not find matches in GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion.')
         except ValueError as ve:
             print(f'Galex obs time in depth error: {ve}')
-            return(f'Unable to search GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion. Please check your inputs or look under question 3 on the FAQ page for more information.')
+            return(f'Unable to search GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion.')
         except Exception as e:
             print(f'Galex obs time in depth error: {e}')
-            return(f'No GALEX observations found for {star_name if star_name else coords}. Unable to correct for proper motion. Look under question 3 on the FAQ page for more information.')
+            return(f'No GALEX observations found for {star_name if star_name else coords}. Unable to correct for proper motion.')
         else:
             try:
                 # STEP 2: If observation time is found, start coordinate correction by initializing variables
@@ -84,6 +85,7 @@ class ProperMotionData():
             except Exception as e:
                 return (f'Unknown error during proper motion correction: {e}')
 
+"""——————————————————————————————SINGLE GALEX FLUX OBJECT——————————————————————————————"""   
 
 class GalexFlux():
     """Represents one GALEX flux and error (FUV or NUV)."""
@@ -130,7 +132,8 @@ class GalexFlux():
         new_lower_err = new_flux - new_lower_lim
         new_err = (new_upper_err + new_lower_err) / 2
         return new_err
-    
+
+"""——————————————————————————————GALEX FLUXES OBJECT——————————————————————————————"""   
 
 class GalexFluxes():
     """Represents GALEX flux values."""
@@ -453,6 +456,7 @@ class GalexFluxes():
             self.convert_scale_photosphere_subtract_nuv()
             self.convert_scale_photosphere_subtract_fuv()
 
+"""——————————————————————————————STELLAR OBJECT——————————————————————————————"""
 
 class StellarObject():
     """Represents a stellar object."""
@@ -606,8 +610,14 @@ class StellarObject():
         galex_data = self.query_galex(self.star_name, self.position, self.pm_corrected_coords, self.coords)
         if galex_data is not None:
             self.modal_error_msgs.append(galex_data)
+            # return
+        
+        # STEP 5: Check that at least one main search returned data
+        if nea_data is not None and galex_data is not None:
+            # This means that no data was returned, redirect to error page with link to manual form
+            self.modal_page_error_msg = 'Nothing found for your target in the NExSci database or the MAST GALEX database.'
             return
-
+        
     def convert_coords(self, position):
         """Converts the position attribute to equatorial coordinates (coords attribute) using the SkyCoord class from the astropy.coordinates module.
         Args:
@@ -752,7 +762,6 @@ class StellarObject():
         """
         # STEP 1: Query the MAST catalogs object by GALEX catalog & given ra and dec
         try:
-            # https://galex.stsci.edu/GR6/?page=mastform
             # Check if SIMBAD is accessible
             mast_response = requests.get("https://galex.stsci.edu/GR6/?page=mastform")
             if mast_response.status_code != 200:
@@ -857,6 +866,7 @@ class StellarObject():
             print(f'In depth stellar subtype search error:', e)
             return(f'Unable to find stellar subtype with inputs: teff={teff}, logg={logg}, and mass={mass}. Please check your input and try again, or manually input your values on the home page manual form.')
 
+"""——————————————————————————————PEGASUS GRID OBJECT——————————————————————————————"""   
 
 class PegasusGrid():
     """Represents the PEGASUS grid"""
@@ -945,30 +955,3 @@ class PegasusGrid():
             return list(models_in_limits)
         except Exception as e:
             return ('Error fetching PEGASUS models:', e)
-
-class PhoenixModel():
-    def __init__(self, fits_filename, teff, logg, mass, euv, fuv, nuv, chi_squared):
-        self.fits_filename = fits_filename
-        self.teff = teff
-        self.logg = logg
-        self.mass = mass
-        self.euv = euv
-        self.fuv = fuv
-        self.nuv = nuv
-        self.chi_squared = chi_squared
-
-    # def get_fits_data(self):
-    #     try:
-    #         # STEP 1: Find a GALEX observation time from PEGASUS API
-    #         url = 'http://phoenixpegasusgrid.com/api/get_model_data'
-    #         params = {'fits_filename': self.fits_filename}
-    #         response = requests.get(url, params=params)
-    #         response.raise_for_status()  # raise an exception if the status code is not 200 OK
-    #         fits_data = dict(response.json())  # parse the response as JSON
-    #         self.wv_data = fits_data['wavelength_data']
-    #         self.flux_data = fits_data['flux_data']
-    #         return fits_data
-    #     except requests.exceptions.RequestException as e:
-    #         return ('Error fetching FITS file data:', e)
-    #     except ValueError as e:
-    #         return ('Error fetching FITS file data:', response.json(), e)
