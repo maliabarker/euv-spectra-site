@@ -564,6 +564,7 @@ def faqs():
 @main.route('/all-spectra', methods=['GET'])
 def index_spectra():
     """View all spectra page."""
+    flash('Model grid is not available to download yet. Please contact us if you need further information.', 'warning')
     return render_template('index-spectra.html')
 
 
