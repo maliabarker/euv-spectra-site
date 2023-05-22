@@ -256,7 +256,6 @@ def return_results():
         upper_limit_models = [] # will hold our upper limit models
         normal_models = [] # will hold our normal models
         plot_data = {} # dict to hold all data to plot
-        filepaths = [] # list of filepaths for download buttons
         using_test_data = False # Boolean to determine if we are using test data or not and throw flash if we are
         model_index = 0 # Instantiating model index
 
@@ -287,6 +286,8 @@ def return_results():
                     # if nothing found in the first query, grow NUV error bars by 5 and try again
                     stellar_object.fluxes.processed_nuv_err = nuv_err * 5
                     saturated_models = pegasus.query_pegasus_saturated_fuv()
+                if len(saturated_models) == 0:
+                    flash('No models found within 5 σ of the GALEX FUV flux measurements. Unable to return model(s).')
             elif stellar_object.fluxes.nuv_is_saturated:
                 # Do the same but with NUV as saturated and FUV as normal flux
                 plot_data['galex_nuv'] = {'name': 'GALEX Processed NUV (Saturated)',
@@ -304,6 +305,8 @@ def return_results():
                     # if nothing found in the second query, grow NUV error bars by 5 and try again
                     stellar_object.fluxes.processed_fuv_err = fuv_err * 5
                     saturated_models = pegasus.query_pegasus_saturated_nuv()
+                if len(saturated_models) == 0:
+                    flash('No models found within 5 σ of the GALEX NUV flux measurements. Unable to return model(s).')
             
             for doc in saturated_models:
                 # for each matching model that comes back, get the filepath
@@ -318,13 +321,11 @@ def return_results():
                 model_index += 1
                 if os.path.exists(filepath):
                     # if the filepath exists, append the data with appropriate flags to plot data
-                    filepaths.append(filepath)
                     plot_data[key]['filepath'] = filepath
                 else:
                     # else if the filepath doesn't exist, append dat with appropriate flags and a test file
                     '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
                     i = list(saturated_models).index(doc)
-                    filepaths.append(test_filepaths[i])
                     plot_data[key]['filepath'] = test_filepaths[i]
                     # set using test data to True so test flash message will be sent to return template
                     using_test_data = True
@@ -352,6 +353,8 @@ def return_results():
                     # if nothing found in the first query, grow NUV error bars by 5 and try again
                     stellar_object.fluxes.processed_nuv_err = nuv_err * 5
                     upper_limit_models = pegasus.query_pegasus_upper_limit_fuv()
+                if len(upper_limit_models) == 0:
+                    flash('No models found within 5 σ of the GALEX FUV flux measurements. Unable to return model(s).')
             elif stellar_object.fluxes.nuv_is_upper_limit:
                 plot_data['galex_nuv'] = {'name': 'GALEX Processed NUV (Upper Limit)',
                                                       'flux_density': stellar_object.fluxes.processed_nuv_upper_limit,
@@ -368,6 +371,8 @@ def return_results():
                     # if nothing found in the first query, grow NUV error bars by 5 and try again
                     stellar_object.fluxes.processed_fuv_err = fuv_err * 5
                     upper_limit_models = pegasus.query_pegasus_upper_limit_nuv()
+                if len(upper_limit_models) == 0:
+                    flash('No models found within 5 σ of the GALEX NUV flux measurements. Unable to return model(s).')
             for doc in upper_limit_models:
                 # for each matching model that comes back, get the filepath
                 filepath = os.path.abspath(
@@ -381,13 +386,11 @@ def return_results():
                 model_index += 1
                 if os.path.exists(filepath):
                     # if the filepath exists, append the data with appropriate flags to plot data
-                    filepaths.append(filepath)
                     plot_data[key]['filepath'] = filepath
                 else:
                     # else if the filepath doesn't exist, append dat with appropriate flags and a test file
                     '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
                     i = list(upper_limit_models).index(doc)
-                    filepaths.append(test_filepaths[i])
                     plot_data[key]['filepath'] = test_filepaths[i]
                     # set using test data to True so test flash message will be sent to return template
                     using_test_data = True
@@ -422,9 +425,9 @@ def return_results():
                 '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
                 if os.path.exists(filepath) == False:
                     # STEP 9A.6 If the filepath does not exist, use test data and put using_test_data to True
+                    print('FILEPATH DOES NOT EXIST, USING TEST FILEPATH')
                     filepath = test_filepaths[0]
                     using_test_data = True
-                filepaths.append(filepath)
                 key = f'model_{model_index}'
                 plot_data[key] = {'index': model_index,
                                     'filepath': filepath,
@@ -448,11 +451,19 @@ def return_results():
                     # STEP 9B.2: Iterate over each model in returned models_in_limits and add each to the plot data dict
                     filepath = os.path.abspath(
                         f"euv_spectra_app/fits_files/{stellar_object.model_subtype}/{doc['fits_filename']}")
+                    
+                    '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
+                    if os.path.exists(filepath) == False:
+                        # STEP 9B.3 If the filepath does not exist, use test data and put using_test_data to True
+                        print('FILEPATH DOES NOT EXIST, USING TEST FILEPATH')
+                        filepath = test_filepaths[model_index]
+                        using_test_data = True
                     key = f'model_{model_index}'
                     plot_data[key] = {'index': model_index,
-                                      'nuv': doc['nuv'],
-                                      'fuv': doc['fuv'],
-                                      'euv': doc['euv']}
+                                        'filepath': filepath,
+                                        'nuv': normal_models[0]['nuv'],
+                                        'fuv': normal_models[0]['fuv'],
+                                        'euv': normal_models[0]['euv']}
                     model_index += 1
                     if stellar_object.has_saturated_fluxes():
                         # STEP 9B.3: If there are saturated fluxes, this will be option B, add proper flag
@@ -460,17 +471,6 @@ def return_results():
                     if stellar_object.has_upper_limit_fluxes():
                         # STEP 9B.4: If there are upper limit fluxes, this will be option B, add proper flag
                         plot_data[key]['flag'] = 'Upper Limit Option B'
-                    if os.path.exists(filepath):
-                        # STEP 9B.5: If the filepath exists, add this data to plot data
-                        filepaths.append(filepath)
-                        plot_data[key]['filepath'] = filepath
-                    else:
-                        # STEP 9B.6: If the filepath does not exists, add test data to plot data
-                        '''——————FOR TESTING PURPOSES (if FITS file is not yet available)—————'''
-                        i = list(models_in_limits).index(doc)
-                        filepaths.append(test_filepaths[i])
-                        plot_data[key]['filepath'] = test_filepaths[i]
-                        using_test_data = True
         # STEP 10: Add the GALEX fuv and nuv flux densities to the plot data if they have not been added
         if 'galex_fuv' not in plot_data:
             plot_data['galex_fuv'] = {'name': 'GALEX Processed FUV',
@@ -482,15 +482,15 @@ def return_results():
                                     'flux_density': stellar_object.fluxes.processed_nuv,
                                     'flux_density_err': stellar_object.fluxes.processed_nuv_err,
                                     'wavelength': 2315}
+        # STEP 11: Generate plot using the compiled data
         plotly_fig = create_plotly_graph(plot_data)
         graphJSON = json.dumps(
             plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
-        session['stellar_target'] = json.dumps(to_json(stellar_object))
         if using_test_data == True:
             flash('EUV data not available yet, using test data for viewing purposes.\
                    Please contact us for more information.', 'danger')
         return_models = normal_models + saturated_models + upper_limit_models
-        print(test_filepaths)
+        session['stellar_target'] = json.dumps(to_json(stellar_object))
         return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_obj=stellar_object, matching_models=return_models, test_filepaths=test_filepath_names)
     else:
         flash('Missing required stellar parameters. Submit the required data to view this page.', 'danger')
