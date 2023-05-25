@@ -398,6 +398,7 @@ class GalexFluxes():
         else:
             return ('Can only run calculations on fuv or nuv flux types. Please input one of these and try again.')
         converted_flux = self.convert_ujy_to_flux_density(flux, wv)
+        print(f'CONVERTED {flux_type} uJy to ERG/S/CM^2/A: {converted_flux}')
         scaled_flux = self.scale_flux(converted_flux)
         photosub_flux = self.subtract_photosphere_flux(scaled_flux, photo_flux)
         return photosub_flux

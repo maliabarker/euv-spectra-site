@@ -72,6 +72,7 @@ class RequiredIfOneOf(DataRequired):
 teff_label = Markup('T<sub>eff</sub> (K)')
 mass_label = Markup('Mass (M<sub>sun</sub>)')
 rad_label = Markup('Radius (R<sub>sun</sub>)')
+flux_label = Markup('Flux (erg/sec/cm<sup>2</sup>/Å)')
 
 
 class ManualForm(FlaskForm):
@@ -86,12 +87,16 @@ class ManualForm(FlaskForm):
     dist = DecimalField('d — Distance', validators=[DataRequired(), NumberRange(min=0, message='Cannot enter negative values.')])
     dist_unit = SelectField('d Unit', validators=[DataRequired()], choices=[
                             ('pc', 'Parsecs (pc)'), ('mas', 'Milliarcseconds (mas)')])
-    fuv = DecimalField('FUV (μJy)', validators=[NotRequiredIf(fuv_flag=['null']), NumberRange(min=0, message='Cannot enter negative values.')])
-    fuv_err = DecimalField('FUV err (μJy)', validators=[NotRequiredIf(fuv_flag=['null', 'saturated', 'upper_limit']), NumberRange(min=0, message='Cannot enter negative values.')])
+    fuv = DecimalField('FUV', validators=[NotRequiredIf(fuv_flag=['null']), NumberRange(min=0, message='Cannot enter negative values.')])
+    fuv_err = DecimalField('FUV err', validators=[NotRequiredIf(fuv_flag=['null', 'saturated', 'upper_limit']), NumberRange(min=0, message='Cannot enter negative values.')])
+    fuv_unit = SelectField('FUV Unit', validators=[DataRequired()], choices=[
+                            ('flux', 'Flux (μJy)'), ('mag', 'Magnitude (mag)')])
     fuv_flag = RadioField('FUV Flag', validators=[Optional()], choices=[(
         'null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated'), ('none', 'None')])
-    nuv = DecimalField('NUV (μJy)', validators=[NotRequiredIf(nuv_flag=['null']), NumberRange(min=0, message='Cannot enter negative values.')])
-    nuv_err = DecimalField('NUV err (μJy)', validators=[NotRequiredIf(nuv_flag=['null', 'saturated', 'upper_limit']), NumberRange(min=0, message='Cannot enter negative values.')])
+    nuv = DecimalField('NUV ', validators=[NotRequiredIf(nuv_flag=['null']), NumberRange(min=0, message='Cannot enter negative values.')])
+    nuv_err = DecimalField('NUV err', validators=[NotRequiredIf(nuv_flag=['null', 'saturated', 'upper_limit']), NumberRange(min=0, message='Cannot enter negative values.')])
+    nuv_unit = SelectField('NUV Unit', validators=[DataRequired()], choices=[
+                            ('flux', 'Flux (μJy)'), ('mag', 'Magnitude (mag)')])
     nuv_flag = RadioField('NUV Flag', validators=[Optional()], choices=[(
         'null', 'Not Detected'), ('upper_limit', 'Upper Limit'), ('saturated', 'Saturated'), ('none', 'None')])
     submit = SubmitField('Submit and Find EUV Spectrum')

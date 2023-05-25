@@ -101,14 +101,9 @@ def submit_modal_form():
 @main.route('/manual-submit', methods=['POST'])
 def submit_manual_form():
     """Submit route for manual form."""
-    if request.args.get('form') == 'extended':
-        extend_form = True
-    else:
-        extend_form = False
-
     form = ManualForm(request.form)
     stellar_object = StellarObject()
-    fields_not_to_include = ['dist_unit', 'fuv_flag', 'nuv_flag', 'submit', 'csrf_token']
+    fields_not_to_include = ['dist_unit', 'fuv_flag', 'nuv_flag', 'fuv_unit', 'nuv_unit', 'submit', 'csrf_token']
     flux_data = ['fuv', 'fuv_err', 'nuv', 'nuv_err']
 
     # iterate over each field in the form and set the attributes to the stellar object
@@ -119,9 +114,31 @@ def submit_manual_form():
                 # Deal with the fields not to include 
                 # (mostly unit checking and conversions and flag functionalities)
                 if fieldname == 'dist_unit' and value == 'mas':
-                    # CHECK DISTANCE UNIT: if distance unit is mas, convert to parsecs
+                    # CHECK DISTANCE UNIT
                     # if the distance unit is milliarcseconds (mas) convert to parsecs
                     stellar_object.dist = int(1 / (form.dist.data / 1000))
+                elif fieldname == 'fuv_unit' and value == 'mag':
+                    # CHECK GALEX FUV UNIT
+                    # if galex unit is in magnitude (mag), convert to flux (in microjanskies)
+                    # mag(AB) → erg/s/cm^2/A
+                    # FUV = ( ( (10^(mag-18.82))/-2.5 ) * (1.4*10^-15) )
+                    fuv = float(form.fuv.data)
+                    fuv_mag_to_flux = ((pow(10, ((fuv-18.82)/-2.5))) * (1.4e-15))
+                    # erg/s/cm^2/A → uJY
+                    fuv_flux_to_uJy = ( ((fuv_mag_to_flux * pow(1542.3, 2)) / (3e-5)) * (pow(10, 6)) )
+                    # set fuv of stellar object fluxes to this flux
+                    setattr(stellar_object.fluxes, 'fuv', fuv_flux_to_uJy)
+                elif fieldname == 'nuv_unit' and value == 'mag':
+                    # CHECK GALEX NUV UNIT
+                    # if galex unit is in magnitude (mag), convert to flux (in microjanskies)
+                    nuv = float(form.nuv.data)
+                    # mag(AB) → erg/s/cm^2/A
+                    # NUV = ( ( (10^(mag-20.08))/-2.5 ) * (2.06*10^-16) )
+                    nuv_mag_to_flux = ((pow(10, ((nuv-20.08)/-2.5))) * (2.06e-16))
+                    # erg/s/cm^2/A → uJY
+                    nuv_flux_to_uJy = ( ((nuv_mag_to_flux * pow(2274.4, 2)) / (3e-5)) * (pow(10, 6)) )
+                    # set nuv of stellar object fluxes to this flux
+                    setattr(stellar_object.fluxes, 'nuv', nuv_flux_to_uJy)
                 elif 'flag' in fieldname:
                     flux = fieldname[:3]
                     flux_err = f'{flux}_err'

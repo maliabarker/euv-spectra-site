@@ -1,7 +1,9 @@
 <form action="/manual-submit" method="POST" class="p-4">
     {{ manual_form.csrf_token }}
     {{ manual_form.hidden_tag() }}
+    <h5 class="mb-3 text-center"><hr class="mt-1">Input Stellar Parameters and GALEX Data Manually</h5>
     <fieldset>
+        <p class="ms-2"><b>Stellar Intrinsic Parameters</b></p>
         <div class="form-floating mb-3">
             {{ manual_form.teff(class="form-control", placeholder="Teff — Stellar Effective Temperature (K)") }}
             {{ manual_form.teff.label(text='* ' + manual_form.teff.label.text) }}
@@ -37,74 +39,66 @@
             </div>
         </div>
 
-        <p class="text-center"><b>GALEX Far and Near Ultraviolet (FUV, NUV) Flux Densities</b></p>
+        <p class="ms-2"><b>GALEX Far and Near Ultraviolet (FUV, NUV) Values</b></p>
         <div class="row">
-            <div class="col-sm-6">
-                <div class="form-floating mb-3">
+            <div class="col-lg-5">
+                <div class="form-floating">
                     {{ manual_form.fuv(class="form-control", placeholder="FUV — Far Ultraviolet Flux in Microjanskys (mjy)") }}
                     {{ manual_form.fuv.label(text='* ' + manual_form.fuv.label.text) }}
                 </div>
             </div>
-            <div class="col-sm-1 d-flex align-items-center">
-                <p class="justify-content-center  ">+/-</p>
-            </div>
-            <div class="col-sm-5">
+            <div class="col-lg-4">
                 <div class="form-floating">
                     {{ manual_form.fuv_err(class="form-control", placeholder="FUV — Far Ultraviolet Flux Error in Microjanskys (mjy)") }}
                     {{ manual_form.fuv_err.label(text='* ' + manual_form.fuv_err.label.text) }}
                 </div>
             </div>
+            <div class="col-lg-3">
+                <div class="form-floating">
+                    {{ manual_form.fuv_unit(class="form-select") }}
+                    {{ manual_form.fuv_unit.label(text='* ' + manual_form.fuv_unit.label.text) }}
+                </div>
+            </div>
         </div>
         
-        <div id="fuv-flags-container" class="text-center">
+        <div id="fuv-flags-container" class="text-center mb-2">
             <span class="me-3">FUV Flags:</span>
             {% for subfield in manual_form.fuv_flag %}
-                {% if subfield.data == 'null' %}
-                    <div class="form-check form-check-inline my-4">
-                        {{ subfield(class="form-check-input") }}
-                        {{ subfield.label(class="form-check-label") }}
-                    </div>
-                {% else %}
-                    <div class="form-check form-check-inline my-4">
-                        {{ subfield(class="form-check-input") }}
-                        {{ subfield.label(class="form-check-label") }}
-                    </div>
-                {% endif %}
+                <div class="form-check form-check-inline my-4">
+                    {{ subfield(class="form-check-input") }}
+                    {{ subfield.label(class="form-check-label") }}
+                </div>
             {% endfor %}
         </div>
 
         <div class="row">
-            <div class="col-sm-6">
-                <div class="form-floating mb-3">
+            <div class="col-lg-5">
+                <div class="form-floating">
                     {{ manual_form.nuv(class="form-control", placeholder="NUV — Near Ultraviolet Flux in Microjanskys (mjy)") }}
                     {{ manual_form.nuv.label(text='* ' + manual_form.nuv.label.text) }}
                 </div>
             </div>
-            <div class="col-sm-1 d-flex align-items-center">
-                <p class="justify-content-center">+/-</p>
-            </div>
-            <div class="col-sm-5">
+            <div class="col-lg-4">
                 <div class="form-floating">
                     {{ manual_form.nuv_err(class="form-control", placeholder="NUV — Near Ultraviolet Flux Error in Microjanskys (mjy)") }}
                     {{ manual_form.nuv_err.label(text='* ' + manual_form.nuv_err.label.text) }}
                 </div>
             </div>
+            <div class="col-lg-3">
+                <div class="form-floating">
+                    {{ manual_form.nuv_unit(class="form-select") }}
+                    {{ manual_form.nuv_unit.label(text='* ' + manual_form.nuv_unit.label.text) }}
+                </div>
+            </div>
         </div>
 
-        <div id="nuv-flags-container" class="text-center">
+        <div id="nuv-flags-container" class="text-center mb-3">
             <span class="me-3">NUV Flags:</span>
             {% for subfield in manual_form.nuv_flag %}
-                {% if subfield.data == 'null' %}
-                    <div class="form-check form-check-inline mt-4">
-                        {{ subfield(class="form-check-input") }}
-                        {{ subfield.label(class="form-check-label") }}
-                    </div>
-                {% else %}
-                    <div class="form-check form-check-inline mt-4">
-                        {{ subfield(class="form-check-input") }}
-                        {{ subfield.label(class="form-check-label") }}
-                    </div>
-                {% endif %}
+                <div class="form-check form-check-inline mt-4">
+                    {{ subfield(class="form-check-input") }}
+                    {{ subfield.label(class="form-check-label") }}
+                </div>
             {% endfor %}
         </div>
 
@@ -113,7 +107,7 @@
             {{ manual_form.submit(class="btn btn-primary border-0 mb-3", id="flux-continue-btn") }}
         </div>
 
-        <div class="text-center mt-3">
+        <div class="text-center mt-2">
             <input type="reset" value="Clear Form" class="link-danger" id="clear-form-button">
         </div>
     </fieldset>
