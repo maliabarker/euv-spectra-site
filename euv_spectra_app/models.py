@@ -85,73 +85,25 @@ class ProperMotionData():
             except Exception as e:
                 return (f'Unknown error during proper motion correction: {e}')
 
-"""——————————————————————————————SINGLE GALEX FLUX OBJECT——————————————————————————————"""   
-
-class GalexFlux():
-    """Represents one GALEX flux and error (FUV or NUV)."""
-
-    def __init__(self, flux, flux_err, photospheric_flux, dist, rad, wv):
-        self.flux = flux
-        self.upper_lim = flux + flux_err
-        self.lower_lim = flux - flux_err
-        self.photo_flux = photospheric_flux
-        self.dist = dist * 3.08567758e18
-        self.rad = rad * 6.9e10
-        self.wv = wv
-        self.scale = ((self.dist**2) / (self.rad**2))
-
-    def convert_ujy_to_flux(self, chosen_flux):
-        """Converts microjanskies to ergs/s/cm2/A."""
-        return (((3e-5) * (chosen_flux * 10**-6)) / pow(self.wv, 2))
-
-    def scale_flux(self, chosen_flux):
-        """Scales flux to stellar surface."""
-        return chosen_flux * self.scale
-
-    def subtract_photosphere_flux(self, chosen_flux):
-        """Subtracts the photospheric contributed flux from GALEX flux."""
-        return chosen_flux - self.photo_flux
-
-    def run_calculations(self, chosen_flux):
-        """Runs calculations in correct order to return converted, scaled flux."""
-        converted_flux = self.convert_ujy_to_flux(chosen_flux)
-        scaled_flux = self.scale_flux(converted_flux)
-        photo_subtracted_flux = self.subtract_photosphere_flux(scaled_flux)
-        return photo_subtracted_flux
-
-    def return_new_flux(self):
-        """Returns newly calculated flux density."""
-        return self.run_calculations(self.flux)
-
-    def return_new_err(self):
-        """Calculates the new flux error."""
-        new_flux = self.return_new_flux()
-        new_upper_lim = self.run_calculations(self.upper_lim)
-        new_lower_lim = self.run_calculations(self.lower_lim)
-        new_upper_err = new_upper_lim - new_flux
-        new_lower_err = new_flux - new_lower_lim
-        new_err = (new_upper_err + new_lower_err) / 2
-        return new_err
-
 """——————————————————————————————GALEX FLUXES OBJECT——————————————————————————————"""   
 
 class GalexFluxes():
     """Represents GALEX flux values."""
 
     def __init__(self, fuv=None, nuv=None, fuv_saturated=None, nuv_saturated=None, fuv_upper_limit=None, nuv_upper_limit=None, fuv_err=None, nuv_err=None, fuv_is_saturated=None, nuv_is_saturated=None, fuv_is_upper_limit=None, nuv_is_upper_limit=None, stellar_obj=None):
-        self.fuv = fuv
-        self.nuv = nuv
-        self.fuv_saturated = fuv_saturated
-        self.nuv_saturated = nuv_saturated
-        self.fuv_upper_limit = fuv_upper_limit
-        self.nuv_upper_limit = nuv_upper_limit
-        self.fuv_err = fuv_err
-        self.nuv_err = nuv_err
-        self.fuv_is_saturated = fuv_is_saturated
-        self.nuv_is_saturated = nuv_is_saturated
-        self.fuv_is_upper_limit = fuv_is_upper_limit
-        self.nuv_is_upper_limit = nuv_is_upper_limit
-        self.stellar_obj = stellar_obj
+        self.fuv = fuv # GALEX FUV value (float)
+        self.nuv = nuv # GALEX NUV value (float)
+        self.fuv_saturated = fuv_saturated # GALEX FUV saturated value (float)
+        self.nuv_saturated = nuv_saturated # GALEX NUV saturated value (float)
+        self.fuv_upper_limit = fuv_upper_limit # GALEX FUV upper limit value (float)
+        self.nuv_upper_limit = nuv_upper_limit # GALEX NUV upper limit value (float)
+        self.fuv_err = fuv_err # GALEX FUV error value (float)
+        self.nuv_err = nuv_err # GALEX NUV error value (float)
+        self.fuv_is_saturated = fuv_is_saturated # Boolean indicating if GALEX FUV is saturated (bool)
+        self.nuv_is_saturated = nuv_is_saturated # Boolean indicating if GALEX NUV is saturated (bool)
+        self.fuv_is_upper_limit = fuv_is_upper_limit # Boolean indicating if GALEX FUV is upper limit (bool)
+        self.nuv_is_upper_limit = nuv_is_upper_limit # Boolean indicating if GALEX NUV is upper limit (bool)
+        self.stellar_obj = stellar_obj # The stellar object associated with the GALEX fluxes
 
     def has_attr_val(self, attr):
         if hasattr(self, attr) and getattr(self, attr) is not None:
@@ -161,20 +113,43 @@ class GalexFluxes():
 
     def check_null_fluxes(self):
         print('CHECKING NULL FLUXES')
-        if (self.fuv is None or ma.is_masked(self.fuv)) and (self.nuv is None or ma.is_masked(self.nuv)):
-            # all fluxes are null/ no galex data
-            self.fuv, self.fuv_err = 'No Detection', 'No Detection'
-            self.nuv, self.nuv_err = 'No Detection', 'No Detection'
+        # check that absolutely all fluxes are None
+        if (self.fuv is None or ma.is_masked(self.fuv)) and (self.nuv is None or ma.is_masked(self.nuv)) and self.fuv_saturated is None and self.nuv_saturated is None and self.fuv_upper_limit is None and self.nuv_upper_limit is None:
+            # Absolutely all fluxes are none/null. Normal fluxes are none, saturated fluxes 
+            # are none, and upper limit fluxes are None. Means no flux data was inputted 
+            # and cannot continue.
             return ('No GALEX detections found.')
-        elif self.fuv is None or ma.is_masked(self.fuv):
-            # only FUV is null, predict FUV and add error message
+        elif (self.fuv is None or ma.is_masked(self.fuv)) and self.fuv_saturated is None and self.fuv_upper_limit is None:
+            # No value for FUV in normal, saturated, or upper limit values.
+            # FUV is null. Need to predict for FUV and add an error message to flash on modal (if on modal)
             print('FUV NULL, predicting flux')
-            self.predict_fluxes(self.nuv, self.nuv_err, 'nuv')
+            if self.nuv_is_saturated:
+                # If the non-null flux is saturated, use that value to predict
+                # pass in None for the error because saturated vals do not have error
+                self.predict_fluxes(self.nuv_saturated, None, 'fuv')
+            elif self.nuv_is_upper_limit:
+                # Else If the non-null flux is an upper limit, use that value to predict
+                # pass in None for the error because upper limit vals do not have error
+                self.predict_fluxes(self.nuv_upper_limit, None, 'fuv')
+            else:
+                # Else do regular prediction with NUV and error
+                self.predict_fluxes(self.nuv, self.nuv_err, 'fuv')
             return ('GALEX FUV not detected. Predicting for FUV and FUV error.')
-        elif self.nuv is None or ma.is_masked(self.nuv):
-            # only NUV is null, predict NUV and add error message
+        elif (self.nuv is None or ma.is_masked(self.nuv)) and self.nuv_saturated is None and self.nuv_upper_limit is None:
+            # No value for NUV in normal, saturated, or upper limit values.
+            # NUV is null. Need to predict for NUV and add an error message to flash on modal (if on modal)
             print('NUV NULL, predicting flux')
-            self.predict_fluxes(self.fuv, self.fuv_err, 'fuv')
+            if self.fuv_is_saturated:
+                # If the non-null flux is saturated, use that value to predict
+                # pass in None for the error because saturated vals do not have error
+                self.predict_fluxes(self.fuv_saturated, None, 'nuv')
+            elif self.fuv_is_upper_limit:
+                # Else If the non-null flux is an upper limit, use that value to predict
+                # pass in None for the error because upper limit vals do not have error
+                self.predict_fluxes(self.fuv_upper_limit, None, 'nuv')
+            else:
+                # Else do regular prediction with FUV and error
+                self.predict_fluxes(self.fuv, self.fuv_err, 'nuv')
             return ('GALEX NUV not detected. Predicting for NUV and NUV error.')
 
     def check_saturated_fluxes(self):
@@ -199,145 +174,229 @@ class GalexFluxes():
             Exception if both fluxes are saturated.
         """
         try:
-            if self.fuv_is_saturated and self.nuv_is_saturated:
-                self.fuv, self.fuv_err = 'No Detection', 'No Detection'
-                self.nuv, self.nuv_err = 'No Detection', 'No Detection'
-                return ('Both GALEX detections cannot be saturated, cannot correct fluxes.')
-            elif self.fuv_is_saturated:
-                # Option A: Predict
-                self.predict_fluxes(self.nuv, self.nuv_err, 'nuv')
-                # print('Testing resulting saturated fluxes to compare:', self.fuv, self.fuv_saturated)
-                if self.fuv < self.fuv_saturated:
-                    # if predicted flux is not greater than saturated flux, change flux and err to None
-                    self.fuv = None
-                    self.fuv_err = None
+            # If a flux is saturated, do two options:
+            # OPTION A: Search on the grid using saturated flux as a lower limit
+            # Option B: Predict the actual flux and do normal search
+                # for option B, check to see if you can predict 
+                # (can only predict if other flux has values for both detection and error)
+                # if you can't, just skip
+                # if you can, we will only use the prediction if the predicted flux is greater 
+                # than the saturated flux. If predicted flux is not greater than saturated flux, 
+                # change flux and err to None so they will not be used
+            if self.fuv_is_saturated:
+                if self.nuv is not None and self.nuv_err is not None:
+                    self.predict_fluxes(self.nuv, self.nuv_err, 'fuv')
+                    if self.fuv < self.fuv_saturated:
+                        self.fuv = None
+                        self.fuv_err = None
             elif self.nuv_is_saturated:
-                self.predict_fluxes(self.fuv, self.fuv_err, 'fuv')
-                # print('Testing resulting saturated fluxes to compare:', self.nuv, self.nuv_saturated)
-                if self.nuv < self.nuv_saturated:
-                    self.nuv = None
-                    self.nuv_err = None
+                if self.fuv is not None and self.fuv_err is not None:
+                    self.predict_fluxes(self.fuv, self.fuv_err, 'nuv')
+                    if self.nuv < self.nuv_saturated:
+                        self.nuv = None
+                        self.nuv_err = None
         except ValueError as e:
             return ('Invalid `fuv_saturated`, `fuv_is_saturated` and/or `nuv_saturated`, `nuv_is_saturated` attributes:' + str(e))
 
     def check_upper_limit_fluxes(self):
         try:
-            if self.fuv_is_upper_limit and self.nuv_is_upper_limit:
-                self.fuv, self.fuv_err = 'No Detection', 'No Detection'
-                self.nuv, self.nuv_err = 'No Detection', 'No Detection'
-                return ('Both GALEX detections cannot be upper limits, cannot correct fluxes.')
-            elif self.fuv_is_upper_limit:
-                # Option A: Predict
-                self.predict_fluxes(self.nuv, self.nuv_err, 'nuv')
-                # print('Testing resulting upper limit fluxes to compare:', self.fuv, self.fuv_upper_limit)
-                if self.fuv > self.fuv_upper_limit:
-                    # if predicted flux is not less than saturated flux, change flux and err to None
-                    self.fuv = None
-                    self.fuv_err = None
-            elif self.nuv_is_upper_limit:
-                self.predict_fluxes(self.fuv, self.fuv_err, 'fuv')
-                # print('Testing resulting upper limit fluxes to compare:', self.nuv, self.nuv_upper_limit)
-                if self.nuv > self.nuv_upper_limit:
-                    self.nuv = None
-                    self.nuv_err = None
+            # If a flux is an upper limit, do two options:
+            # OPTION A: Search on the grid using flux as an upper limit
+            # Option B: Predict the actual flux and do normal search
+                # for option B, check to see if you can predict 
+                # (can only predict if other flux has values for both detection and error)
+                # if you can't, just skip
+                # if you can, we will only use the prediction if the predicted flux is less than 
+                # the upper limit flux. If predicted flux is not less than the upper limit flux, 
+                # change flux and err to None so they will not be used
+                if self.fuv_is_upper_limit:
+                    if self.nuv is not None and self.nuv_err is not None:
+                        self.predict_fluxes(self.nuv, self.nuv_err, 'fuv')
+                        if self.fuv > self.fuv_upper_limit:
+                            self.fuv = None
+                            self.fuv_err = None
+                elif self.nuv_is_upper_limit:
+                    if self.fuv is not None and self.fuv_err is not None:
+                        self.predict_fluxes(self.fuv, self.fuv_err, 'nuv')
+                        if self.nuv > self.nuv_upper_limit:
+                            self.nuv = None
+                            self.nuv_err = None
         except ValueError as e:
             return ('Invalid `fuv_upper_limit`, `fuv_is_upper_limit` and/or `nuv_upper_limit`, `nuv_is_upper_limit` attributes:' + str(e))
 
-    def predict_early_ms(self, flux_val, flux_err, flux_type):
-        """
-        STEP 1: Scale GALEX flux densities to be at 10 parsecs with following equation
-            stellar_dist^2 / 100 
-            * NOTE: the stellar distance needs to be in parsecs
-        STEP 2: Solve for the missing flux, for example if the given flux_type is 'nuv', 
-        solve for 'fuv', use the following equations
+    def predict_early_ms_equation(self, flux_val, flux_type, unscale):
+        """Runs the equation for the predicted flux value using other flux value for early M stars.
+
+        This equation uses flux values scaled at 10 parsecs. The values given should already be scaled.
+        The equation is then run depending on the flux type. The following equations that correspond to 
+        flux types are:
             FUV = 10 ^ ( 1.17 * log10(NUV) - 1.26 )
             NUV = 10 ^ ( ( log10(FUV) + 1.26 ) / 1.17 )
-            * NOTE: the fluxes in these equations are the scaled values obtained from 
-                    the last step
-        STEP 3: Unscale the flux from 10 psc back to earth surface using equation
-            100 / stellar_dist^2
+        Then, these predicted flux values are 'unscaled', or scaled back to their original distances 
+        with the given unscale value.
+
+        Args:
+            flux_val: The value of the flux that will be used in the prediction equation.
+            flux_type: The flux you are predicting for. Will be either fuv or nuv.
+            unscale: The unscale value that will be used to reverse original scaling. Calculated using 
+                the equation (100 / (stellar distance^2))
+        
+        Returns:
+            The final predicted flux value.
+        
+        Raises:
+            No errors are raised but will return string error if the flux type is not nuv or fuv.
         """
-        pred_flux = None
-        pred_err = None
-        scale = ((pow(self.stellar_obj['dist'], 2)) / 100)
-        unscale = (100 / (pow(self.stellar_obj['dist'], 2)))
-        scaled_flux = flux_val * scale
-        upper_lim_scaled = (flux_val + flux_err) * scale
-        lower_lim_scaled = (flux_val - flux_err) * scale
-        which_flux = None
-        which_err = None
-        if flux_type == 'fuv':
-            # predicting for NUV
-            which_flux = 'nuv'
-            which_err = 'nuv_err'
-            pred_flux = (pow(10, (( math.log10(scaled_flux) + 1.26 ) / 1.17 ))) * unscale
-            pred_upper_lim = (pow(10, (( math.log10(upper_lim_scaled) + 1.26 ) / 1.17 ))) * unscale
-            pred_lower_lim = (pow(10, (( math.log10(lower_lim_scaled) + 1.26 ) / 1.17 ))) * unscale
-        elif flux_type == 'nuv':
-            # predicting for FUV
-            which_flux = 'fuv'
-            which_err = 'fuv_err'
-            pred_flux = (pow(10, ( 1.17 * math.log10(scaled_flux) - 1.26 ))) * unscale
-            pred_upper_lim = (pow(10, ( 1.17 * math.log10(upper_lim_scaled) - 1.26 ))) * unscale
-            pred_lower_lim = (pow(10, ( 1.17 * math.log10(lower_lim_scaled) - 1.26 ))) * unscale
+        if flux_type == 'nuv':
+            # Equation for predicting NUV
+            return((pow(10, (( math.log10(flux_val) + 1.26 ) / 1.17 ))) * unscale)
+        elif flux_type == 'fuv':
+            # Equation for predicting FUV
+            return((pow(10, ( 1.17 * math.log10(flux_val) - 1.26 ))) * unscale)
         else:
-            return 'Can only correct GALEX FUV and NUV fluxes.'
-        setattr(self, which_flux, pred_flux)
-        new_upper_flux = pred_upper_lim - pred_flux
-        new_lower_flux = pred_flux - pred_lower_lim
-        pred_err = (new_upper_flux + new_lower_flux) / 2
-        setattr(self, which_err, pred_err)
+            return f'Can only correct for flux types: fuv, nuv. Please retry with one of these flux types.'
+        
+    def predict_late_ms_equation(self, flux_val, flux_type, unscale):
+        """Runs the equation for the predicted flux value using other flux value for late M stars.
+
+        This equation uses flux values scaled at 10 parsecs. The values given should already be scaled.
+        The equation is then run depending on the flux type. The following equations that correspond to 
+        flux types are:
+            FUV = 10 ^ ( 1.17 * log10(NUV) - 1.26 )
+            NUV = 10 ^ ( ( log10(FUV) + 1.26 ) / 1.17 )
+        Then, these predicted flux values are 'unscaled', or scaled back to their original distances 
+        with the given unscale value.
+
+        Args:
+            flux_val: The value of the flux that will be used in the prediction equation.
+            flux_type: The flux you are predicting for. Will be either fuv or nuv.
+            unscale: The unscale value that will be used to reverse original scaling. Calculated using 
+                the equation (100 / (stellar distance^2))
+        
+        Returns:
+            The final predicted flux value.
+        
+        Raises:
+            No errors are raised but will return string error if the flux type is not nuv or fuv.
+        """
+        if flux_type == 'nuv':
+            # Equation for predicting NUV
+            return((pow(10, (( math.log10(flux_val) + 0.47 ) / 0.98 ))) * unscale)
+        elif flux_type == 'fuv':
+            # Equation for predicting FUV
+            return((pow(10, ( 0.98 * math.log10(flux_val) - 0.47 ))) * unscale)
+        else:
+            return f'Can only correct for flux types: fuv, nuv. Please retry with one of these flux types.'
+
+    def predict_early_ms(self, flux_val, flux_err, flux_type):
+        """Predicts the values for given fluxes and errors for early M stars.
+
+        The function scales the given flux value by 10 parsecs, then runs the prediction equation.
+        The resulting predicted flux is assigned to an attribute of this object using the given
+        flux type. The errors will also be predicted if an error is given using the same functionality
+        described above.
+
+        Args:
+            flux_val: The value of the flux that will be used in the prediction equation.
+                (Will be the non-null flux value).
+            flux_err: The error of the flux that will be used in the prediction equation.
+                (Will be the non-null flux value).
+            flux_type: The flux you are predicting for. Will be either fuv or nuv.
+
+        Side Effects:
+            Sets the attribute corresponding with the given flux type to the predicted flux.
+            If the flux error is given, will also set the attribute corresponding with the given
+            flux type's error to the predicted error.     
+        """
+        # STEP 1: Scale GALEX flux densities to be at 10 parsecs equation: stellar_dist^2 / 100 
+        # NOTE: the stellar distance needs to be in parsecs
+        scale = ((pow(self.stellar_obj['dist'], 2)) / 100)
+        scaled_flux = flux_val * scale
+        # STEP 2: Calculate value to unscale the flux from 10 psc back to earth surface using
+        # equation 100 / stellar_dist^2
+        unscale = (100 / (pow(self.stellar_obj['dist'], 2)))
+        # STEP 3: Solve for the missing flux, use the following equations
+        pred_flux = self.predict_early_ms_equation(scaled_flux, flux_type, unscale)
+        # STEP 4: Set the attribute of the flux you are predicting for to the flux returned from equation
+        setattr(self, flux_type, pred_flux)
+        # STEP 5: If an error is given, predict the error as well.
+        if flux_err is not None:
+            # Scale the upper and lower limits of the flux
+            upper_lim_scaled = (flux_val + flux_err) * scale
+            lower_lim_scaled = (flux_val - flux_err) * scale
+            # Run prediction equation
+            pred_upper_lim = self.predict_early_ms_equation(upper_lim_scaled, flux_type, unscale)
+            pred_lower_lim = self.predict_early_ms_equation(lower_lim_scaled, flux_type, unscale)
+            # Find new upper error and lower error
+            new_upper_flux = pred_upper_lim - pred_flux
+            new_lower_flux = pred_flux - pred_lower_lim
+            # Take average to find new error
+            pred_err = (new_upper_flux + new_lower_flux) / 2
+            # Set the attribute of the flux error you are predicting for usign avg error
+            which_err = f'{flux_type}_err'
+            setattr(self, which_err, pred_err)
 
     def predict_late_ms(self, flux_val, flux_err, flux_type):
+        """Predicts the values for given fluxes and errors for late M stars.
+
+        The function scales the given flux value by 10 parsecs, then runs the prediction equation.
+        The resulting predicted flux is assigned to an attribute of this object using the given
+        flux type. The errors will also be predicted if an error is given using the same functionality
+        described above.
+
+        Args:
+            flux_val: The value of the flux that will be used in the prediction equation.
+                (Will be the non-null flux value).
+            flux_err: The error of the flux that will be used in the prediction equation.
+                (Will be the non-null flux value).
+            flux_type: The flux you are predicting for. Will be either fuv or nuv.
+
+        Side Effects:
+            Sets the attribute corresponding with the given flux type to the predicted flux.
+            If the flux error is given, will also set the attribute corresponding with the given
+            flux type's error to the predicted error.     
         """
-        STEP 1: Scale GALEX flux densities to be at 10 parsecs with following equation
-            stellar_dist^2 / 100 
-            * NOTE: the stellar distance needs to be in parsecs
-        STEP 2: Solve for the missing flux, for example if the given flux_type is 'nuv', 
-        solve for 'fuv', use the following equations
-            FUV = 10 ^ ( 0.98 * log10(NUV) - 0.47 )
-            NUV = 10 ^ ( ( log10(FUV) + 0.47 ) / 0.98 )
-            * NOTE: the fluxes used in these equations are the scaled values obtained 
-                    from the last step
-        """
-        pred_flux = None
-        pred_err = None
+        # STEP 1: Scale GALEX flux densities to be at 10 parsecs equation: stellar_dist^2 / 100 
+        # NOTE: the stellar distance needs to be in parsecs
         scale = ((pow(self.stellar_obj['dist'], 2)) / 100)
-        unscale = (100 / (pow(self.stellar_obj['dist'], 2)))
         scaled_flux = flux_val * scale
-        upper_lim_scaled = (flux_val + flux_err) * scale
-        lower_lim_scaled = (flux_val - flux_err) * scale
-        which_flux = None
-        which_err = None
-        if flux_type == 'fuv':
-            # predicting for NUV
-            which_flux = 'nuv'
-            which_err = 'nuv_err'
-            pred_flux = (pow(10, (( math.log10(scaled_flux) + 0.47 ) / 0.98 ))) * unscale
-            pred_upper_lim = (pow(10, (( math.log10(upper_lim_scaled) + 0.47 ) / 0.98 ))) * unscale
-            pred_lower_lim = (pow(10, (( math.log10(lower_lim_scaled) + 0.47 ) / 0.98 ))) * unscale
-        elif flux_type == 'nuv':
-            # predicting for FUV
-            which_flux = 'fuv'
-            which_err = 'fuv_err'
-            pred_flux = (pow(10, ( 0.98 * math.log10(scaled_flux) - 0.47 ))) * unscale
-            pred_upper_lim = (pow(10, ( 0.98 * math.log10(upper_lim_scaled) - 0.47 ))) * unscale
-            pred_lower_lim = (pow(10, ( 0.98 * math.log10(lower_lim_scaled) - 0.47 ))) * unscale
-        setattr(self, which_flux, pred_flux)
-        new_upper_flux = pred_upper_lim - pred_flux
-        new_lower_flux = pred_flux - pred_lower_lim
-        pred_err = (new_upper_flux + new_lower_flux) / 2
-        setattr(self, which_err, pred_err)
+        # STEP 2: Calculate value to unscale the flux from 10 psc back to earth surface using
+        # equation 100 / stellar_dist^2
+        unscale = (100 / (pow(self.stellar_obj['dist'], 2)))
+        # STEP 3: Solve for the missing flux, use the following equations
+        pred_flux = self.predict_late_ms_equation(scaled_flux, flux_type, unscale)
+        # STEP 4: Set the attribute of the flux you are predicting for to the flux returned from equation
+        setattr(self, flux_type, pred_flux)
+        # STEP 5: If an error is given, predict the error as well.
+        if flux_err is not None:
+            # Scale the upper and lower limits of the flux
+            upper_lim_scaled = (flux_val + flux_err) * scale
+            lower_lim_scaled = (flux_val - flux_err) * scale
+            # Run prediction equation
+            pred_upper_lim = self.predict_late_ms_equation(upper_lim_scaled, flux_type, unscale)
+            pred_lower_lim = self.predict_late_ms_equation(lower_lim_scaled, flux_type, unscale)
+            # Find new upper error and lower error
+            new_upper_flux = pred_upper_lim - pred_flux
+            new_lower_flux = pred_flux - pred_lower_lim
+            # Take average to find new error
+            pred_err = (new_upper_flux + new_lower_flux) / 2
+            # Set the attribute of the flux error you are predicting for usign avg error
+            which_err = f'{flux_type}_err'
+            setattr(self, which_err, pred_err)
 
     def predict_fluxes(self, flux_val, flux_err, flux_type):
         """Predicts the specified flux based on the remaining GALEX flux values.
 
         Args:
-            flux_to_predict: Either fuv or nuv, specifies which flux to predict for.
+            flux_val: The value of the flux that will be used in the prediction equation.
+                (Will be the non-null flux value).
+            flux_err: The error of the flux that will be used in the prediction equation.
+                (Will be the non-null flux value).
+            flux_type: The flux you are predicting for. Will be either fuv or nuv.
 
         Side Effects:
-            If flux_to_predict is 'fuv', sets fuv and fuv_err of GalexFluxes object.
-            If flux_to_predict is 'nuv', sets nuv and nuv_err of GalexFluxes object.
+            If flux_type is 'fuv', sets fuv and fuv_err of GalexFluxes object.
+            If flux_type is 'nuv', sets nuv and nuv_err of GalexFluxes object.
         """
         early_m = ['M0', 'M1', 'M2', 'M3', 'M4', 'M5']
         late_m = ['M6', 'M7', 'M8', 'M9', 'M5']
@@ -345,7 +404,7 @@ class GalexFluxes():
         # STEP 1: Check that stellar_subtype value exists
         if 'stellar_subtype' not in self.stellar_obj:
             print('DOES NOT HAVE A STELLAR SUBTYPE')
-            return ('Cannot predict flux without stellar subtype. Please try again or contact us with more information on your search.')
+            return ('Cannot predict flux without stellar subtype. Please run the get_stellar_subtype function for your stellar object and try again.')
         elif self.stellar_obj['stellar_subtype'] in early_m:
             print('STAR IS EARLY M:', self.stellar_obj['stellar_subtype'])
             self.predict_early_ms(flux_val, flux_err, flux_type)
@@ -355,12 +414,6 @@ class GalexFluxes():
         else:
             print('Not an m star?')
             return ('Can only run predictions on M stars at the moment.')
-
-    def get_limits(self, flux, err):
-        """Returns the upper and lower limits of a specified flux."""
-        upper_lim = flux + err
-        lower_lim = flux - err
-        return {"upper_lim": upper_lim, "lower_lim": lower_lim}
 
     def convert_ujy_to_flux_density(self, num, wv):
         """Converts microjanskies to ergs/s/cm2/A."""
@@ -373,10 +426,10 @@ class GalexFluxes():
         return num * scale
 
     def get_photosphere_model(self):
+        """Returns a PEGASUS photosphere model for photosphere subtraction."""
         try:
             matching_photosphere_model = find_matching_photosphere(
                 self.stellar_obj['teff'], self.stellar_obj['logg'], self.stellar_obj['mass'])
-            # print('PHOTOSPHERE MODEL', matching_photosphere_model)
             return matching_photosphere_model
         except Exception:
             return ('Cannot find a photosphere model. Please try again.')
@@ -386,6 +439,21 @@ class GalexFluxes():
         return chosen_flux - photo_flux
     
     def convert_scale_photosphere_subtract_single_flux(self, flux, flux_type):
+        """Runs all calculations to process a GALEX flux to prepare for searching PEGASUS grid.
+
+        Will run three processes on the given GALEX flux: 
+            1. Converts the flux from microjanskies to ergs/s/cm2/A.
+            2. Scales the flux to the stellar surface.
+            3. Finds a matching photosphere model with the given stellar parameters and subtracts 
+                photospheric flux contribution.
+        
+        Args:
+            flux: The value of the given flux.
+            flux_type: The type of the given flux. Will be either fuv or nuv.
+        
+        Returns:
+            The final processed flux.
+        """
         wv = None
         photo_flux = None
         photosphere_data = self.get_photosphere_model()
@@ -398,64 +466,42 @@ class GalexFluxes():
         else:
             return ('Can only run calculations on fuv or nuv flux types. Please input one of these and try again.')
         converted_flux = self.convert_ujy_to_flux_density(flux, wv)
-        print(f'CONVERTED {flux_type} uJy to ERG/S/CM^2/A: {converted_flux}')
         scaled_flux = self.scale_flux(converted_flux)
         photosub_flux = self.subtract_photosphere_flux(scaled_flux, photo_flux)
         return photosub_flux
-    
-    def convert_scale_photosphere_subtract_fuv(self):
-        self.processed_fuv = self.convert_scale_photosphere_subtract_single_flux(self.fuv, 'fuv')
-        fuv_lims = self.get_limits(self.fuv, self.fuv_err)
-        photosub_fuv_upper_lim = self.convert_scale_photosphere_subtract_single_flux(fuv_lims['upper_lim'], 'fuv')
-        photosub_fuv_lower_lim = self.convert_scale_photosphere_subtract_single_flux(fuv_lims['lower_lim'], 'fuv')
-        new_fuv_upper_err = photosub_fuv_upper_lim - self.processed_fuv
-        new_fuv_lower_err = self.processed_fuv - photosub_fuv_lower_lim
-        self.processed_fuv_err = (new_fuv_upper_err + new_fuv_lower_err) / 2
-
-    def convert_scale_photosphere_subtract_nuv(self):
-        self.processed_nuv = self.convert_scale_photosphere_subtract_single_flux(self.nuv, 'nuv')
-        nuv_lims = self.get_limits(self.nuv, self.nuv_err)
-        photosub_nuv_upper_lim = self.convert_scale_photosphere_subtract_single_flux(nuv_lims['upper_lim'], 'nuv')
-        photosub_nuv_lower_lim = self.convert_scale_photosphere_subtract_single_flux(nuv_lims['lower_lim'], 'nuv')
-        new_nuv_upper_err = photosub_nuv_upper_lim - self.processed_nuv
-        new_nuv_lower_err = self.processed_nuv - photosub_nuv_lower_lim
-        self.processed_nuv_err = (new_nuv_upper_err + new_nuv_lower_err) / 2
 
     def convert_scale_photosphere_subtract_fluxes(self):
-        if self.fuv is None and self.nuv is None:
-            return ValueError('The values of FUV and NUV cannot both be None. Please check values of the GalexFluxes object and try again.')
-        elif self.nuv_is_saturated and self.nuv is None:
-            # means that prediction test of saturation did not work, only do fuv and nuv_saturated values
-            self.convert_scale_photosphere_subtract_fuv()
-            self.processed_nuv_saturated = self.convert_scale_photosphere_subtract_single_flux(self.nuv_saturated, 'nuv')
-        elif self.fuv_is_saturated and self.fuv is None:
-            # means that prediction test of saturation did not work, only do nuv and fuv_saturated values
-            self.convert_scale_photosphere_subtract_nuv()
-            self.processed_fuv_saturated = self.convert_scale_photosphere_subtract_single_flux(self.fuv_saturated, 'fuv')
-        elif self.nuv_is_upper_limit and self.nuv is None:
-            # means that prediction test of upper limit did not work, only do fuv and nuv_upper_limit values
-            self.convert_scale_photosphere_subtract_fuv()
-            self.processed_nuv_upper_limit = self.convert_scale_photosphere_subtract_single_flux(self.nuv_upper_limit, 'nuv')
-        elif self.fuv_is_upper_limit and self.fuv is None:
-            # means that prediction test of saturation did not work, only do nuv and fuv_upper_limit values
-            self.convert_scale_photosphere_subtract_nuv()
-            self.processed_fuv_upper_limit = self.convert_scale_photosphere_subtract_single_flux(self.fuv_upper_limit, 'fuv')
-        else:
-            # means either:
-            #   all fluxes are available, may have predicted flux but no saturated/upper limit flux OR
-            #   a flux is saturated/upper limit, prediction test worked, treat all flux values as is and 
-            #   do calculations on saturated/upper limit value as well
-            if self.nuv_is_saturated:
-                self.processed_nuv_saturated = self.convert_scale_photosphere_subtract_single_flux(self.nuv_saturated, 'nuv')
-            if self.fuv_is_saturated:
-                self.processed_fuv_saturated = self.convert_scale_photosphere_subtract_single_flux(self.fuv_saturated, 'fuv')
-            if self.nuv_is_upper_limit:
-                self.processed_nuv_upper_limit = self.convert_scale_photosphere_subtract_single_flux(self.nuv_upper_limit, 'nuv')
-            if self.fuv_is_upper_limit:
-                self.processed_fuv_upper_limit = self.convert_scale_photosphere_subtract_single_flux(self.fuv_upper_limit, 'fuv')
-            # This means both are fine to process
-            self.convert_scale_photosphere_subtract_nuv()
-            self.convert_scale_photosphere_subtract_fuv()
+        """Runs all processing needed to search PEGASUS grid for each valid GALEX flux.
+
+        Iterates through each attribute in the object and if it is valid flux, will run processes:
+            1. Converts the flux from microjanskies to ergs/s/cm2/A.
+            2. Scales the flux to the stellar surface.
+            3. Finds a matching photosphere model with the given stellar parameters and subtracts 
+                photospheric flux contribution.
+        """
+        for key, val in dict(vars(self)).items():
+            processed_flux_name = f'processed_{key}'
+            if ('fuv' in key or 'nuv' in key) and 'err' not in key and 'is' not in key and val is not None:
+                if 'fuv' in key:
+                    processed_flux = self.convert_scale_photosphere_subtract_single_flux(val, 'fuv')
+                elif 'nuv' in key:
+                    processed_flux = self.convert_scale_photosphere_subtract_single_flux(val, 'nuv')
+                print(f'Setting {processed_flux_name} to {processed_flux}')
+                setattr(self, processed_flux_name, processed_flux)
+            elif (key == 'fuv_err' or key == 'nuv_err') and val is not None:
+                # get the attribute value with the name of which flux
+                which_flux = key[:3]
+                flux = getattr(self, which_flux)
+                processed_flux = getattr(self, f'processed_{which_flux}')
+                upper_lim = flux + val
+                lower_lim = flux - val
+                photosub_upper_lim = self.convert_scale_photosphere_subtract_single_flux(upper_lim, which_flux)
+                photosub_lower_lim = self.convert_scale_photosphere_subtract_single_flux(lower_lim, which_flux)
+                new_upper_err = photosub_upper_lim - processed_flux
+                new_lower_err = processed_flux - photosub_lower_lim
+                avg_err = (new_upper_err + new_lower_err) / 2
+                print(f'Setting {processed_flux_name} to {avg_err}')
+                setattr(self, processed_flux_name, avg_err)
 
 """——————————————————————————————STELLAR OBJECT——————————————————————————————"""
 

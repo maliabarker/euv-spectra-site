@@ -3,8 +3,7 @@ import json
 import os
 from astropy.io import fits
 from euv_spectra_app.extensions import *
-from euv_spectra_app.helpers_astroquery import StellarTarget
-from euv_spectra_app.models import GalexFlux
+from euv_spectra_app.helpers_astroquery import StellarTarget, GalexFlux
 from euv_spectra_app.helpers import to_json
 from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios
 
