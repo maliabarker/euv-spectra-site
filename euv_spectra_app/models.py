@@ -10,7 +10,7 @@ from astroquery.mast import Catalogs
 from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
 from astroquery.simbad import Simbad
 from euv_spectra_app.extensions import db
-from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, search_db, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios, get_models_within_limits_saturated_fuv, get_models_within_limits_saturated_nuv, get_models_within_limits_upper_limit_fuv, get_models_within_limits_upper_limit_nuv
+from euv_spectra_app.helpers_dbqueries import get_matching_subtype, get_matching_photosphere, search_db, get_models_with_chi_squared, get_models_with_weighted_fuv, get_flux_ratios
 
 customSimbad = Simbad()
 customSimbad.remove_votable_fields('coordinates')
@@ -428,7 +428,7 @@ class GalexFluxes():
     def get_photosphere_model(self):
         """Returns a PEGASUS photosphere model for photosphere subtraction."""
         try:
-            matching_photosphere_model = find_matching_photosphere(
+            matching_photosphere_model = get_matching_photosphere(
                 self.stellar_obj['teff'], self.stellar_obj['logg'], self.stellar_obj['mass'])
             return matching_photosphere_model
         except Exception:
@@ -903,7 +903,7 @@ class StellarObject():
             Exception if any unknown error occurs.
         """
         try:
-            matching_subtype = find_matching_subtype(teff, logg, mass)
+            matching_subtype = get_matching_subtype(teff, logg, mass)
             try:
                 self.stellar_subtype = matching_subtype['model']
             except TypeError as te:
@@ -925,9 +925,8 @@ class PegasusGrid():
         """Queries pegasus for stellar subtype based on stellar parameters.
         """
         try:
-            matching_subtype = find_matching_subtype(
+            matching_subtype = get_matching_subtype(
                 self.stellar_obj.teff, self.stellar_obj.logg, self.stellar_obj.mass)
-
             self.stellar_obj.model_collection = f"{matching_subtype['model'].lower()}_grid"
             return matching_subtype
         except Exception as e:
@@ -940,18 +939,6 @@ class PegasusGrid():
         except Exception as e:
             print(f'Error fetching PEGASUS model: {e}')
             return (f'Error fetching PEGASUS model: {e}')
-
-    def query_pegasus_models_in_limits(self):
-        """Queries pegasus models within limits of GALEX fuv and nuv flux densities.
-        """
-        try:
-            models_in_limits = get_models_within_limits(
-                self.stellar_obj.fluxes.processed_nuv, self.stellar_obj.fluxes.processed_fuv,
-                self.stellar_obj.fluxes.processed_nuv_err, self.stellar_obj.fluxes.processed_fuv_err,
-                self.stellar_obj.model_collection)
-            return list(models_in_limits)
-        except Exception as e:
-            return ('Error fetching PEGASUS models:', e)
 
     def query_pegasus_chi_square(self):
         """Queries pegasus models based on chi square of fuv and nuv flux densities.
@@ -980,34 +967,6 @@ class PegasusGrid():
             models_with_ratios = get_flux_ratios(
                 self.stellar_obj.fluxes.processed_nuv, self.stellar_obj.fluxes.processed_fuv, self.stellar_obj.model_collection)
             return list(models_with_ratios)
-        except Exception as e:
-            return ('Error fetching PEGASUS models:', e)
-    
-    def query_pegasus_saturated_nuv(self):
-        try:
-            models_in_limits = get_models_within_limits_saturated_nuv(self.stellar_obj.fluxes.processed_nuv_saturated, self.stellar_obj.fluxes.processed_fuv, self.stellar_obj.fluxes.processed_fuv_err, self.stellar_obj.model_collection)
-            return list(models_in_limits)
-        except Exception as e:
-            return ('Error fetching PEGASUS models:', e)
-        
-    def query_pegasus_saturated_fuv(self):
-        try:
-            models_in_limits = get_models_within_limits_saturated_fuv(self.stellar_obj.fluxes.processed_fuv_saturated, self.stellar_obj.fluxes.processed_nuv, self.stellar_obj.fluxes.processed_nuv_err, self.stellar_obj.model_collection)
-            return list(models_in_limits)
-        except Exception as e:
-            return ('Error fetching PEGASUS models:', e)
-        
-    def query_pegasus_upper_limit_nuv(self):
-        try:
-            models_in_limits = get_models_within_limits_upper_limit_nuv(self.stellar_obj.fluxes.processed_nuv_upper_limit, self.stellar_obj.fluxes.processed_fuv, self.stellar_obj.fluxes.processed_fuv_err, self.stellar_obj.model_collection)
-            return list(models_in_limits)
-        except Exception as e:
-            return ('Error fetching PEGASUS models:', e)
-        
-    def query_pegasus_upper_limit_fuv(self):
-        try:
-            models_in_limits = get_models_within_limits_upper_limit_fuv(self.stellar_obj.fluxes.processed_fuv_upper_limit, self.stellar_obj.fluxes.processed_nuv, self.stellar_obj.fluxes.processed_nuv_err, self.stellar_obj.model_collection)
-            return list(models_in_limits)
         except Exception as e:
             return ('Error fetching PEGASUS models:', e)
         

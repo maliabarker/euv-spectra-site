@@ -5,7 +5,7 @@ from astropy.io import fits
 from euv_spectra_app.extensions import *
 from euv_spectra_app.helpers_astroquery import StellarTarget, GalexFlux
 from euv_spectra_app.helpers import to_json
-from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios
+from euv_spectra_app.helpers_dbqueries import get_matching_subtype, get_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios
 
 api = Blueprint("api", __name__, url_prefix="/api")
 
@@ -305,7 +305,7 @@ def get_matching_photosphere_model():
     mass = request.args.get('mass')
     try:
         if teff is not None and logg is not None and mass is not None:
-            matching_photosphere_model = find_matching_photosphere(float(teff), float(logg), float(mass))
+            matching_photosphere_model = get_matching_photosphere(float(teff), float(logg), float(mass))
             del matching_photosphere_model['_id']
             del matching_photosphere_model['fits_filename']
             return json.dumps(matching_photosphere_model)
@@ -415,7 +415,7 @@ def convert_scale_photosphere_subtract_galex_fluxes():
 
     try:
         if teff is not None and logg is not None and mass is not None:
-            matching_photosphere_model = find_matching_photosphere(float(teff), float(logg), float(mass))
+            matching_photosphere_model = get_matching_photosphere(float(teff), float(logg), float(mass))
             return_data['photo_fuv'] = matching_photosphere_model['fuv']
             return_data['photo_nuv'] = matching_photosphere_model['nuv']
         else:
@@ -455,11 +455,11 @@ def convert_scale_photosphere_subtract_galex_fluxes():
     return json.dumps(return_data)
 
 
-@api.route('/find_matching_subtype')
+@api.route('/get_matching_subtype')
 def find_matching_phoenix_subtype():
     """Returns a matching subtype based on the PHOENIX stellar subtype parameters.
 
-    Example HTML path: /api/find_matching_subtype?teff=4014.0&logg=4.68&mass=0.64
+    Example HTML path: /api/get_matching_subtype?teff=4014.0&logg=4.68&mass=0.64
 
     Args:
         teff: Effective temperature of the target star in Kelvin
@@ -484,7 +484,7 @@ def find_matching_phoenix_subtype():
     logg = request.args.get('logg')
     try:
         if teff is not None and mass is not None and logg is not None:
-            matching_subtype = find_matching_subtype(float(teff), float(logg), float(mass))
+            matching_subtype = get_matching_subtype(float(teff), float(logg), float(mass))
             del matching_subtype['_id']
             del matching_subtype['diff_sum']
             return json.dumps(matching_subtype)

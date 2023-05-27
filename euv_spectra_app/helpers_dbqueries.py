@@ -1,6 +1,6 @@
 from euv_spectra_app.extensions import *
 
-def find_matching_subtype(teff, logg, mass):
+def get_matching_subtype(teff, logg, mass):
     """Matches to a subtype in the PEGASUS grid.
 
     Searches the PEGASUS grid for stellar subtype match using stellar effective 
@@ -43,7 +43,7 @@ def find_matching_subtype(teff, logg, mass):
     return list(matching_subtype)[0]
 
 
-def find_matching_photosphere(teff, logg, mass):
+def get_matching_photosphere(teff, logg, mass):
     """Matches to a PHOENIX photosphere model.
 
     Searches a grid of custom PHOENIX calculated photosphere models for best match
@@ -75,6 +75,18 @@ def find_matching_photosphere(teff, logg, mass):
     return list(matching_photosphere_model)[0]
 
 def search_db(model_collection, fuv, nuv):
+    # NORMAL SEARCH: fuv, fuv_err, nuv, and nuv_err are all there, search within limits
+    # DETECTION ONLY SEARCH: fuv and nuv are there but no errors, search for closest match
+    # SATURATED SEARCH 
+        # (w/ normal flux): one flux is saturated, search for anything above it and grow error bars of other flux by 3, then by 5
+        # (w/ detection only flux): one flux is saturated, the other is a detection only (no error), search for anything above saturated value and closest match to detection
+        # (w/ saturated flux): both fluxes are saturated, search for anything above fluxes and return model w/ lowest chi-squared val
+        # (w/ upper limit): one flux is saturated, one is upper limit, search for anything above sat value and below upper lim value, return model with lowest chi-squared val
+    # UPPER LIMIT SEARCH 
+        # (w/ normal flux): one flux is an upper limit, search for anything below it and grow error bars of other flux by 3, then by 5
+        # (w/ detection only flux): one flux is saturated, the other is a detection only (no error), search for anything above saturated value and closest match to detection
+        # (w/ saturated flux): both fluxes are saturated, search for anything above fluxes and return model w/ lowest chi-squared val
+        # (w/ upper limit): one flux is saturated, one is upper limit, search for anything above sat value and below upper lim value, return model with lowest chi-squared val
     pipeline = []
     # get the query stages for fuv and nuv
     fuv_query = construct_flux_query('fuv', fuv['flag'], fuv['value'], fuv['error'])
@@ -96,40 +108,6 @@ def search_db(model_collection, fuv, nuv):
         pipeline.append(sort_by_chi_squared_stage)
     models = db.get_collection(model_collection).aggregate(pipeline)
     return models
-
-    # Will have to get all combinations of possible searches
-        # For example: Let's say we have a saturated FUV and normal NUV. Then we get an 
-        #   FUV, FUV error, saturated FUV
-        #   NUV, NUV error
-        # So the possible searches we can do is the saturated search (saturated FUV + NUV and err)
-        # and we can also do the normal search (FUV and err + NUV and err)
-        # However, let's say we get a saturated FUV and a null NUV. We only predict for NUV and no error
-        #   saturated FUV
-        #   NUV
-        # So the possible search we have is (saturated FUV + NUV (no error, detection only/closest match))
-
-        # We need to isolate all the possible FUV options and NUV options. Then, if something is a normal 
-        # flux, we need to check if there is also an error. If there is not, we do the detection only search.
-
-        # We could get all possible combinations by passing the GalexFluxes object in here, then running a loop
-        # on all of the attributes and categorizing them into FUV and NUV lists
-        # During this iteration, if we come across the normal fuv or nuv, we see if the error is there. If the 
-        # error is there, we create a tuple with them.
-
-        # Then, we create all possible pairs of searches.
-
-    # NORMAL SEARCH: fuv, fuv_err, nuv, and nuv_err are all there, search within limits
-    # DETECTION ONLY SEARCH: fuv and nuv are there but no errors, search for closest match
-    # SATURATED SEARCH 
-        # (w/ normal flux): one flux is saturated, search for anything above it and grow error bars of other flux by 3, then by 5
-        # (w/ detection only flux): one flux is saturated, the other is a detection only (no error), search for anything above saturated value and closest match to detection
-        # (w/ saturated flux): both fluxes are saturated, search for anything above fluxes and return model w/ lowest chi-squared val
-        # (w/ upper limit): one flux is saturated, one is upper limit, search for anything above sat value and below upper lim value, return model with lowest chi-squared val
-    # UPPER LIMIT SEARCH 
-        # (w/ normal flux): one flux is an upper limit, search for anything below it and grow error bars of other flux by 3, then by 5
-        # (w/ detection only flux): one flux is saturated, the other is a detection only (no error), search for anything above saturated value and closest match to detection
-        # (w/ saturated flux): both fluxes are saturated, search for anything above fluxes and return model w/ lowest chi-squared val
-        # (w/ upper limit): one flux is saturated, one is upper limit, search for anything above sat value and below upper lim value, return model with lowest chi-squared val
 
 def construct_flux_query(fieldname, flux_flag, flux_value, flux_err):
     if flux_flag == "normal":
@@ -188,7 +166,6 @@ def get_models_with_chi_squared(corrected_nuv, corrected_fuv, model_collection):
     ])
     return models_with_chi_squared
 
-
 def get_models_with_weighted_fuv(corrected_nuv, corrected_fuv, model_collection):
     """Calculates chi square value with weighted preference on FUV flux.
 
@@ -234,138 +211,48 @@ def get_models_with_weighted_fuv(corrected_nuv, corrected_fuv, model_collection)
             final_models.append(model)
     return final_models
 
+def get_flux_ratios(corrected_nuv, corrected_fuv, model_collection):
+    """TESTING: Computes the chi square value of flux ratios.
 
-def get_models_within_limits_saturated_nuv(corrected_saturated_nuv, corrected_fuv, corrected_fuv_err, model_collection):
-    """
+    Computes the chi square value of the model NUV to FUV flux ratio compared to
+    the GALEX NUV to FUV flux ratio.
 
+    Args:
+        corrected_nuv: The GALEX NUV flux density (scaled, converted, and photosphere
+         subtracted) of the user's stellar target.
+        corrected_fuv: The GALEX FUV flux density (scaled, converted, and photosphere
+         subtracted) of the user's stellar target.
+        model_collection: The name of the MongoDB collection representing the matched 
+         stellar subtype.
+
+    Returns:
+        The matching MongoDB collection with an additional field, 'chi_squared',
+        that is calculated with the equation:
+
+        ((((model_nuv / model_fuv) - (galex_nuv / galex_fuv)) ** 2) / (galex_nuv / galex_fuv))
+
+        The collection is returned from lowest value of chi_squared to highest.
     """
-    fuv_lower_lim = corrected_fuv - corrected_fuv_err
-    fuv_upper_lim = corrected_fuv + corrected_fuv_err
-    models_within_limits = db.get_collection(model_collection).aggregate([
-        {
-            '$match': {
-                'fuv': { '$gte': fuv_lower_lim, '$lte': fuv_upper_lim },
-                'nuv': { '$gte': corrected_saturated_nuv },
+    models_with_ratio = db.get_collection(model_collection).aggregate([
+        {  
+            "$addFields": {
+                "galex_flux_ratio": {"$divide": [corrected_nuv, corrected_fuv]},
+                "model_flux_ratio": {"$divide": ["$nuv", "$fuv"]}
             }
         },
         {
             "$addFields": {
                 "chi_squared": {
-                    "$round": [ 
-                        { "$add": 
-                            [ 
-                                { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", corrected_saturated_nuv ] }, 2 ] }, corrected_saturated_nuv ] },
-                                { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", corrected_fuv ] }, 2 ] }, corrected_fuv ] } 
-                            ]
-                        }, 
-                        2 
+                    "$divide": [
+                        { "$pow": [ { "$subtract": [ "$model_flux_ratio", "$galex_flux_ratio" ] }, 2 ] },
+                        "$galex_flux_ratio"
                     ]
-                } 
-            } 
-        },
-        { "$sort": { "chi_squared": 1 } }
-    ])
-    return models_within_limits
-
-
-def get_models_within_limits_saturated_fuv(corrected_saturated_fuv, corrected_nuv, corrected_nuv_err, model_collection):
-    """
-    """
-    nuv_lower_lim = corrected_nuv - corrected_nuv_err
-    nuv_upper_lim = corrected_nuv + corrected_nuv_err
-    models_within_limits = db.get_collection(model_collection).aggregate([
-        {
-            '$match': {
-                'fuv': { '$gte': corrected_saturated_fuv },
-                'nuv': { '$gte': nuv_lower_lim, '$lte': nuv_upper_lim },
+                }
             }
         },
-        {
-            "$addFields": {
-                "chi_squared": {
-                    "$round": [ 
-                        { "$add": 
-                            [ 
-                                { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", corrected_nuv ] }, 2 ] }, corrected_nuv ] },
-                                { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", corrected_saturated_fuv ] }, 2 ] }, corrected_saturated_fuv ] } 
-                            ]
-                        }, 
-                        2 
-                    ]
-                } 
-            } 
-        },
-        { "$sort": { "chi_squared": 1 } }
+        {"$sort": {"chi_squared": 1}}
     ])
-    return models_within_limits
-
-
-def get_models_within_limits_upper_limit_nuv(corrected_upper_limit_nuv, corrected_fuv, corrected_fuv_err, model_collection):
-    """
-
-    """
-    fuv_lower_lim = corrected_fuv - corrected_fuv_err
-    fuv_upper_lim = corrected_fuv + corrected_fuv_err
-    models_within_limits = db.get_collection(model_collection).aggregate([
-        {
-            '$match': {
-                'fuv': { '$gte': fuv_lower_lim, '$lte': fuv_upper_lim },
-                'nuv': { '$lte': corrected_upper_limit_nuv },
-            }
-        },
-        {
-            "$addFields": {
-                "chi_squared": {
-                    "$round": [ 
-                        { "$add": 
-                            [ 
-                                { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", corrected_upper_limit_nuv ] }, 2 ] }, corrected_upper_limit_nuv ] },
-                                { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", corrected_fuv ] }, 2 ] }, corrected_fuv ] } 
-                            ]
-                        }, 
-                        2 
-                    ]
-                } 
-            } 
-        },
-        { "$sort": { "chi_squared": 1 } }
-    ])
-    return models_within_limits
-
-
-def get_models_within_limits_upper_limit_fuv(corrected_upper_limit_fuv, corrected_nuv, corrected_nuv_err, model_collection):
-    """
-    """
-    nuv_lower_lim = corrected_nuv - corrected_nuv_err
-    nuv_upper_lim = corrected_nuv + corrected_nuv_err
-    # print('NUV UPPER LIM:', nuv_upper_lim, 'NUV LOWER LIM:', nuv_lower_lim)
-    # print('FUV LESS THAN:', corrected_upper_limit_fuv)
-    models_within_limits = db.get_collection(model_collection).aggregate([
-        {
-            '$match': {
-                'fuv': { '$lte': corrected_upper_limit_fuv },
-                'nuv': { '$gte': nuv_lower_lim, '$lte': nuv_upper_lim },
-            }
-        },
-        {
-            "$addFields": {
-                "chi_squared": {
-                    "$round": [ 
-                        { "$add": 
-                            [ 
-                                { "$divide": [ { "$pow": [ { "$subtract": [ "$nuv", corrected_nuv ] }, 2 ] }, corrected_nuv ] },
-                                { "$divide": [ { "$pow": [ { "$subtract": [ "$fuv", corrected_upper_limit_fuv ] }, 2 ] }, corrected_upper_limit_fuv ] } 
-                            ]
-                        }, 
-                        2 
-                    ]
-                } 
-            } 
-        },
-        { "$sort": { "chi_squared": 1 } }
-    ])
-    return models_within_limits
-
+    return models_with_ratio
 
 def get_models_within_limits(corrected_nuv, corrected_fuv, corrected_nuv_err, corrected_fuv_err, model_collection):
     """Searches for models within limits of GALEX FUV and NUV flux densities.
@@ -416,47 +303,3 @@ def get_models_within_limits(corrected_nuv, corrected_fuv, corrected_nuv_err, co
         { "$sort": { "chi_squared": 1 } }
     ])
     return models_within_limits
-
-
-def get_flux_ratios(corrected_nuv, corrected_fuv, model_collection):
-    """TESTING: Computes the chi square value of flux ratios.
-
-    Computes the chi square value of the model NUV to FUV flux ratio compared to
-    the GALEX NUV to FUV flux ratio.
-
-    Args:
-        corrected_nuv: The GALEX NUV flux density (scaled, converted, and photosphere
-         subtracted) of the user's stellar target.
-        corrected_fuv: The GALEX FUV flux density (scaled, converted, and photosphere
-         subtracted) of the user's stellar target.
-        model_collection: The name of the MongoDB collection representing the matched 
-         stellar subtype.
-
-    Returns:
-        The matching MongoDB collection with an additional field, 'chi_squared',
-        that is calculated with the equation:
-
-        ((((model_nuv / model_fuv) - (galex_nuv / galex_fuv)) ** 2) / (galex_nuv / galex_fuv))
-
-        The collection is returned from lowest value of chi_squared to highest.
-    """
-    models_with_ratio = db.get_collection(model_collection).aggregate([
-        {  
-            "$addFields": {
-                "galex_flux_ratio": {"$divide": [corrected_nuv, corrected_fuv]},
-                "model_flux_ratio": {"$divide": ["$nuv", "$fuv"]}
-            }
-        },
-        {
-            "$addFields": {
-                "chi_squared": {
-                    "$divide": [
-                        { "$pow": [ { "$subtract": [ "$model_flux_ratio", "$galex_flux_ratio" ] }, 2 ] },
-                        "$galex_flux_ratio"
-                    ]
-                }
-            }
-        },
-        {"$sort": {"chi_squared": 1}}
-    ])
-    return models_with_ratio
