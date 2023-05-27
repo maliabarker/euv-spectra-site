@@ -10,7 +10,7 @@ from astroquery.mast import Catalogs
 from astroquery.ipac.nexsci.nasa_exoplanet_archive import NasaExoplanetArchive
 from astroquery.simbad import Simbad
 from euv_spectra_app.extensions import db
-from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios, get_models_within_limits_saturated_fuv, get_models_within_limits_saturated_nuv, get_models_within_limits_upper_limit_fuv, get_models_within_limits_upper_limit_nuv
+from euv_spectra_app.helpers_dbqueries import find_matching_subtype, find_matching_photosphere, search_db, get_models_with_chi_squared, get_models_within_limits, get_models_with_weighted_fuv, get_flux_ratios, get_models_within_limits_saturated_fuv, get_models_within_limits_saturated_nuv, get_models_within_limits_upper_limit_fuv, get_models_within_limits_upper_limit_nuv
 
 customSimbad = Simbad()
 customSimbad.remove_votable_fields('coordinates')
@@ -932,6 +932,14 @@ class PegasusGrid():
             return matching_subtype
         except Exception as e:
             return ('Error fetching PEGASUS models:', e)
+    
+    def query_model_collection(self, fuv, nuv):
+        try:
+            models = search_db(self.stellar_obj.model_collection, fuv, nuv)
+            return list(models)
+        except Exception as e:
+            print(f'Error fetching PEGASUS model: {e}')
+            return (f'Error fetching PEGASUS model: {e}')
 
     def query_pegasus_models_in_limits(self):
         """Queries pegasus models within limits of GALEX fuv and nuv flux densities.
@@ -1002,3 +1010,9 @@ class PegasusGrid():
             return list(models_in_limits)
         except Exception as e:
             return ('Error fetching PEGASUS models:', e)
+        
+class FlashMessage:
+    def __init__(self, message, category, location):
+        self.message = message
+        self.category = category
+        self.location = location

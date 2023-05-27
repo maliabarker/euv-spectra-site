@@ -1,5 +1,4 @@
 from euv_spectra_app.extensions import *
-from bson.objectid import ObjectId
 
 def find_matching_subtype(teff, logg, mass):
     """Matches to a subtype in the PEGASUS grid.
@@ -75,6 +74,75 @@ def find_matching_photosphere(teff, logg, mass):
     ])
     return list(matching_photosphere_model)[0]
 
+def search_db(model_collection, fuv, nuv):
+    pipeline = []
+    # get the query stages for fuv and nuv
+    fuv_query = construct_flux_query('fuv', fuv['flag'], fuv['value'], fuv['error'])
+    nuv_query = construct_flux_query('nuv', nuv['flag'], nuv['value'], nuv['error'])
+    # add stages to the pipeline
+    pipeline.append(fuv_query)
+    pipeline.append(nuv_query)
+    # add the chi squared stage if needed
+    chi_squared_stage = { "$addFields": { "chi_squared": { "$round": [ {"$add": [
+        {"$divide": [{"$pow": [{"$subtract": ["$nuv", nuv['value']]}, 2]}, nuv['value']]},
+        {"$divide": [{"$pow": [{"$subtract": ["$fuv", fuv['value']]}, 2]}, fuv['value']]}
+    ]}, 2]}}}
+    pipeline.append(chi_squared_stage)
+    sort_by_diff_flux_stage = {'$sort': {'diff_flux': 1}}
+    sort_by_chi_squared_stage = {'$sort': {'chi_squared': 1}}
+    if fuv['flag'] == 'detection_only' or nuv['flag'] == 'detection_only':
+        pipeline.append(sort_by_diff_flux_stage)
+    else:
+        pipeline.append(sort_by_chi_squared_stage)
+    models = db.get_collection(model_collection).aggregate(pipeline)
+    return models
+
+    # Will have to get all combinations of possible searches
+        # For example: Let's say we have a saturated FUV and normal NUV. Then we get an 
+        #   FUV, FUV error, saturated FUV
+        #   NUV, NUV error
+        # So the possible searches we can do is the saturated search (saturated FUV + NUV and err)
+        # and we can also do the normal search (FUV and err + NUV and err)
+        # However, let's say we get a saturated FUV and a null NUV. We only predict for NUV and no error
+        #   saturated FUV
+        #   NUV
+        # So the possible search we have is (saturated FUV + NUV (no error, detection only/closest match))
+
+        # We need to isolate all the possible FUV options and NUV options. Then, if something is a normal 
+        # flux, we need to check if there is also an error. If there is not, we do the detection only search.
+
+        # We could get all possible combinations by passing the GalexFluxes object in here, then running a loop
+        # on all of the attributes and categorizing them into FUV and NUV lists
+        # During this iteration, if we come across the normal fuv or nuv, we see if the error is there. If the 
+        # error is there, we create a tuple with them.
+
+        # Then, we create all possible pairs of searches.
+
+    # NORMAL SEARCH: fuv, fuv_err, nuv, and nuv_err are all there, search within limits
+    # DETECTION ONLY SEARCH: fuv and nuv are there but no errors, search for closest match
+    # SATURATED SEARCH 
+        # (w/ normal flux): one flux is saturated, search for anything above it and grow error bars of other flux by 3, then by 5
+        # (w/ detection only flux): one flux is saturated, the other is a detection only (no error), search for anything above saturated value and closest match to detection
+        # (w/ saturated flux): both fluxes are saturated, search for anything above fluxes and return model w/ lowest chi-squared val
+        # (w/ upper limit): one flux is saturated, one is upper limit, search for anything above sat value and below upper lim value, return model with lowest chi-squared val
+    # UPPER LIMIT SEARCH 
+        # (w/ normal flux): one flux is an upper limit, search for anything below it and grow error bars of other flux by 3, then by 5
+        # (w/ detection only flux): one flux is saturated, the other is a detection only (no error), search for anything above saturated value and closest match to detection
+        # (w/ saturated flux): both fluxes are saturated, search for anything above fluxes and return model w/ lowest chi-squared val
+        # (w/ upper limit): one flux is saturated, one is upper limit, search for anything above sat value and below upper lim value, return model with lowest chi-squared val
+
+def construct_flux_query(fieldname, flux_flag, flux_value, flux_err):
+    if flux_flag == "normal":
+        query = {'$match': {fieldname: {"$gte": flux_value - flux_err, "$lte": flux_value + flux_err}}}
+    elif flux_flag == "saturated":
+        query = {'$match': {fieldname: {"$gte": flux_value}}}
+    elif flux_flag == "upper_limit":
+        query = {'$match': {fieldname: {"$lte": flux_value}}}
+    elif flux_flag == "detection_only":
+        query = {'$addFields': {'diff_flux': {'$abs': {'$subtract': [flux_value, f"${fieldname}"]}}}}
+    else:
+        query = {}
+    return query
 
 def get_models_with_chi_squared(corrected_nuv, corrected_fuv, model_collection):
     """Calculates chi square (χ2) values.

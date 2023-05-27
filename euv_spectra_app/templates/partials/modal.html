@@ -35,19 +35,15 @@
                         Oops! Some fields are missing, please review form and submit again.
                     </div>
                 {% endif %}
-                {% for category, message in get_flashed_messages(with_categories=true) %}
-                    {% if 'GALEX' in message or 'Error connecting to the NASA Exoplanet Archive' in message %}
-                        {% if 'FAQ page' in message %}
-                            <div class="alert alert-{{category}} mt-2" role="alert">
-                                <!-- somehow add the  -->
-                                {{ message }}
+
+                {% for flash_message in get_flashed_messages() %}
+                    {% if flash_message.location == 'modal' %}
+                        <div class="alert alert-{{flash_message.category}} mt-2" role="alert">
+                            {{ flash_message.message }}
+                            {% if 'FAQ page' in flash_message.message %}
                                 {% include 'partials/modal_faq_error.html' %}
-                            </div>
-                        {% else %}
-                            <div class="alert alert-{{category}} mt-2" role="alert">
-                                {{ message }}
-                            </div>
-                        {% endif %}
+                            {% endif %}
+                        </div>
                     {% endif %}
                 {% endfor %}
                 
