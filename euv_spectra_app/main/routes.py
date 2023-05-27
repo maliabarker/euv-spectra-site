@@ -442,13 +442,28 @@ def return_results():
                     flash(FlashMessage('No models found within 5 σ of the GALEX FUV flux measurements.', 'danger', 'page'))
             elif (fuv_value['flag'] == 'saturated' or nuv_value['flag'] == 'saturated') and (fuv_value['flag'] == 'upper_limit' or nuv_value['flag'] == 'upper_limit'):
                 # return first model (lowest chi-squared value)
-                flash(FlashMessage(f'{len(models)} results found within upper and lower limits of GALEX UV fluxes. Returning model with lowest chi-squared value.', 'success', 'page'))
-                models = [models[0]]
+                if len(models) > 0:
+                    flash(FlashMessage(f'{len(models)} results found within upper and lower limits of GALEX UV fluxes. Returning model with lowest chi-squared value.', 'success', 'page'))
+                    models = [models[0]]
+                else:
+                    flash(FlashMessage('No results found within GALEX UV fluxes.', 'danger', 'page'))
+            elif (fuv_value['flag'] == 'saturated' and nuv_value['flag'] == 'saturated'):
+                if len(models) > 0:
+                    flash(FlashMessage(f'{len(models)} results found within GALEX UV fluxes. Returning model with lowest chi-squared value.', 'success', 'page'))
+                    models = [models[0]]
+                else:
+                    flash(FlashMessage('No results found within GALEX UV fluxes.', 'danger', 'page'))
+            elif (fuv_value['flag'] == 'upper_limit' and nuv_value['flag'] == 'upper_limit'):
+                if len(models) > 0:
+                    flash(FlashMessage(f'{len(models)} results found within GALEX UV fluxes. Returning model with lowest chi-squared value.', 'success', 'page'))
+                    models = [models[0]]
+                else:
+                    flash(FlashMessage('No results found within GALEX UV fluxes.', 'danger', 'page'))
             # DETECTION ONLY WORKFLOW
                 # The models will be sorted by the diff_flux field, so the first model will have the closest 
                 # value to the given detection. Just return the first model.
             if fuv_value['flag'] == 'detection_only' or nuv_value['flag'] == 'detection_only':
-                if len(models) != 0: # Check if there are returned models first
+                if len(models) > 0: # Check if there are returned models first
                     models = [models[0]]
                     flash(FlashMessage('Returning closest match to GALEX UV fluxes.', 'warning', 'page'))
                 else:
@@ -531,6 +546,7 @@ def return_results():
             flash(FlashMessage('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger', 'page'))
         session['stellar_target'] = json.dumps(to_json(stellar_object))
         print(return_models)
+        print(json.dumps(to_json(stellar_object)))
         return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_obj=stellar_object, matching_models=return_models, test_filepaths=test_filepath_names)
     else:
         flash(FlashMessage('Missing required stellar parameters. Submit the required data to view this page.', 'danger', 'page'))
