@@ -15,7 +15,7 @@ def remove_objs_from_obj_dict(obj_dict):
 def insert_data_into_form(obj, form):
     attrs = vars(obj)
     for attr_name, attr_value in attrs.items():
-        if attr_name is 'fluxes':
+        if attr_name == 'fluxes':
             # is an object, go again
             insert_data_into_form(attr_value, form)
         elif hasattr(form, attr_name):
@@ -52,23 +52,26 @@ def to_json(obj):
 
 def from_json(json_str):
     # Deserialize the JSON formatted string back into an object
-    data = json.loads(json_str)
-    stellar_target_obj = StellarObject()
-    proper_motion_obj = ProperMotionData()
-    galex_fluxes_obj = GalexFluxes()
-    for key, value in data.items():
-        if key == 'pm_data' and value is not None:
-            proper_motion_dict = value
-            for pm_key, pm_value in proper_motion_dict.items():
-                setattr(proper_motion_obj, pm_key, pm_value)
-        elif key == 'fluxes' and value is not None:
-            galex_fluxes_dict = value
-            for flux_key, flux_value in galex_fluxes_dict.items():
-                setattr(galex_fluxes_obj, flux_key, flux_value)
-        setattr(stellar_target_obj, key, value)
-    stellar_target_obj.pm_data = proper_motion_obj
-    stellar_target_obj.fluxes = galex_fluxes_obj
-    return stellar_target_obj
+    if json_str is not None:
+        data = json.loads(json_str)
+        stellar_target_obj = StellarObject()
+        proper_motion_obj = ProperMotionData()
+        galex_fluxes_obj = GalexFluxes()
+        for key, value in data.items():
+            if key == 'pm_data' and value is not None:
+                proper_motion_dict = value
+                for pm_key, pm_value in proper_motion_dict.items():
+                    setattr(proper_motion_obj, pm_key, pm_value)
+            elif key == 'fluxes' and value is not None:
+                galex_fluxes_dict = value
+                for flux_key, flux_value in galex_fluxes_dict.items():
+                    setattr(galex_fluxes_obj, flux_key, flux_value)
+            setattr(stellar_target_obj, key, value)
+        stellar_target_obj.pm_data = proper_motion_obj
+        stellar_target_obj.fluxes = galex_fluxes_obj
+        return stellar_target_obj
+    # else:
+    #     # Handle the case where json_str is None
 
 
 def create_plotly_graph(files):
