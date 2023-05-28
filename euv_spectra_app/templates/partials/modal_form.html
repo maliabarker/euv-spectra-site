@@ -49,12 +49,12 @@
                                     <div class="d-flex justify-content-start">
                                         <div class="form-check my-1">
                                             {{ subfield(class="form-check-input mt-2") }}
-                                            {{ modal_form.manual_fuv(class="form-control", onclick="checkManualRadio(this); checkErrFlux(this)") }}
+                                            {{ modal_form.manual_fuv(class="form-control", onclick="checkManualRadio(this); checkManualFUVErrFlux(this)") }}
                                         </div>
                                         <span class="ms-3 my-2">+/-</span>
                                         <div class="form-check my-1">
                                             {{ subfield_err(class="form-check-input mt-2", style="position: fixed; opacity: 0; pointer-events: none;") }}
-                                            {{ modal_form.manual_fuv_err(class="form-control", onclick="checkManualRadio(this)") }}
+                                            {{ modal_form.manual_fuv_err(class="form-control", onclick="checkManualRadio(this); checkManualFUVErrFlux(this)") }}
                                         </div>
                                     </div>
                                 </td>
@@ -69,7 +69,7 @@
                                 <td class="me-0">
                                     <div class="d-flex justify-content-start">
                                         <div class="form-check my-1 mx-0">
-                                            {{ subfield(checked=true, class="form-check-input") }}
+                                            {{ subfield(checked=true, class="form-check-input", onclick="checkFUVErrFlux(this)") }}
                                             {{ subfield.label(text='%0.2f'| format(subfield.label.text|float), class="form-check-label") }}
                                         </div>
                                         <span class="ms-3 my-1"> +/- </span>

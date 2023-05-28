@@ -9,10 +9,9 @@ from flask_mail import Message
 from datetime import timedelta
 from euv_spectra_app.extensions import *
 from euv_spectra_app.main.forms import ManualForm, StarNameForm, PositionForm, ModalForm, ContactForm
-from euv_spectra_app.models import StellarObject, PegasusGrid, FlashMessage
+from euv_spectra_app.models import StellarObject, PegasusGrid
 from euv_spectra_app.helpers import insert_data_into_form, to_json, from_json, create_plotly_graph, remove_objs_from_obj_dict
 main = Blueprint("main", __name__)
-
 
 @main.context_processor
 def inject_form():
@@ -58,7 +57,7 @@ def homepage():
             # check if there were any errors returned from searching databases
             return redirect(url_for('main.error', msg=stellar_object.modal_page_error_msg))
         for msg in stellar_object.modal_error_msgs:
-            flash(FlashMessage(msg, 'warning', 'modal'))
+            flash(msg, 'warning')
         insert_data_into_form(stellar_object, modal_form)
 
         # store the object as a json variable for persistence
@@ -66,7 +65,7 @@ def homepage():
         session['modal_show'] = True
         return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, modal_form=modal_form, stellar_obj=stellar_object)
 
-    flash(FlashMessage('Website is under development. Files are not available for use yet. For testing purposes, try out object GJ 338 B.', 'warning', 'page'))
+    flash('Website is under development. Files are not available for use yet. For testing purposes, try out object GJ 338 B.', 'warning')
     return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, extend_form=extend_form)
 
 
@@ -86,6 +85,8 @@ def submit_modal_form():
     insert_data_into_form(stellar_object, modal_form)
     modal_form.populate_obj(request.form)
 
+    fluxes = ['fuv', 'nuv', 'fuv_err', 'nuv_err']
+
     if request.method == 'POST':
         if modal_form.validate_on_submit():
             for field in modal_form:
@@ -93,7 +94,18 @@ def submit_modal_form():
                 if 'manual' in field.name and field.data is not None:
                     # if a manual parameter is submitted, add that data to the object
                     unmanual_field = field.name.replace('manual_', '')
-                    setattr(stellar_object, unmanual_field, float(field.data))
+                    if getattr(modal_form, unmanual_field).data == 'Manual':
+                        print(f'MANUAL FIELD {field.name} with value of {field.data} is being used')
+                        # Only add the data from manual form if the unmanual field has a value of 
+                        # 'Manual' (meaning manual radio option was checked)
+                        if unmanual_field in fluxes:
+                            if 'err' in field.name and float(field.data) == 0:
+                                # If a flux error was inputted as 0, put as None
+                                setattr(stellar_object.fluxes, unmanual_field, None)
+                            else:
+                                setattr(stellar_object.fluxes, unmanual_field, float(field.data))
+                        else:
+                            setattr(stellar_object, unmanual_field, float(field.data))
             session['stellar_object'] = json.dumps(to_json(stellar_object))
             return redirect(url_for('main.return_results'))
     return render_template('home.html', manual_form=manual_form, name_form=name_form, position_form=position_form, modal_form=modal_form, stellar_obj=stellar_object)
@@ -189,18 +201,22 @@ def submit_manual_form():
                 if fieldname in flux_data:
                     # If the field is a flux value, add it to the stellar_object.fluxes object
                     if value is not None:
-                        print(f'SETTING THE {fieldname} FLUX')
-                        setattr(stellar_object.fluxes, fieldname, float(value))
+                        if 'err' in fieldname and int(value) == 0:
+                            print(f'SETTING THE {fieldname} FLUX TO NONE, actual value is {value} and in float is {float(value)}')
+                            setattr(stellar_object.fluxes, fieldname, None)
+                        else:
+                            print(f'SETTING THE {fieldname} FLUX to {value}')
+                            setattr(stellar_object.fluxes, fieldname, float(value))
                     else:
                         print(f'SETTING THE {fieldname} FLUX TO NONE')
-                        setattr(stellar_object.fluxes, fieldname, value)
+                        setattr(stellar_object.fluxes, fieldname, None)
                 else:
                     if value is not None:
                         print(f'SETTING THE {fieldname}')
                         setattr(stellar_object, fieldname, float(value))
                     else:
                         print(f'SETTING THE {fieldname} TO NONE')
-                        setattr(stellar_object, fieldname, value)
+                        setattr(stellar_object, fieldname, None)
         stellar_object.get_stellar_subtype(
             stellar_object.teff, stellar_object.logg, stellar_object.mass)
         # remove any objects within the stellar object and assign it to fluxes
@@ -217,10 +233,10 @@ def submit_manual_form():
         session['stellar_object'] = json.dumps(to_json(stellar_object))
         return redirect(url_for('main.return_results'))
     else:
-        flash(FlashMessage('Whoops, something went wrong. Please check your inputs and try again!', 'danger', 'page'))
+        flash('Whoops, something went wrong. Please check your inputs and try again!', 'danger')
         for fieldname, error_msg in form.errors.items():
             for err in error_msg:
-                flash(FlashMessage(f'{fieldname}: {err}', 'danger', 'page'))
+                flash(f'{fieldname}: {err}', 'danger')
         return redirect(url_for('main.homepage', form='extended'))
 
 
@@ -393,7 +409,7 @@ def return_results():
                 # For saturated/upper limit FUV flux and a normal NUV flux
                 # _ results found within upper and lower limits of the GALEX NUV flux and upper limits of GALEX FUV (upper limit)
                 if len(models) > 0:
-                    flash(FlashMessage(f'{len(models)} results found within the upper and lower limits of your submitted UV fluxes.', 'success', 'page'))
+                    flash(f'{len(models)} results found within the upper and lower limits of your submitted UV fluxes.', 'success')
                 if len(models) == 0:
                     print(f'NO MODELS FOUND IN FIRST SAT SEARCH, GROWING BARS BY 3')
                     # grow nuv error bars by three
@@ -402,7 +418,7 @@ def return_results():
                     models = pegasus.query_model_collection(
                         fuv_value, nuv_copy)
                     if len(models) > 0:
-                        flash(FlashMessage(f'{len(models)} results found within 3 σ of the GALEX NUV flux.', 'success', 'page'))
+                        flash(f'{len(models)} results found within 3 σ of the GALEX NUV flux.', 'success')
                 if len(models) == 0:
                     print(f'NO MODELS FOUND IN FIRST SAT SEARCH, GROWING BARS BY 5')
                     # grow nuv error bars by five
@@ -411,14 +427,14 @@ def return_results():
                     models = pegasus.query_model_collection(
                         fuv_value, nuv_copy)
                     if len(models) > 0:
-                        flash(FlashMessage(f'{len(models)} results found within 5 σ of the GALEX NUV flux.', 'success', 'page'))
+                        flash(f'{len(models)} results found within 5 σ of the GALEX NUV flux.', 'success')
                 if len(models) == 0:
                     # if there are still no models, flash error
-                    flash(FlashMessage('No models found within 5 σ of the GALEX NUV flux measurements.', 'danger', 'page'))
+                    flash('No models found within 5 σ of the GALEX NUV flux measurements.', 'danger')
             elif (nuv_value['flag'] == 'saturated' or nuv_value['flag'] == 'upper_limit') and fuv_value['flag'] == 'normal':
                 # For saturated/upper limit NUV flux and a normal FUV flux
                 if len(models) > 0:
-                    flash(FlashMessage(f'{len(models)} results found within the upper and lower limits of your submitted UV fluxes.', 'success', 'page'))
+                    flash(f'{len(models)} results found within the upper and lower limits of your submitted UV fluxes.', 'success')
                 if len(models) == 0:
                     # grow fuv error bars by three
                     print(f'NO MODELS FOUND IN FIRST UPPER LIM SEARCH, GROWING BARS BY 3')
@@ -427,7 +443,7 @@ def return_results():
                     models = pegasus.query_model_collection(
                         fuv_copy, nuv_value)
                     if len(models) > 0:
-                        flash(FlashMessage(f'{len(models)} results found within 3 σ of the GALEX FUV flux.', 'success', 'page'))
+                        flash(f'{len(models)} results found within 3 σ of the GALEX FUV flux.', 'success')
                 if len(models) == 0:
                     # grow fuv error bars by three
                     print(f'NO MODELS FOUND IN FIRST UPPER LIM SEARCH, GROWING BARS BY 5')
@@ -436,38 +452,38 @@ def return_results():
                     models = pegasus.query_model_collection(
                         fuv_copy, nuv_value)
                     if len(models) > 0:
-                        flash(FlashMessage(f'{len(models)} results found within 5 σ of the GALEX FUV flux.', 'success', 'page'))
+                        flash(f'{len(models)} results found within 5 σ of the GALEX FUV flux.', 'success')
                 if len(models) == 0:
                     # if there are still no models, flash error
-                    flash(FlashMessage('No models found within 5 σ of the GALEX FUV flux measurements.', 'danger', 'page'))
+                    flash('No models found within 5 σ of the GALEX FUV flux measurements.', 'danger')
             elif (fuv_value['flag'] == 'saturated' or nuv_value['flag'] == 'saturated') and (fuv_value['flag'] == 'upper_limit' or nuv_value['flag'] == 'upper_limit'):
                 # return first model (lowest chi-squared value)
                 if len(models) > 0:
-                    flash(FlashMessage(f'{len(models)} results found within upper and lower limits of GALEX UV fluxes. Returning model with lowest chi-squared value.', 'success', 'page'))
+                    flash(f'{len(models)} results found within upper and lower limits of GALEX UV fluxes. Returning model with lowest chi-squared value.', 'success')
                     models = [models[0]]
                 else:
-                    flash(FlashMessage('No results found within GALEX UV fluxes.', 'danger', 'page'))
+                    flash('No results found within GALEX UV fluxes.', 'danger')
             elif (fuv_value['flag'] == 'saturated' and nuv_value['flag'] == 'saturated'):
                 if len(models) > 0:
-                    flash(FlashMessage(f'{len(models)} results found within GALEX UV fluxes. Returning model with lowest chi-squared value.', 'success', 'page'))
+                    flash(f'{len(models)} results found within GALEX UV fluxes. Returning model with lowest chi-squared value.', 'success')
                     models = [models[0]]
                 else:
-                    flash(FlashMessage('No results found within GALEX UV fluxes.', 'danger', 'page'))
+                    flash('No results found within GALEX UV fluxes.', 'danger')
             elif (fuv_value['flag'] == 'upper_limit' and nuv_value['flag'] == 'upper_limit'):
                 if len(models) > 0:
-                    flash(FlashMessage(f'{len(models)} results found within GALEX UV fluxes. Returning model with lowest chi-squared value.', 'success', 'page'))
+                    flash(f'{len(models)} results found within GALEX UV fluxes. Returning model with lowest chi-squared value.', 'success')
                     models = [models[0]]
                 else:
-                    flash(FlashMessage('No results found within GALEX UV fluxes.', 'danger', 'page'))
+                    flash('No results found within GALEX UV fluxes.', 'danger')
             # DETECTION ONLY WORKFLOW
                 # The models will be sorted by the diff_flux field, so the first model will have the closest 
                 # value to the given detection. Just return the first model.
             if fuv_value['flag'] == 'detection_only' or nuv_value['flag'] == 'detection_only':
                 if len(models) > 0: # Check if there are returned models first
                     models = [models[0]]
-                    flash(FlashMessage('Returning closest match to GALEX UV fluxes.', 'warning', 'page'))
+                    flash('Returning closest match to GALEX UV fluxes.', 'warning')
                 else:
-                    flash(FlashMessage('No results found within GALEX UV fluxes.', 'danger', 'page'))
+                    flash('No results found within GALEX UV fluxes.', 'danger')
             # NORMAL WORKFLOW
                 # If no models are found within the error bars of the given fluxes,
                 # search for models weighted on the FUV. If no models are returned 
@@ -480,14 +496,14 @@ def return_results():
                     models_weighted = pegasus.query_pegasus_weighted_fuv()
                     if len(models_weighted) > 0:
                         # If there are weighted results, use those
-                        flash(FlashMessage('No results found within upper and lower limits of UV fluxes. Returning document with nearest chi squared value weighted towards the FUV.', 'warning', 'page'))
+                        flash('No results found within upper and lower limits of UV fluxes. Returning document with nearest chi squared value weighted towards the FUV.', 'warning')
                         models = [models_weighted[0]]
                     else:
                         # If no weighted results, just use model with lowest chi squared
-                        flash(FlashMessage('No results found within upper and lower limits of UV fluxes. No model found with a close FUV match. Returning model with lowest chi-square value.', 'warning', 'page'))
+                        flash('No results found within upper and lower limits of UV fluxes. No model found with a close FUV match. Returning model with lowest chi-square value.', 'warning')
                         models = [models_with_chi_squared[0]]
                 else:
-                    flash(FlashMessage(f'{len(models)} results found within the upper and lower limits of your submitted UV fluxes.', 'success', 'page'))
+                    flash(f'{len(models)} results found within the upper and lower limits of your submitted UV fluxes.', 'success')
             # STEP 10: After getting models for this search, we need to add each model to the plot data and 
             # add any flags the models may have.
             # Flags include:
@@ -543,13 +559,13 @@ def return_results():
             plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
         # STEP 12: If using test data, add flash so user knows that test data is being used
         if using_test_data == True:
-            flash(FlashMessage('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger', 'page'))
+            flash('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
         session['stellar_target'] = json.dumps(to_json(stellar_object))
         print(return_models)
         print(json.dumps(to_json(stellar_object)))
         return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_obj=stellar_object, matching_models=return_models, test_filepaths=test_filepath_names)
     else:
-        flash(FlashMessage('Missing required stellar parameters. Submit the required data to view this page.', 'danger', 'page'))
+        flash('Missing required stellar parameters. Submit the required data to view this page.', 'danger')
         return redirect(url_for('main.homepage'))
 
 
@@ -587,7 +603,7 @@ def download(filename, model):
             current_app.root_path, app.config['FITS_FOLDER'], stellar_target.model_subtype)
     file_path = os.path.join(downloads, filename)
     if not os.path.exists(file_path):
-        flash(FlashMessage('File is not available to download because it does not exist yet!', 'danger', 'page'))
+        flash('File is not available to download because it does not exist yet!', 'danger')
     # Create the zip file in memory
     memory_file = io.BytesIO()
     with zipfile.ZipFile(memory_file, 'w') as zipf:
@@ -619,7 +635,7 @@ def faqs():
 @main.route('/all-spectra', methods=['GET'])
 def index_spectra():
     """View all spectra page."""
-    flash(FlashMessage('Model grid is not available to download yet. Please contact us if you need further information.', 'warning', 'page'))
+    flash('Model grid is not available to download yet. Please contact us if you need further information.', 'warning')
     return render_template('index-spectra.html')
 
 
@@ -639,10 +655,10 @@ def send_email():
                       recipients=['phoenixpegasusgrid@gmail.com'],
                       body=f'FROM {form.name.data}, {form.email.data}\n MESSAGE: {form.message.data}')
         mail.send(msg)
-        flash(FlashMessage('Email sent!', 'success', 'page'))
+        flash('Email sent!', 'success')
         return redirect(url_for('main.homepage'))
     else:
-        flash(FlashMessage('error', 'danger', 'page'))
+        flash('error', 'danger')
         return redirect(url_for('main.error', msg='Contact form unavailable at this time, please email phoenixpegasusgrid@gmail.com directly.'))
 
 

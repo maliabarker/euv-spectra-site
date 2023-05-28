@@ -2,6 +2,7 @@
 import numpy.ma as ma
 import math
 import requests
+import json
 from astropy.time import Time
 import astropy.units as u
 from astroquery.exceptions import ResolverError
@@ -50,16 +51,16 @@ class ProperMotionData():
                 {'target': star_name})['t_min']
         except TypeError as te:
             print(f'Galex obs time in depth error: {te}')
-            return(f'Did not find matches in GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion.')
+            return(f'GALEX Error: Did not find matches in GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion.')
         except KeyError as ke:
-            print(f'Galex obs time in depth error: {ke}')
-            return(f'Did not find matches in GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion.')
+            print(f'GALEX Error: GALEX obs time in depth error: {ke}')
+            return(f'GALEX Error: Did not find matches in GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion.')
         except ValueError as ve:
             print(f'Galex obs time in depth error: {ve}')
-            return(f'Unable to search GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion.')
+            return(f'GALEX Error: Unable to search GALEX observations for {star_name if star_name else coords}. Unable to correct for proper motion.')
         except Exception as e:
             print(f'Galex obs time in depth error: {e}')
-            return(f'No GALEX observations found for {star_name if star_name else coords}. Unable to correct for proper motion.')
+            return(f'GALEX Error: No GALEX observations found for {star_name if star_name else coords}. Unable to correct for proper motion.')
         else:
             try:
                 # STEP 2: If observation time is found, start coordinate correction by initializing variables
@@ -531,34 +532,6 @@ class StellarObject():
             return True
         else:
             return False
-        
-    def has_null_fluxes(self):
-        # Checks for any null fluxes.
-        if self.fluxes.has_attr_val('processed_fuv') is False or self.fluxes.has_attr_val('processed_nuv') is False:
-            return True
-        else:
-            return False
-        
-    def has_saturated_fluxes(self):
-        # Checks for any fluxes flagged as saturated.
-        if hasattr(self.fluxes, 'fuv_saturated') and self.fluxes.fuv_saturated or hasattr(self.fluxes, 'nuv_saturated') and self.fluxes.nuv_saturated:
-            return True
-        else:
-            return False
-        
-    def has_upper_limit_fluxes(self):
-        # Checks for any fluxes flagged as upper limit.
-        if hasattr(self.fluxes, 'fuv_upper_limit') and self.fluxes.fuv_upper_limit or hasattr(self.fluxes, 'nuv_upper_limit') and self.fluxes.nuv_upper_limit:
-            return True
-        else:
-            return False
-
-    def has_all_processed_fluxes(self):
-        # Checks to see that all GALEX fluxes have been converted, scaled, and photosphere subtracted.
-        if self.fluxes.has_attr_val('processed_fuv') and self.fluxes.has_attr_val('processed_fuv_err') and self.fluxes.has_attr_val('processed_nuv') and self.fluxes.has_attr_val('processed_nuv_err'):
-            return True
-        else:
-            return False
 
     def get_stellar_parameters(self):
         """Searches Astroquery databases for stellar data.
@@ -705,7 +678,7 @@ class StellarObject():
             # Check if SIMBAD is accessible
             simbad_response = requests.get("http://simbad.cds.unistra.fr/simbad/")
             if simbad_response.status_code != 200:
-                return "SIMBAD is currently down. Cannot get data to correct for proper motion. Please enter GALEX flux values manually or try again later."
+                return "Error connecting to SIMBAD. Cannot get data to correct for proper motion. Please enter GALEX flux values manually or try again later."
             
             result_table = customSimbad.query_object(star_name)
             if result_table and len(result_table) > 0:
@@ -812,7 +785,7 @@ class StellarObject():
             # Check if SIMBAD is accessible
             mast_response = requests.get("https://galex.stsci.edu/GR6/?page=mastform")
             if mast_response.status_code != 200:
-                return "MAST is currently down. Please enter GALEX flux values manually or try again later."
+                return "Error connecting to MAST. Please enter GALEX flux values manually or try again later."
             
             galex_data = None
             if star_name and pm_corrected_coords:
@@ -866,26 +839,26 @@ class StellarObject():
                         return
                     else:
                         # No results within 0.167 arc minutes
-                        return 'No detection in GALEX FUV and NUV. Look under question 3 on the FAQ page for more information.'
+                        return 'GALEX Error: No detection in GALEX FUV and NUV. Look under question 3 on the FAQ page for more information.'
                 else:
                     # No results found for the GALEX catalog query
-                    return (f'No GALEX observations found. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')
+                    return (f'GALEX Error: No GALEX observations found. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')
             else:
                 # No results found because proper info was not given for example, will happen if 
                 # proper motion correction did not occur and is therefore not given
-                return (f'Missing data to query GALEX {"because coordinates were not corrected for proper motion" if star_name else f"for {coords}"}. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')
+                return (f'GALEX Error: Missing data to query GALEX {"because coordinates were not corrected for proper motion" if star_name else f"for {coords}"}. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')
         except requests.exceptions.RequestException as rqe:
             print(f'Galex search in depth error: {rqe}')
             return f"Error connecting to MAST. Please enter GALEX flux values manually or try again later."
         except ResolverError as re:
             print(f'Galex search in depth error: {re}')
-            return (f'Could not search GALEX catalog with object {coords if position else pm_corrected_coords}. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')
+            return (f'GALEX Error: Could not search GALEX catalog with object {coords if position else pm_corrected_coords}. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')
         except ValueError as ve:
             print(f'Galex search in depth error: {ve}')
-            return (f'Could not search GALEX catalog with object {coords if position else pm_corrected_coords}. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')
+            return (f'GALEX Error: Could not search GALEX catalog with object {coords if position else pm_corrected_coords}. Please enter flux values manually or approximate flux values using the proxy table under question 3 on the FAQ page.')
         except Exception as e:
             print(f'Galex search in depth error: {e}')
-            return (f'Unknown error during GALEX search: {e}')
+            return (f'GALEX Error: Unknown error during GALEX search: {e}')
     
     def get_stellar_subtype(self, teff, logg, mass):
         """Assigns the matching PEGASUS grid stellar subtype to object.
@@ -969,9 +942,3 @@ class PegasusGrid():
             return list(models_with_ratios)
         except Exception as e:
             return ('Error fetching PEGASUS models:', e)
-        
-class FlashMessage:
-    def __init__(self, message, category, location):
-        self.message = message
-        self.category = category
-        self.location = location

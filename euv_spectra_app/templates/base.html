@@ -36,10 +36,10 @@
         {% include 'partials/navbar.html' %}
         
         <div class="container">
-            {% for flash_message in get_flashed_messages() %}
-                {% if flash_message.location == 'page' %}
-                    <div class="alert alert-{{ flash_message.category }} mt-2" role="alert">
-                        {{ flash_message.message }}
+            {% for category, message in get_flashed_messages(with_categories=true) %}
+                {% if 'GALEX Error:' not in message and 'Error connecting to the NASA Exoplanet Archive' not in message and 'Error connecting to SIMBAD' not in message and 'Error connecting to MAST' not in message %}
+                    <div class="alert alert-{{category}} mt-2" role="alert">
+                        {{ message }}
                     </div>
                 {% endif %}
             {% endfor %}
