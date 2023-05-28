@@ -124,7 +124,6 @@ def submit_manual_form():
     if form.validate_on_submit():
         # STEP 1a: If both flags are null, return flashed error message (with form extended)
         for fieldname, value in form.data.items():
-            print(f'MANUAL FORM FIELDNAME: {fieldname}, VALUE: {value}')
             if fieldname in fields_not_to_include:
                 # Deal with the fields not to include
                 # (mostly unit checking and conversions and flag functionalities)
@@ -132,75 +131,51 @@ def submit_manual_form():
                     # CHECK DISTANCE UNIT
                     # if the distance unit is milliarcseconds (mas) convert to parsecs
                     stellar_object.dist = int(1 / (form.dist.data / 1000))
-                elif fieldname == 'fuv_unit' and value == 'mag' and form.fuv.data is not None:
-                    # TODO: Check that (if there is flag) the value is not being reassigned to 
-                    # non-converted flux in flag check step (can maybe do this by assigning the 
-                    # form's flux value to the converted value so if it is gone over again, will 
-                    # use the converted val from form?)
-
-                    # CHECK GALEX FUV UNIT
+                elif (fieldname == 'fuv_unit' and value == 'mag' and form.fuv.data is not None) or (fieldname == 'nuv_unit' and value == 'mag' and form.nuv.data is not None):
+                    # Converting FUV/NUV magnitudes to fluxes
+                    # Check which flux & err
+                    flux = fieldname[:3]
+                    flux_err = f'{flux}_err'
+                    flux_flag = f'{flux}_flag'
+                    flux_value = float(getattr(form, flux).data)
+                    flux_err_value = getattr(form, flux_err).data
                     # if galex unit is in magnitude (mag), convert to flux (in microjanskies)
-                    fuv = float(form.fuv.data)
-                    fuv_converted = stellar_object.fluxes.convert_mag_to_ujy(fuv, 'fuv')
+                    print(f'CONVERTING {flux} WITH VAL {flux_value} FROM MAG TO FLUX')
+                    flux_converted = stellar_object.fluxes.convert_mag_to_ujy(flux_value, str(flux))
                     # if there is an error, get the error as well (there is an error if it is not None or not 0)
-                    if form.fuv_err.data is not None and int(form.fuv_err.data) != 0:
-                        fuv_upper_lim = fuv + float(form.fuv_err.data)
-                        fuv_lower_lim = fuv - float(form.fuv_err.data)
-                        fuv_upper_lim_converted = stellar_object.fluxes.convert_mag_to_ujy(fuv_upper_lim, 'fuv')
-                        fuv_lower_lim_converted = stellar_object.fluxes.convert_mag_to_ujy(fuv_lower_lim, 'fuv')
-                        fuv_up_err = fuv_upper_lim_converted - fuv_converted
-                        fuv_low_err = fuv_converted - fuv_lower_lim_converted
-                        fuv_err_converted = (fuv_up_err + fuv_low_err) / 2
-                        print(f'SETTING THE CONVERTED FUV FLUX ERR TO {fuv_err_converted}')
-                        setattr(stellar_object.fluxes, 'fuv_err', fuv_err_converted)
-                    # set fuv of stellar object fluxes to this flux
-                    # First, we need to check if the flux has any flags
-                    print(f'SETTING THE CONVERTED FUV FLUX TO {fuv_converted}')
-                    form.fuv.data = fuv_converted
-                    if form.fuv_flag.data is not None:
-                        flag = form.fuv_flag.data
+                    if flux_err_value is not None and flux_err_value != '0':
+                        upper_lim = flux_value + float(flux_err_value)
+                        lower_lim = flux_value - float(flux_err_value)
+                        print(f'Upper limit of {flux}: {upper_lim}. Lower limit of {flux}: {lower_lim}')
+                        upper_lim_converted = stellar_object.fluxes.convert_mag_to_ujy(upper_lim, str(flux))
+                        lower_lim_converted = stellar_object.fluxes.convert_mag_to_ujy(lower_lim, str(flux))
+                        print(f'CONVERTED Upper limit of {flux}: {upper_lim_converted}. Lower limit of {flux}: {lower_lim_converted}')
+                        up_err = upper_lim_converted - flux_converted
+                        low_err = flux_converted - lower_lim_converted
+                        print(f'NEW UPPER VAL: {up_err}, NEW LOW VAL: {low_err}')
+                        err_converted = (up_err + low_err) / 2
+                        print(f'SETTING THE CONVERTED FLUX ERR {flux_err} TO {err_converted}')
+                        setattr(stellar_object.fluxes, flux_err, err_converted)
+                    # Reassign form value so if checked again in flag check, will assign to converted val
+                    getattr(form, flux).data = flux_converted
+                    # Check if the flux has any flags and set flux of stellar object fluxes to converted val accordingly
+                    if getattr(form, flux_flag).data is not None:
+                        flag = getattr(form, flux_flag).data
                         # if it does, assign the converted flux to that 
                         if flag == 'saturated':
                             # assign to saturated value
-                            setattr(stellar_object.fluxes, 'fuv_saturated', fuv_converted)
+                            flux_saturated = f'{flux}_saturated'
+                            print(f'SETTING THE CONVERTED SATURATED FLUX {flux_saturated} TO {flux_converted}')
+                            setattr(stellar_object.fluxes, flux_saturated, flux_converted)
                         elif flag == 'upper_limit':
                             # assign to upper limit value
-                            setattr(stellar_object.fluxes, 'fuv_upper_limit', fuv_converted)
+                            flux_upper_limit = f'{flux}_upper_limit'
+                            print(f'SETTING THE CONVERTED UPPER LIMIT FLUX {flux_upper_limit} TO {flux_converted}')
+                            setattr(stellar_object.fluxes, flux_upper_limit, flux_converted)
                     else:
+                        print(f'SETTING THE CONVERTED FLUX {flux} TO {flux_converted}')
                         # else, assign converted flux to normal fuv attribute
-                        setattr(stellar_object.fluxes, 'fuv', fuv_converted)
-                elif fieldname == 'nuv_unit' and value == 'mag' and form.nuv.data is not None:
-                    # CHECK GALEX NUV UNIT
-                    # if galex unit is in magnitude (mag), convert to flux (in microjanskies)
-                    nuv = float(form.nuv.data)
-                    nuv_converted = stellar_object.fluxes.convert_mag_to_ujy(nuv, 'nuv')
-                    # if there is an error, get the error as well (there is an error if it is not None or not 0)
-                    if form.nuv_err.data is not None and int(form.nuv_err.data) != 0:
-                        nuv_upper_lim = nuv + float(form.nuv_err.data)
-                        nuv_lower_lim = nuv - float(form.nuv_err.data)
-                        nuv_upper_lim_converted = stellar_object.fluxes.convert_mag_to_ujy(nuv_upper_lim, 'nuv')
-                        nuv_lower_lim_converted = stellar_object.fluxes.convert_mag_to_ujy(nuv_lower_lim, 'nuv')
-                        nuv_up_err = nuv_upper_lim_converted - nuv_converted
-                        nuv_low_err = nuv_converted - nuv_lower_lim_converted
-                        nuv_err_converted = (nuv_up_err + nuv_low_err) / 2
-                        print(f'SETTING THE CONVERTED NUV FLUX ERR TO {nuv_err_converted}')
-                        setattr(stellar_object.fluxes, 'nuv_err', nuv_err_converted)
-                    # set nuv of stellar object fluxes to this flux
-                    # First, we need to check if the flux has any flags
-                    print(f'SETTING THE CONVERTED NUV FLUX TO {nuv_converted}')
-                    form.nuv.data = nuv_converted
-                    if form.nuv_flag.data is not None:
-                        flag = form.nuv_flag.data
-                        # if it does, assign the converted flux to that 
-                        if flag == 'saturated':
-                            # assign to saturated value
-                            setattr(stellar_object.fluxes, 'nuv_saturated', nuv_converted)
-                        elif flag == 'upper_limit':
-                            # assign to upper limit value
-                            setattr(stellar_object.fluxes, 'nuv_upper_limit', nuv_converted)
-                    else:
-                        # else, assign converted flux to normal nuv attribute
-                        setattr(stellar_object.fluxes, 'nuv', nuv_converted)
+                        setattr(stellar_object.fluxes, flux, flux_converted)
                 elif 'flag' in fieldname:
                     flux = fieldname[:3]
                     flux_err = f'{flux}_err'

@@ -70,8 +70,9 @@ def from_json(json_str):
         stellar_target_obj.pm_data = proper_motion_obj
         stellar_target_obj.fluxes = galex_fluxes_obj
         return stellar_target_obj
-    # else:
-    #     # Handle the case where json_str is None
+    else:
+        # if there is no json string, that means the session timed out, return an empty stellar object
+        return StellarObject()
 
 
 def create_plotly_graph(files):
@@ -85,8 +86,6 @@ def create_plotly_graph(files):
     """
     # STEP 1: initialize figure
     fig = go.Figure()
-    # colors = ['#2E42FC', "#7139F1", "#9A33EA", "#C32DE3",
-    #           "#EE26DB", "#FE63A0", "#FE8F77", "#FDAE5A"]
     colors = ['#2E42FC', '#EE26DB', '#FF79AE', '#FE6201', '#FFBC28', '#DB2681', '#BBBBBB', '#00E4B0', '#7FFF1D']
     galex_x = [value['wavelength'] for key, value in files.items() if 'galex' in key]
     galex_y = [value['flux_density'] for key, value in files.items() if 'galex' in key]
