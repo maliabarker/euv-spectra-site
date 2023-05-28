@@ -416,8 +416,26 @@ class GalexFluxes():
             print('Not an m star?')
             return ('Can only run predictions on M stars at the moment.')
 
+    def convert_mag_to_ujy(self, num, flux_type):
+        if flux_type == 'fuv':
+            # mag(AB) → erg/s/cm^2/A
+            # FUV = ( ( (10^(mag-18.82))/-2.5 ) * (1.4*10^-15) )
+            mag_to_flux = ((pow(10, ((num-18.82)/-2.5))) * (1.4e-15))
+            print(f'FUV MAG TO ERG/S/CM2/A: {mag_to_flux}')
+            # erg/s/cm^2/A → uJY
+            flux_to_uJy = (((mag_to_flux * pow(1542.3, 2)) / (3e-5)) * (pow(10, 6)))
+            print(f'FUV ERG/S/CM2/A TO uJy: {flux_to_uJy}')
+        elif flux_type == 'nuv':
+            # mag(AB) → erg/s/cm^2/A
+            # NUV = ( ( (10^(mag-20.08))/-2.5 ) * (2.06*10^-16) )
+            mag_to_flux = ((pow(10, ((num-20.08)/-2.5))) * (2.06e-16))
+            # erg/s/cm^2/A → uJY
+            flux_to_uJy = (((mag_to_flux * pow(2274.4, 2)) / (3e-5)) * (pow(10, 6)))
+        return flux_to_uJy
+
     def convert_ujy_to_flux_density(self, num, wv):
         """Converts microjanskies to ergs/s/cm2/A."""
+        print(f'Converting {num} to erg/s/cm2/A using {wv}')
         return (((3e-5) * (num * 10**-6)) / pow(wv, 2))
 
     def scale_flux(self, num):
