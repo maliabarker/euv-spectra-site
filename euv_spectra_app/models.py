@@ -260,8 +260,8 @@ class GalexFluxes():
         This equation uses flux values scaled at 10 parsecs. The values given should already be scaled.
         The equation is then run depending on the flux type. The following equations that correspond to 
         flux types are:
-            FUV = 10 ^ ( 1.17 * log10(NUV) - 1.26 )
-            NUV = 10 ^ ( ( log10(FUV) + 1.26 ) / 1.17 )
+            FUV = 10 ^ ( 0.98 * log10(NUV) - 0.47 )
+            NUV = 10 ^ ( ( log10(FUV) + 0.47 ) / 0.98 )
         Then, these predicted flux values are 'unscaled', or scaled back to their original distances 
         with the given unscale value.
 
