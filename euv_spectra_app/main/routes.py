@@ -95,7 +95,6 @@ def submit_modal_form():
                     # if a manual parameter is submitted, add that data to the object
                     unmanual_field = field.name.replace('manual_', '')
                     if getattr(modal_form, unmanual_field).data == 'Manual':
-                        print(f'MANUAL FIELD {field.name} with value of {field.data} is being used')
                         # Only add the data from manual form if the unmanual field has a value of 
                         # 'Manual' (meaning manual radio option was checked)
                         if unmanual_field in fluxes:
@@ -191,8 +190,6 @@ def submit_manual_form():
                         flux_flag = f'{flux}_{value}'
                         flux_is_flag = f'{flux}_is_{value}'
                         flux_value = float(getattr(form, flux).data)
-                        print(f'SETTING FLUX: {flux_flag} to {flux_value}')
-                        print(f'SETTING FLUX IS FLAG: {flux_is_flag} to TRUE')
                         setattr(stellar_object.fluxes, flux, None)
                         setattr(stellar_object.fluxes, flux_flag, flux_value)
                         setattr(stellar_object.fluxes, flux_is_flag, True)
@@ -205,10 +202,8 @@ def submit_manual_form():
                             # If user inputs 0 as error, make it None so it is not used as actual value
                             setattr(stellar_object.fluxes, fieldname, None)
                         else:
-                            print(f'SETTING THE {fieldname} FLUX to {value}')
                             setattr(stellar_object.fluxes, fieldname, float(value))
                     else:
-                        print(f'SETTING THE {fieldname} FLUX TO NONE')
                         setattr(stellar_object.fluxes, fieldname, None)
                 else:
                     # Else if it is a regular stellar parameter, add to stellar_object
@@ -256,9 +251,7 @@ def return_results():
     # Populate the modal form with data from object
     insert_data_into_form(stellar_object, modal_form)
 
-    # STEP 1: Prepare GALEX fluxes for searching the grid
-    stellar_object.fluxes.convert_scale_photosphere_subtract_fluxes()
-    # STEP 2: Check if all stellar intrinstic parameters are available to start querying pegasus
+    # STEP 1: Check if all stellar intrinstic parameters are available to start querying pegasus
     if stellar_object.has_all_stellar_parameters():
         print('HAS ALL STELLAR PARAMETERS, CONTINUING')
         '''———————————FOR TESTING PURPOSES (Test file)——————————'''
@@ -281,16 +274,18 @@ def return_results():
             "new_test_6.fits", "new_test_7.fits"
         ]
         """———————————END TEST FILE DATA——————————"""
+        # STEP 2: Prepare GALEX fluxes for searching the grid
+        stellar_object.fluxes.convert_scale_photosphere_subtract_fluxes()
 
-        # STEP 2: Create new PegasusGrid object and insert the stellar object with corrected fluxes
+        # STEP 3: Create new PegasusGrid object and insert the stellar object with corrected fluxes
         pegasus = PegasusGrid(stellar_object)
 
-        # STEP 3: Search the model_parameter_grid collection to find closest matching stellar subtype
+        # STEP 4: Search the model_parameter_grid collection to find closest matching stellar subtype
         subtype = pegasus.query_pegasus_subtype()
         stellar_object.model_subtype = subtype['model']
         print('SUBTYPE', stellar_object.model_subtype)
 
-        # STEP 4: Check if model subtype data exists in database
+        # STEP 5: Check if model subtype data exists in database
         model_collection = f'{stellar_object.model_subtype.lower()}_grid'
         if model_collection not in db.list_collection_names():
             error_msg = f'The grid for model subtype {stellar_object.model_subtype} is currently unavailable. \
@@ -298,13 +293,13 @@ def return_results():
                           parameters and returned subtype if you think this is incorrect.'
             return redirect(url_for('main.error', msg=error_msg))
 
-        # STEP 5: Instantiate the following objects
+        # STEP 6: Instantiate the following objects
         plot_data = {}  # Dict to hold all data to plot
         using_test_data = False # Bool to determine if we are using test data
         model_index = 0  # Instantiating model index
         return_models = [] # Instantiating list to hold all returned models
 
-        # STEP 6: Add the GALEX fluxes to plot data
+        # STEP 7: Add the GALEX fluxes to plot data
         plot_data['galex_fuv'] = {'name': 'GALEX Processed FUV',
                                   'wavelength': 1542}
         plot_data['galex_nuv'] = {'name': 'GALEX Processed NUV',
@@ -343,9 +338,7 @@ def return_results():
             if stellar_object.fluxes.nuv_err is not None:
                 # if there is an error, add to GALEX NUV flux return data
                 plot_data['galex_nuv']['flux_density_err'] = stellar_object.fluxes.processed_nuv_err
-        print(plot_data['galex_fuv'])
-        print(plot_data['galex_nuv'])
-        # STEP 7: Get all possible searchable values of FUV and NUV from the GalexFluxes object
+        # STEP 8: Get all possible searchable values of FUV and NUV from the GalexFluxes object
         fuv_dict = {} # Dict to hold all FUV values
         nuv_dict = {} # Dict to hold all NUV values
         for key, val in vars(stellar_object.fluxes).items():
@@ -382,23 +375,20 @@ def return_results():
                     else:
                         # If it is none of these, means it is normal flux w/o error (detection only)
                         nuv_dict[key]['flag'] = 'detection_only'
-        print(f'FUVS: {fuv_dict}')
-        print(f'NUVS: {nuv_dict}')
-        # STEP 8: Get all possible combinations of fuv-nuv pairs. These are the pairs of fluxes that will be 
+        # STEP 9: Get all possible combinations of fuv-nuv pairs. These are the pairs of fluxes that will be 
         # used for PEGASUS grid searches.
         fuv_keys = list(fuv_dict)
         nuv_keys = list(nuv_dict)
         key_pairs = list(itertools.product(fuv_keys, nuv_keys))
-        # STEP 9: Iterate over each pair and run PEGASUS grid search on each pair
+        # STEP 10: Iterate over each pair and run PEGASUS grid search on each pair
         for fuv_key, nuv_key in key_pairs:
-            # STEP 9.1: Retrieve the fuv and nuv values using the keys from the dictionaries
+            # STEP 10.1: Retrieve the fuv and nuv values using the keys from the dictionaries
             fuv_value = fuv_dict[fuv_key]
             nuv_value = nuv_dict[nuv_key]
             print(f'SEARCHING USING FUV: {fuv_value}, NUV:{nuv_value}')
-            # STEP 9.2: Call the search_db function with the fuv and nuv values
+            # STEP 10.2: Call the search_db function with the fuv and nuv values
             models = pegasus.query_model_collection(fuv_value, nuv_value)
-            print(f'MODELS: {models}')
-            # STEP 9.3: Do additional processing on the returned models depending on the flag
+            # STEP 10.3: Do additional processing on the returned models depending on the flag
             # SATURATED/UPPER LIMIT WORK FLOW:
                 # If one val is saturated/upper limit and one val is normal and no models are returned,
                 # will need to increase error bars of normal flux by 3 sigma, then by 5 sigma
@@ -503,7 +493,7 @@ def return_results():
                         models = [models_with_chi_squared[0]]
                 else:
                     flash(f'{len(models)} results found within the upper and lower limits of your submitted UV fluxes.', 'success')
-            # STEP 10: After getting models for this search, we need to add each model to the plot data and 
+            # STEP 11: After getting models for this search, we need to add each model to the plot data and 
             # add any flags the models may have.
             # Flags include:
                 # If there are saturated fluxes and this is a saturated search, add saturated option A flag
@@ -511,9 +501,9 @@ def return_results():
                 # If there are saturated fluxes and this is a normal search, add saturated option B flag
                 # If there are upper limit fluxes and this is a normal search, add upper limit option B flag
                 # If there are both saturated and upper limit fluxes, add saturated and upper limit option A flag
-            # STEP 10.1: Append all models to the return models list for return table
+            # STEP 11.1: Append all models to the return models list for return table
             return_models += models
-            # STEP 10.2: Iterate over each model returned and add data and flag (if applicable)
+            # STEP 11.2: Iterate over each model returned and add data and flag (if applicable)
             for doc in models:
                 # for each matching model that comes back, get the filepath so we can check if it exists later
                 filepath = os.path.abspath(
@@ -552,16 +542,16 @@ def return_results():
                     # If there are upper limit fluxes and this is a normal search, add upper limit option B flag
                     if (fuv_value['flag'] == 'normal' and nuv_value['flag'] == 'normal'):
                         plot_data[key]['flag'] = 'Upper Limit Search Option B'
-        # STEP 11: Generate plot using the compiled data
+        # STEP 12: Generate plot using the compiled data
+        print('BEEP')
+        print(plot_data)
         plotly_fig = create_plotly_graph(plot_data)
         graphJSON = json.dumps(
             plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
-        # STEP 12: If using test data, add flash so user knows that test data is being used
+        # STEP 13: If using test data, add flash so user knows that test data is being used
         if using_test_data == True:
             flash('EUV data not available yet, using test data for viewing purposes. Please contact us for more information.', 'danger')
         session['stellar_target'] = json.dumps(to_json(stellar_object))
-        print(return_models)
-        print(json.dumps(to_json(stellar_object)))
         return render_template('result.html', modal_form=modal_form, name_form=name_form, position_form=position_form, graphJSON=graphJSON, stellar_obj=stellar_object, matching_models=return_models, test_filepaths=test_filepath_names)
     else:
         flash('Missing required stellar parameters. Submit the required data to view this page.', 'danger')

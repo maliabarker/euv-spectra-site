@@ -87,9 +87,10 @@ def create_plotly_graph(files):
     # STEP 1: initialize figure
     fig = go.Figure()
     colors = ['#2E42FC', '#EE26DB', '#FF79AE', '#FE6201', '#FFBC28', '#DB2681', '#BBBBBB', '#00E4B0', '#7FFF1D']
+    galex_names = [value['name'] for key, value in files.items() if 'galex' in key]
     galex_x = [value['wavelength'] for key, value in files.items() if 'galex' in key]
     galex_y = [value['flux_density'] for key, value in files.items() if 'galex' in key]
-    galex_names = [value['name'] for key, value in files.items() if 'galex' in key]
+    galex_error_y = []
     galex_symbols = []
     all_buttons = []
     model_buttons = []
@@ -140,11 +141,17 @@ def create_plotly_graph(files):
                 galex_symbols.append('arrow-down')
             else:
                 galex_symbols.append('circle')
+            if 'flux_density_err' in value:
+                galex_error_y.append(value['flux_density_err'])
+            else:
+                galex_error_y.append(None)
     # plot the GALEX data points
     fig.add_trace(go.Scatter(
         x=galex_x, y=galex_y, name='GALEX Processed Fluxes',
         mode='markers', marker=dict(color='Black', symbol=galex_symbols, size=10),
-        hovertemplate='<b>%{text}</b>: %{y:.2f}<extra></extra>',
+        error_y=dict(type='data', array=galex_error_y, color='Black', thickness=1.5),
+        hovertemplate='<b>%{text}</b>: %{y:.2f}' + '%{customdata}' + '<extra></extra>',
+        customdata=[[f' ± {err:.2f}' if (err is not None and err != '0.0') else ''] for err in galex_error_y],
         text=galex_names,
         legendgroup='GALEX Processed Fluxes'
     ))

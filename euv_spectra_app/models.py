@@ -113,7 +113,6 @@ class GalexFluxes():
             return False
 
     def check_null_fluxes(self):
-        print('CHECKING NULL FLUXES')
         # check that absolutely all fluxes are None
         if (self.fuv is None or ma.is_masked(self.fuv)) and (self.nuv is None or ma.is_masked(self.nuv)) and self.fuv_saturated is None and self.nuv_saturated is None and self.fuv_upper_limit is None and self.nuv_upper_limit is None:
             # Absolutely all fluxes are none/null. Normal fluxes are none, saturated fluxes 
@@ -123,7 +122,6 @@ class GalexFluxes():
         elif (self.fuv is None or ma.is_masked(self.fuv)) and self.fuv_saturated is None and self.fuv_upper_limit is None:
             # No value for FUV in normal, saturated, or upper limit values.
             # FUV is null. Need to predict for FUV and add an error message to flash on modal (if on modal)
-            print('FUV NULL, predicting flux')
             if self.nuv_is_saturated:
                 # If the non-null flux is saturated, use that value to predict
                 # pass in None for the error because saturated vals do not have error
@@ -139,7 +137,6 @@ class GalexFluxes():
         elif (self.nuv is None or ma.is_masked(self.nuv)) and self.nuv_saturated is None and self.nuv_upper_limit is None:
             # No value for NUV in normal, saturated, or upper limit values.
             # NUV is null. Need to predict for NUV and add an error message to flash on modal (if on modal)
-            print('NUV NULL, predicting flux')
             if self.fuv_is_saturated:
                 # If the non-null flux is saturated, use that value to predict
                 # pass in None for the error because saturated vals do not have error
@@ -401,7 +398,6 @@ class GalexFluxes():
         """
         early_m = ['M0', 'M1', 'M2', 'M3', 'M4', 'M5']
         late_m = ['M6', 'M7', 'M8', 'M9', 'M5']
-        print('checking stellar subtype from inside predict fluxes:', self.stellar_obj['stellar_subtype'])
         # STEP 1: Check that stellar_subtype value exists
         if 'stellar_subtype' not in self.stellar_obj:
             print('DOES NOT HAVE A STELLAR SUBTYPE')
@@ -421,10 +417,8 @@ class GalexFluxes():
             # mag(AB) → erg/s/cm^2/A
             # FUV = ( ( (10^(mag-18.82))/-2.5 ) * (1.4*10^-15) )
             mag_to_flux = ((pow(10, ((num-18.82)/-2.5))) * (1.4e-15))
-            print(f'FUV MAG TO ERG/S/CM2/A: {mag_to_flux}')
             # erg/s/cm^2/A → uJY
             flux_to_uJy = (((mag_to_flux * pow(1542.3, 2)) / (3e-5)) * (pow(10, 6)))
-            print(f'FUV ERG/S/CM2/A TO uJy: {flux_to_uJy}')
         elif flux_type == 'nuv':
             # mag(AB) → erg/s/cm^2/A
             # NUV = ( ( (10^(mag-20.08))/-2.5 ) * (2.06*10^-16) )
@@ -435,7 +429,6 @@ class GalexFluxes():
 
     def convert_ujy_to_flux_density(self, num, wv):
         """Converts microjanskies to ergs/s/cm2/A."""
-        print(f'Converting {num} to erg/s/cm2/A using {wv}')
         return (((3e-5) * (num * 10**-6)) / pow(wv, 2))
 
     def scale_flux(self, num):
@@ -505,7 +498,6 @@ class GalexFluxes():
                     processed_flux = self.convert_scale_photosphere_subtract_single_flux(val, 'fuv')
                 elif 'nuv' in key:
                     processed_flux = self.convert_scale_photosphere_subtract_single_flux(val, 'nuv')
-                print(f'Setting {processed_flux_name} to {processed_flux}')
                 setattr(self, processed_flux_name, processed_flux)
             elif (key == 'fuv_err' or key == 'nuv_err') and val is not None:
                 # get the attribute value with the name of which flux
@@ -519,7 +511,6 @@ class GalexFluxes():
                 new_upper_err = photosub_upper_lim - processed_flux
                 new_lower_err = processed_flux - photosub_lower_lim
                 avg_err = (new_upper_err + new_lower_err) / 2
-                print(f'Setting {processed_flux_name} to {avg_err}')
                 setattr(self, processed_flux_name, avg_err)
 
 """——————————————————————————————STELLAR OBJECT——————————————————————————————"""

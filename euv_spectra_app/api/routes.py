@@ -56,10 +56,8 @@ def get_galex_obs_time():
     Example HTML path: /api/get_galex_obs_time?star_name=GJ338B
     """
     star_name = request.args.get('star_name')
-    print(star_name)
     if star_name is not None:
         galex_time = db.mast_galex_times.find_one({'target': star_name})
-        print(galex_time)
         if galex_time:
             return_data = galex_time['t_min']
             return json.dumps(return_data)
@@ -596,7 +594,6 @@ def get_models_by_chi_squared():
                 return_data = {}
                 count = 0
                 for i in models_with_chi_squared:
-                    print(i)
                     del i['_id']
                     return_data[f'model_{count}'] = i
                     count += 1
@@ -658,7 +655,6 @@ def get_models_by_weighted_fuv():
                 return_data = {}
                 count = 0
                 for i in models_weighted:
-                    print(i)
                     del i['_id']
                     del i['chi_squared_fuv']
                     del i['chi_squared_nuv']
@@ -726,7 +722,6 @@ def get_models_by_flux_ratio():
                 return_data = {}
                 count = 0
                 for i in models_ratios:
-                    print(i)
                     del i['_id']
                     del i['galex_flux_ratio']
                     del i['model_flux_ratio']

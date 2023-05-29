@@ -103,38 +103,6 @@ class StellarTarget():
             # coords
         self.search_galex()
 
-    def test_tic(self):
-        # names = Simbad.query_objectids(self.search_input)
-        # for name in names:
-        #     print(name)
-        #     if ''
-
-        # result = Vizier.query_object(self.search_input)
-        # # tic_table = result["IV/39/tic82"]
-        # # star_table = result["J/AJ/159/280/table2"]
-        # for i in result.keys():
-        #     if "J/AJ/159/280" in i:
-        #         print(i)
-        # print(tic_table)
-        # print(tic_table[0])
-        # data = {
-        #     'teff': tic_table[0]['Teff'],
-        #     'logg': tic_table[0]['logg'],
-        #     'mass': tic_table[0]['Mass'],
-        #     'dist': tic_table[0]['Dist'],
-        #     'rad': tic_table[0]['Rad']
-        # }
-        # print(star_table)
-        # data = {
-        #     'teff': star_table[0]['Teff'],
-        #     'logg': star_table[0]['logg'],
-        #     'mass': star_table[0]['Mass'],
-        #     'dist': star_table[0]['Dist'],
-        #     'rad': star_table[0]['Rad']
-        # }
-        # print(data)
-        pass
-
     def convert_coords(self):
         """Converts coordinates to right ascension and declination.
 
@@ -289,7 +257,6 @@ class StellarTarget():
                         # FUV is saturated
                         # predict flux and compare predicted flux to actual flux
                         # return whatever is higher
-                        print('FUV saturated')
                         self.predict_fluxes('fuv')
                         fuv_fluxes = [self.fuv,
                                       filtered_data['fuv_flux']]
@@ -310,7 +277,6 @@ class StellarTarget():
                         # NUV is saturated
                         # predict flux and compare predicted flux to actual flux
                         # return whatever is higher
-                        print('NUV saturated')
                         self.predict_fluxes('nuv')
                         nuv_fluxes = [self.fuv,
                                       filtered_data['nuv_flux']]
@@ -368,7 +334,6 @@ class StellarTarget():
         elif flux_type == 'fuv':
             upper_lim = self.nuv + self.nuv_err
             lower_lim = self.nuv - self.nuv_err
-            print('J BAND', j_band_ujy)
             # Predict FUV flux using FUV = ((NUV/J)^1.11) * J
             # STEP F1: Use equation to find upper, lower limits and new flux values
             new_fuv_upper_lim = (
@@ -384,8 +349,6 @@ class StellarTarget():
             # STEP N3: Assign new values to return data dict using calculated flux & error
             self.fuv = new_fuv
             self.fuv_err = avg_fuv_err
-        else:
-            print('Cannot correct for that flux type, can only do FUV and NUV.')
 
 
 class ProperMotionDataOld():
@@ -519,7 +482,6 @@ class GalexFluxesOld():
         j_band_ujy = 1000 * (ZEROPOINT * pow(10.0, -0.4 * j_band))
         # STEP 3: Use equation to predict missing flux & error
         if flux_type == 'nuv':
-            print('OLD NUV', self.nuv, self.nuv_err)
             upper_lim = self.fuv + self.fuv_err
             lower_lim = self.fuv - self.fuv_err
             # Predict NUV flux using NUV = ((FUV/J)^(1/1.1)) * J
@@ -537,12 +499,9 @@ class GalexFluxesOld():
             # STEP N3: Assign new values to return data dict using calculated flux & error
             self.nuv = new_nuv
             self.nuv_err = avg_nuv_err
-            print('NEW NUV', self.nuv, self.nuv_err)
         elif flux_type == 'fuv':
-            print('OLD FUV', self.fuv, self.fuv_err)
             upper_lim = self.nuv + self.nuv_err
             lower_lim = self.nuv - self.nuv_err
-            print('J BAND', j_band_ujy)
             # Predict FUV flux using FUV = ((NUV/J)^1.11) * J
             # STEP F1: Use equation to find upper, lower limits and new flux values
             new_fuv_upper_lim = (
@@ -558,6 +517,3 @@ class GalexFluxesOld():
             # STEP N3: Assign new values to return data dict using calculated flux & error
             self.fuv = new_fuv
             self.fuv_err = avg_fuv_err
-            print('NEW FUV', self.fuv, self.fuv_err)
-        else:
-            print('Cannot correct for that flux type, can only do FUV and NUV.')
