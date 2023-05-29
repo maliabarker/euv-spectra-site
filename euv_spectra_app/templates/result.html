@@ -129,13 +129,25 @@
     <div class="text-center mt-3">
         <a data-bs-toggle="modal" data-bs-target="#myModal" class="btn btn-primary py-3 px-2">Click Here to Edit Your Parameters</a>
     </div>
-    <div class="chart" id="linegraph">
-        <script>
-            var graphs = JSON.parse('{{graphJSON | safe}}');
-            var config = {responsive: true};
-            Plotly.plot('linegraph', graphs, config);
-        </script>
+
+    <div id="loading-indicator">
+        <div class="loader-wrap">
+            <div class="loader">
+                <span class="loader-item"></span>
+                <span class="loader-item"></span>
+                <span class="loader-item"></span>
+                <span class="loader-item"></span>
+                <span class="loader-item"></span>
+                <span class="loader-item"></span>
+                <span class="loader-item"></span>
+                <span class="loader-item"></span>
+                <span class="loader-item"></span>
+                <span class="loader-item"></span>
+            </div>
+        </div>
     </div>
+
+    <div id="linegraph" style="visibility: hidden;"></div>
     <div class="my-3">
         <small>
             NOTES: <br> 
@@ -155,4 +167,21 @@
         });
     </script>
     <script src="{{ url_for('static', filename='js/download.js' )}}"></script>
+    <script>
+        // Get references to the loading indicator and graph container elements
+        var loadingIndicator = document.getElementById('loading-indicator');
+        var graphContainer = document.getElementById('linegraph');
+
+        // Toggle visibility of loading indicator and graph container
+        loadingIndicator.style.visibility = 'visible';  // Show loading indicator
+        graphContainer.style.visibility = 'hidden';  // Hide graph container
+
+        // Once the graph is loaded, hide the loading indicator and show the graph
+        var graphs = JSON.parse('{{graphJSON | safe}}');
+        var config = {responsive: true};
+        Plotly.plot('linegraph', graphs, config).then(function() {
+            loadingIndicator.style.display = 'none';  // Hide loading indicator
+            graphContainer.style.visibility = 'visible';  // Show graph container
+        });
+    </script>
 {% endblock %}
