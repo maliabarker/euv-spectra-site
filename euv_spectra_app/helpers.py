@@ -1,5 +1,4 @@
 import json
-import math
 from astropy.io import fits
 import plotly.graph_objects as go
 from euv_spectra_app.extensions import *
@@ -135,10 +134,10 @@ def create_plotly_graph(files):
             err_visible = False
             if 'flag' in value and value['flag'] == 'saturated':
                 symbol = 'arrow-up'
-                value['name'] += '***'
+                value['name'] += '<sup>[3]</sup>'
             elif 'flag' in value and value['flag'] == 'upper_limit':
                 symbol = 'arrow-down'
-                value['name'] += '****'
+                value['name'] += '<sup>[4]</sup>'
             if 'flux_density_err' in value:
                 err = [value['flux_density_err']]
                 err_visible = True

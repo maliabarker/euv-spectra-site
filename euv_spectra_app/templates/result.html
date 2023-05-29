@@ -17,7 +17,7 @@
         </div>
     </div>
 
-    <h4 class="mt-5 pt-4 text-center">Closest Match PHOENIX Model
+    <h4 class="mt-5 pt-4 text-center">Closest Match PHOENIX Model(s)
         {% if stellar_obj.position is not none %}
             for <i>{{ stellar_obj.position }}</i>
         {% elif stellar_obj.star_name is not none %}
@@ -64,7 +64,7 @@
                         {% endfor %}
                     </tr>
                     <tr>
-                        <th scope="row">GALEX FUV Flux Density<sup>*</sup></th>
+                        <th scope="row">GALEX FUV Flux Density<sup><a href="#footnotes">[1]</a></sup></th>
                         {% if stellar_obj.fluxes.fuv_is_saturated == True %}
                             <td>{{ "%.2f"|format(stellar_obj.fluxes.processed_fuv_saturated) }}</td>
                         {% elif stellar_obj.fluxes.fuv_is_upper_limit == True %}
@@ -79,7 +79,7 @@
                         {% endfor %}
                     </tr>
                     <tr>
-                        <th scope="row">GALEX NUV Flux Density<sup>*</sup></th>
+                        <th scope="row">GALEX NUV Flux Density<sup><a href="#footnotes">[1]</a></sup></th>
                         {% if stellar_obj.fluxes.nuv_is_saturated == True %}
                             <td>{{ "%.2f"|format(stellar_obj.fluxes.processed_nuv_saturated) }}</td>
                         {% elif stellar_obj.fluxes.nuv_is_upper_limit == True %}
@@ -94,14 +94,14 @@
                         {% endfor %}
                     </tr>
                     <tr>
-                        <th scope="row">PHOENIX EUV Flux Density<sup>*</sup><br><small>(from 100 - 1000 Å)</small></th>
+                        <th scope="row">PHOENIX EUV Flux Density<sup><a href="#footnotes">[1]</a></sup><br><small>(from 100 - 1000 Å)</small></th>
                         <td>N/A</td>
                         {% for model in matching_models %}
                             <td>{{ "%.2f"|format(model.euv) }}</td>
                         {% endfor %}
                     </tr>
                     <tr>
-                        <th scope="col">Download FITS File<sup>**</sup></th>
+                        <th scope="col">Download FITS File<sup><a href="#footnotes">[2]</a></sup></th>
                         <td>N/A</td>
                         {% for model in matching_models %}
                             <td>
@@ -148,13 +148,14 @@
     </div>
 
     <div id="linegraph" style="visibility: hidden;"></div>
-    <div class="my-3">
+    <div class="my-3" id="footnotes">
         <small>
             NOTES: <br> 
-            * In units of ergs/s/cm<sup>2</sup>/Å, scaled to stellar surface and corrected for photospheric contribution. <br>
-            ** See More Info About FITS Products <a href="/about">Here</a> <br>
-            *** If a GALEX flux is saturated, models are searched with corresponding flux values greater than or equal to the GALEX saturated flux value. <br>
-            **** If a GALEX flux is an upper limit, models are searched with corresponding flux values less than or equal to the GALEX upper limit flux value.
+            <sup>1</sup> In units of ergs/s/cm<sup>2</sup>/Å, scaled to stellar surface and corrected for photospheric contribution. <br>
+            <sup>2</sup> See More Info About FITS Products <a href="/about">Here</a> <br>
+            <sup>3</sup> If a GALEX flux is saturated, models are searched with corresponding flux values greater than or equal to the GALEX saturated flux value. <br>
+            <sup>4</sup> If a GALEX flux is an upper limit, models are searched with corresponding flux values less than or equal to the GALEX upper limit flux value. <br>
+            <sup>5</sup> Upper limit and saturated searches have two options, Option A and Option B. Option A searches for any corresponding flux values above the saturated flux value, and/or any corresponding flux values below the upper limit flux value. Option B uses the flux prediction equations on the <a href="{{ url_for('main.faqs', question_id='Q3') }}">FAQ page</a> to predict values for the saturated/upper limit flux. If the predicted flux is greater than the saturated flux/less than the upper limit flux, the predicted flux is used for another search under Option B.<br>
         </small>
     </div>
     {% include 'partials/modal.html' %}

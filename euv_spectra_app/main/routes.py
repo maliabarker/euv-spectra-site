@@ -502,21 +502,21 @@ def return_results():
                 # Now add the flag if there is one.
                 if (stellar_object.fluxes.fuv_is_saturated or stellar_object.fluxes.nuv_is_saturated) and (stellar_object.fluxes.fuv_is_upper_limit or stellar_object.fluxes.nuv_is_upper_limit):
                     # If there are both saturated and upper limit fluxes, add saturated and upper limit option A flag
-                    plot_data[key]['flag'] = 'Saturated and Upper Limit<br> Search Option A'
+                    plot_data[key]['flag'] = 'Saturated and Upper Limit<br> Search Option A<sup>[5]</sup>'
                 elif (stellar_object.fluxes.fuv_is_saturated or stellar_object.fluxes.nuv_is_saturated):
                     # If there are saturated fluxes and this is a saturated search, add saturated option A flag
                     if (fuv_value['flag'] == 'saturated' or nuv_value['flag'] == 'saturated'):
-                        plot_data[key]['flag'] = 'Saturated Search<br> Option A'
+                        plot_data[key]['flag'] = 'Saturated Search<br> Option A<sup>[5]</sup>'
                     # If there are saturated fluxes and this is a normal search, add saturated option B flag
                     if (fuv_value['flag'] == 'normal' and nuv_value['flag'] == 'normal'):
-                        plot_data[key]['flag'] = 'Saturated Search<br> Option B'
+                        plot_data[key]['flag'] = 'Saturated Search<br> Option B<sup>[5]</sup>'
                 elif (stellar_object.fluxes.fuv_is_upper_limit or stellar_object.fluxes.nuv_is_upper_limit):
                     # If there are upper limit fluxes and this is a upper limit search, add upper limit option A flag
                     if (fuv_value['flag'] == 'upper_limit' or nuv_value['flag'] == 'upper_limit'):
-                        plot_data[key]['flag'] = 'Upper Limit Search<br> Option A'
+                        plot_data[key]['flag'] = 'Upper Limit Search<br> Option A<sup>[5]</sup>'
                     # If there are upper limit fluxes and this is a normal search, add upper limit option B flag
                     if (fuv_value['flag'] == 'normal' and nuv_value['flag'] == 'normal'):
-                        plot_data[key]['flag'] = 'Upper Limit Search<br> Option B'
+                        plot_data[key]['flag'] = 'Upper Limit Search<br> Option B<sup>[5]</sup>'
         # STEP 12: Generate plot using the compiled data
         plotly_fig = create_plotly_graph(plot_data)
         graphJSON = json.dumps(
