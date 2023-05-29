@@ -18,24 +18,26 @@ function checkManualRadio(obj) {
     obj.previousElementSibling.checked = true;
 };
 
-function checkManualFUVErrFlux(obj) {
-    console.log('Unchecking given FUV, checking manual FUV')
+function checkManualFUVErrFlux() {
+    console.log('Manual FUV err checked')
     errFUVManualRadioBtn.checked = true;
     errFUVRadioBtn.checked = false;
 };
 
-function checkFUVErrFlux(obj) {
-    console.log('Unchecking manual FUV, checking given FUV')
+function checkFUVErrFlux() {
+    console.log('Given FUV err checked')
     errFUVManualRadioBtn.checked = false;
     errFUVRadioBtn.checked = true;
 };
 
-function checkManualNUVErrFlux(obj) {
+function checkManualNUVErrFlux() {
+    console.log('Manual NUV err checked')
     errNUVManualRadioBtn.checked = true;
     errNUVRadioBtn.checked = false;
 };
 
-function checkManualNUVErrFlux(obj) {
+function checkNUVErrFlux() {
+    console.log('Given NUV err checked')
     errNUVManualRadioBtn.checked = false;
     errNUVRadioBtn.checked = true;
 };
