@@ -140,7 +140,9 @@
         <small>
             NOTES: <br> 
             * In units of ergs/s/cm<sup>2</sup>/Å, scaled to stellar surface and corrected for photospheric contribution. <br>
-            ** See More Info About FITS Products <a href="/about">Here</a>
+            ** See More Info About FITS Products <a href="/about">Here</a> <br>
+            *** If a GALEX flux is saturated, models are searched with corresponding flux values greater than or equal to the GALEX saturated flux value. <br>
+            **** If a GALEX flux is an upper limit, models are searched with corresponding flux values less than or equal to the GALEX upper limit flux value.
         </small>
     </div>
     {% include 'partials/modal.html' %}

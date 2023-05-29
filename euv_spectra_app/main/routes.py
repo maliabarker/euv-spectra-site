@@ -300,86 +300,61 @@ def return_results():
         return_models = [] # Instantiating list to hold all returned models
 
         # STEP 7: Add the GALEX fluxes to plot data
-        plot_data['galex_fuv'] = {'name': 'GALEX Processed FUV',
-                                  'wavelength': 1542}
-        plot_data['galex_nuv'] = {'name': 'GALEX Processed NUV',
-                                  'wavelength': 2315}
-        # GALEX FUV Data
-        if stellar_object.fluxes.fuv_is_saturated:
-            # plot saturated GALEX FUV flux
-            plot_data['galex_fuv']['name'] += ' (Saturated)'
-            plot_data['galex_fuv']['flux_density'] = stellar_object.fluxes.processed_fuv_saturated
-            plot_data['galex_fuv']['flag'] = 'saturated'
-        elif stellar_object.fluxes.fuv_is_upper_limit:
-            # plot upper limit GALEX FUV flux
-            plot_data['galex_fuv']['name'] += ' (Upper Limit)'
-            plot_data['galex_fuv']['flux_density'] = stellar_object.fluxes.processed_fuv_upper_limit
-            plot_data['galex_fuv']['flag'] = 'upper_limit'
-        else:
-            # plot normal GALEX FUV flux
-            plot_data['galex_fuv']['flux_density'] = stellar_object.fluxes.processed_fuv
-            if stellar_object.fluxes.fuv_err is not None:
-                # if there is an error, add to GALEX FUV flux return data
-                plot_data['galex_fuv']['flux_density_err'] = stellar_object.fluxes.processed_fuv_err
-        # GALEX NUV Data
-        if stellar_object.fluxes.nuv_is_saturated:
-            # plot saturated GALEX NUV flux
-            plot_data['galex_nuv']['name'] += ' (Saturated)'
-            plot_data['galex_nuv']['flux_density'] = stellar_object.fluxes.processed_nuv_saturated
-            plot_data['galex_nuv']['flag'] = 'saturated'
-        elif stellar_object.fluxes.nuv_is_upper_limit:
-            # plot upper limit GALEX NUV flux
-            plot_data['galex_nuv']['name'] += ' (Upper Limit)'
-            plot_data['galex_nuv']['flux_density'] = stellar_object.fluxes.processed_nuv_upper_limit
-            plot_data['galex_nuv']['flag'] = 'upper_limit'
-        else:
-            # plot normal GALEX NUV flux
-            plot_data['galex_nuv']['flux_density'] = stellar_object.fluxes.processed_nuv
-            if stellar_object.fluxes.nuv_err is not None:
-                # if there is an error, add to GALEX NUV flux return data
-                plot_data['galex_nuv']['flux_density_err'] = stellar_object.fluxes.processed_nuv_err
+        for flux in ['fuv', 'nuv']:
+            key = f'galex_{flux}'
+            plot_data[key] = {'name': f'GALEX Processed {flux.upper()}'}
+            if flux == 'fuv':
+                plot_data[key]['wavelength'] = 1542
+            elif flux == 'nuv':
+                plot_data[key]['wavelength'] = 2315
+            err = getattr(stellar_object.fluxes, f'{flux}_err')
+            if getattr(stellar_object.fluxes, f'{flux}_is_saturated'):
+                plot_data[key]['name'] += '<br>(Saturated)'
+                plot_data[key]['flux_density'] = getattr(stellar_object.fluxes, f'processed_{flux}_saturated')
+                plot_data[key]['flag'] = 'saturated'
+            elif getattr(stellar_object.fluxes, f'{flux}_is_upper_limit'):
+                plot_data[key]['name'] += '<br>(Upper Limit)'
+                plot_data[key]['flux_density'] = getattr(stellar_object.fluxes, f'processed_{flux}_upper_limit')
+                plot_data[key]['flag'] = 'upper_limit'
+            else:
+                plot_data[key]['flux_density'] = getattr(stellar_object.fluxes, f'processed_{flux}')
+                if err is not None:
+                    plot_data[key]['flux_density_err'] = err
+
         # STEP 8: Get all possible searchable values of FUV and NUV from the GalexFluxes object
         fuv_dict = {} # Dict to hold all FUV values
         nuv_dict = {} # Dict to hold all NUV values
         for key, val in vars(stellar_object.fluxes).items():
             if 'processed' in key: # Only use processed fluxes
-                if 'fuv' in key and 'err' not in key: # Get all values of processed FUV (except error)
-                    fuv_dict[key] = {'value': val} # Add the value of the flux
-                    fuv_dict[key]['error'] = None # Set the error as None by default
-                    if key == 'processed_fuv' and hasattr(stellar_object.fluxes, 'processed_fuv_err'):
+                flux = None
+                # Get which flux (FUV or NUV) if it is a value and is not an error value
+                if 'fuv' in key and 'err' not in key:
+                    flux = 'fuv'
+                elif 'nuv' in key and 'err' not in key:
+                    flux = 'nuv'
+                if flux is not None:
+                    # If the key is a valid flux value, assign the data to the corresponding dict
+                    flux_dict = locals().get(f'{flux}_dict') # Get the dictionary dynamically
+                    flux_dict[key] = {'value': val} # Add the value of the flux
+                    flux_dict[key]['error'] = None # Set the error as None by default
+                    # Add flags and error if it exists
+                    if key == f'processed_{flux}' and hasattr(stellar_object.fluxes, f'processed_{flux}_err'):
                         # If there is an error, this means it is a normal flux. Add flag and error
-                        fuv_dict[key]['error'] = stellar_object.fluxes.processed_fuv_err
-                        fuv_dict[key]['flag'] = 'normal'
+                        flux_dict[key]['error'] = getattr(stellar_object.fluxes, f'processed_{flux}_err')
+                        flux_dict[key]['flag'] = 'normal'
                     elif 'saturated' in key:
                         # If it is saturated, add flag
-                        fuv_dict[key]['flag'] = 'saturated'
+                        flux_dict[key]['flag'] = 'saturated'
                     elif 'upper_limit' in key:
                         # If it is upper limit, add flag
-                        fuv_dict[key]['flag'] = 'upper_limit'
+                        flux_dict[key]['flag'] = 'upper_limit'
                     else:
                         # If it is none of these, means it is normal flux w/o error (detection only)
-                        fuv_dict[key]['flag'] = 'detection_only'
-                elif 'nuv' in key and 'err' not in key: # Get all values of processed NUV (except error)
-                    nuv_dict[key] = {'value': val} # Add the value of the flux
-                    nuv_dict[key]['error'] = None # Set the error as None by default
-                    if key == 'processed_nuv' and hasattr(stellar_object.fluxes, 'processed_nuv_err'):
-                        # If there is an error, this means it is a normal flux. Add flag and error
-                        nuv_dict[key]['error'] = stellar_object.fluxes.processed_nuv_err
-                        nuv_dict[key]['flag'] = 'normal'
-                    elif 'saturated' in key:
-                        # If it is saturated, add flag
-                        nuv_dict[key]['flag'] = 'saturated'
-                    elif 'upper_limit' in key:
-                        # If it is upper limit, add flag
-                        nuv_dict[key]['flag'] = 'upper_limit'
-                    else:
-                        # If it is none of these, means it is normal flux w/o error (detection only)
-                        nuv_dict[key]['flag'] = 'detection_only'
+                        flux_dict[key]['flag'] = 'detection_only'
+
         # STEP 9: Get all possible combinations of fuv-nuv pairs. These are the pairs of fluxes that will be 
         # used for PEGASUS grid searches.
-        fuv_keys = list(fuv_dict)
-        nuv_keys = list(nuv_dict)
-        key_pairs = list(itertools.product(fuv_keys, nuv_keys))
+        key_pairs = list(itertools.product(list(fuv_dict), list(nuv_dict)))
         # STEP 10: Iterate over each pair and run PEGASUS grid search on each pair
         for fuv_key, nuv_key in key_pairs:
             # STEP 10.1: Retrieve the fuv and nuv values using the keys from the dictionaries
@@ -527,24 +502,22 @@ def return_results():
                 # Now add the flag if there is one.
                 if (stellar_object.fluxes.fuv_is_saturated or stellar_object.fluxes.nuv_is_saturated) and (stellar_object.fluxes.fuv_is_upper_limit or stellar_object.fluxes.nuv_is_upper_limit):
                     # If there are both saturated and upper limit fluxes, add saturated and upper limit option A flag
-                    plot_data[key]['flag'] = 'Saturated and Upper Limit Search Option A'
+                    plot_data[key]['flag'] = 'Saturated and Upper Limit<br> Search Option A'
                 elif (stellar_object.fluxes.fuv_is_saturated or stellar_object.fluxes.nuv_is_saturated):
                     # If there are saturated fluxes and this is a saturated search, add saturated option A flag
                     if (fuv_value['flag'] == 'saturated' or nuv_value['flag'] == 'saturated'):
-                        plot_data[key]['flag'] = 'Saturated Search Option A'
+                        plot_data[key]['flag'] = 'Saturated Search<br> Option A'
                     # If there are saturated fluxes and this is a normal search, add saturated option B flag
                     if (fuv_value['flag'] == 'normal' and nuv_value['flag'] == 'normal'):
-                        plot_data[key]['flag'] = 'Saturated Search Option B'
+                        plot_data[key]['flag'] = 'Saturated Search<br> Option B'
                 elif (stellar_object.fluxes.fuv_is_upper_limit or stellar_object.fluxes.nuv_is_upper_limit):
                     # If there are upper limit fluxes and this is a upper limit search, add upper limit option A flag
                     if (fuv_value['flag'] == 'upper_limit' or nuv_value['flag'] == 'upper_limit'):
-                        plot_data[key]['flag'] = 'Upper Limit Search Option A'
+                        plot_data[key]['flag'] = 'Upper Limit Search<br> Option A'
                     # If there are upper limit fluxes and this is a normal search, add upper limit option B flag
                     if (fuv_value['flag'] == 'normal' and nuv_value['flag'] == 'normal'):
-                        plot_data[key]['flag'] = 'Upper Limit Search Option B'
+                        plot_data[key]['flag'] = 'Upper Limit Search<br> Option B'
         # STEP 12: Generate plot using the compiled data
-        print('BEEP')
-        print(plot_data)
         plotly_fig = create_plotly_graph(plot_data)
         graphJSON = json.dumps(
             plotly_fig, cls=plotly.utils.PlotlyJSONEncoder)
