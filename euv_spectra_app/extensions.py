@@ -19,6 +19,8 @@ app.jinja_env.filters['zip'] = zip
 dashboard.config.init_from(file='/config.py')
 dashboard.bind(app)
 
+# hello!
+
 # ======= DB Setup ==========
 uri = environ.get('MONGODB_URI')
 client = MongoClient(uri)
