@@ -2,7 +2,6 @@
 import numpy.ma as ma
 import math
 import requests
-import json
 from astropy.time import Time
 import astropy.units as u
 from astroquery.exceptions import ResolverError
@@ -831,13 +830,9 @@ class StellarObject():
                         if not ma.is_masked(filtered_data['fuv_flux_aper_7']) and filtered_data['fuv_flux_aper_7'] > 34:
                             self.fluxes.fuv_is_saturated = True
                             self.fluxes.fuv_saturated = filtered_data['fuv_flux']
-                        else:
-                            self.fluxes.fuv_is_saturated = False
                         if not ma.is_masked(filtered_data['nuv_flux_aper_7']) and filtered_data['nuv_flux_aper_7'] > 108:
                             self.fluxes.nuv_is_saturated = True
                             self.fluxes.nuv_saturated = filtered_data['nuv_flux']
-                        else:
-                            self.fluxes.nuv_is_saturated = False
                         # STEP 6: Check if there are any masked values (these will be null values)
                         null_fluxes = self.fluxes.check_null_fluxes()
                         if null_fluxes is not None:

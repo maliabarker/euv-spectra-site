@@ -613,7 +613,8 @@ def send_email():
     form = ContactForm(request.form)
     if form.validate_on_submit():
         msg = Message(form.subject.data,
-                      sender=(form.name.data, form.email.data),
+                      sender=form.email.data,
+                      reply_to=form.email.data,
                       recipients=['phoenixpegasusgrid@gmail.com'],
                       body=f'FROM {form.name.data}, {form.email.data}\n MESSAGE: {form.message.data}')
         mail.send(msg)

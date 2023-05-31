@@ -14,8 +14,8 @@ class Config(object):
     # for flask mail
     MAIL_SERVER = os.getenv("MAIL_SERVER")
     MAIL_PORT = os.getenv("MAIL_PORT")
-    MAIL_USE_TLS = False
-    MAIL_USE_SSL = True
+    MAIL_USE_TLS = True
+    MAIL_USE_SSL = False
     MAIL_USERNAME = os.getenv("MAIL_USERNAME")
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
     MAIL_FAIL_SILENTLY = False
@@ -26,3 +26,7 @@ class Config(object):
     # for cache
     CACHE_TYPE = 'simple'
     CACHE_DEFAULT_TIMEOUT = 1800
+
+    # for captcha
+    RECAPTCHA_PUBLIC_KEY = os.getenv("RECAPTCHA_PUBLIC_KEY")
+    RECAPTCHA_PRIVATE_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
