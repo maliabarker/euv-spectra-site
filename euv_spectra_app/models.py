@@ -21,7 +21,6 @@ customSimbad.add_votable_fields(
 
 class ProperMotionData():
     """Represents proper motion data of a stellar object."""
-
     def __init__(self, pm_ra=None, pm_dec=None, plx=None, rad_vel=None):
         self.pm_ra = pm_ra
         self.pm_dec = pm_dec
@@ -464,6 +463,7 @@ class GalexFluxes():
         
         Returns:
             The final processed flux.
+        # TODO Add type error catch
         """
         wv = None
         photo_flux = None

@@ -83,6 +83,7 @@ def create_plotly_graph(files):
     Returns:
         A plotly figure. Will then be json serialized and sent to the front end.
     """
+    # TODO: Make a smooth plot function where there is a JS option to toggle vis of smoothed and non-smoothed graph
     # STEP 1: initialize figure
     fig = go.Figure()
     colors = ['#2E42FC', '#EE26DB', '#FF79AE', '#FE6201', '#FFBC28', '#DB2681', '#BBBBBB', '#00E4B0', '#7FFF1D']
